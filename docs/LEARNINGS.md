@@ -1255,6 +1255,122 @@ Always audit template/starter kit code before shipping. Every component that doe
 
 ---
 
+## 36. Quote-Wrapping SQL Column Names in Dynamic UPDATE Statements
+
+### The Problem
+
+The `update_lineage()` function in `ingest/config.py` uses `**kwargs` to dynamically build SQL SET clauses:
+
+```python
+sets = ", ".join(f"{k} = ?" for k in kwargs)
+conn.execute(f"UPDATE pipeline.lineage SET {sets} WHERE run_id = ?", [*values, run_id])
+```
+
+When the keyword argument name matches the column name exactly (both use underscores like `raw_food_prices_rows`), this works. But if a column name contains spaces (e.g., `raw food prices rows` vs `raw_food_prices_rows`), the generated SQL `SET raw food prices rows = ?` is invalid — DuckDB parses `raw` and `food` as separate tokens.
+
+**Root Cause:** No quoting around column identifiers. Unlike row values (which use `?` placeholders), column identifiers in SET clauses are interpolated directly into the SQL string. Unquoted identifiers with spaces or special characters fail.
+
+### Solution
+
+Quote-wrap column names with double quotes in the SET clause:
+
+```python
+sets = ", ".join(f'"{k}" = ?' for k in kwargs)
+```
+
+Now `SET "raw food prices rows" = ?` is valid SQL regardless of column naming conventions.
+
+### Rule
+
+Any dynamic SQL that interpolates column/table identifiers must quote-wrap them with `"identifier"` (or backticks in MySQL). Use `?` placeholders only for values, never for identifiers. An unquoted identifier is a SQL injection and syntax error waiting to happen.
+
+### Related
+
+This is the DuckDB/dbt equivalent of LEARNINGS.md §24 (uninitialized variable in error handler). Both are Python patterns that look correct in happy-path testing but fail in edge cases.
+
+---
+
+## 37. Idempotent Data Loads: DROP TABLE Before CREATE TABLE AS
+
+### The Problem
+
+The original `load_csv_to_raw()` used:
+
+```python
+conn.execute(f"CREATE TABLE IF NOT EXISTS raw.{table_name} AS SELECT * FROM read_csv_auto(...)")
+```
+
+`CREATE TABLE IF NOT EXISTS` only creates the table if it doesn't exist. On subsequent runs, the table already exists, so this statement becomes a no-op. The data is never reloaded — the old data remains, and new data is never inserted.
+
+**Result:** Re-running `load_raw.py` does nothing. The only way to reload is to manually drop the table or delete the DuckDB file.
+
+### Solution
+
+Replace with explicit drop + create:
+
+```python
+conn.execute(f"DROP TABLE IF EXISTS raw.{table_name}")
+conn.execute(f"CREATE TABLE raw.{table_name} AS SELECT * FROM read_csv_auto(...)")
+```
+
+This guarantees:
+- Each run produces a clean, fresh load
+- No duplicate rows from previous runs
+- Schema stays current with the CSV structure
+
+### When DROP vs TRUNCATE
+
+| Approach | Use Case |
+|----------|----------|
+| `DROP TABLE` + `CREATE TABLE` | Schema is defined entirely by the data source (CSV schema inference). Table definition does not exist independently. |
+| `TRUNCATE` + `INSERT` | Table has a fixed schema (defined in DDL/migration). Preserves indexes, constraints, and column metadata. |
+
+For DuckDB loading from CSV with `read_csv_auto()`, the schema comes from the CSV itself. `DROP TABLE` is the correct approach because there's no standalone DDL to preserve. For a production database with explicit schema definitions, use `TRUNCATE` (as documented in LEARNINGS.md §18).
+
+---
+
+## 38. Pipeline Orchestration with Per-Layer Row-Count Reconciliation
+
+### The Problem
+
+The original pipeline ran steps independently:
+- `load_raw.py` loaded CSVs into DuckDB
+- `dbt run` transformed staging models
+- No script chained them together
+- No verification that row counts preserved between layers
+
+A mismatch between CSV rows → raw table rows → staging view rows would go undetected until the dashboard showed wrong numbers.
+
+### Solution
+
+Created `run_pipeline.py` that:
+
+1. **Chains steps sequentially**: ingest → dbt run (staging) → dbt test
+2. **Reconciles row counts** between each layer:
+   ```
+   CSV count → raw table count  (must match)
+   raw table count → staging view count  (must match)
+   ```
+3. **Updates pipeline lineage** at each step for auditability
+4. **Fails fast** — any mismatch or dbt failure stops the pipeline
+
+### Pattern
+
+```python
+def reconcile_layer(conn, label, source_count, target_table):
+    target_count = conn.execute(f"SELECT COUNT(*) FROM {target_table}").fetchone()[0]
+    if source_count == target_count:
+        logger.info("OK %s: source=%d target=%d", label, source_count, target_count)
+    else:
+        raise RuntimeError(f"FAIL {label} MISMATCH: source={source_count} target={target_count}")
+```
+
+### Rule
+
+Every pipeline needs a single orchestrator that chains all steps, not individual scripts called manually. Row-count reconciliation between layers is the cheapest and most effective data quality check — a simple `COUNT(*)` comparison catches truncation, join explosions, and filter over-application.
+
+---
+
 ## Updated Decision Log
 
 | Decision | Rationale |
@@ -1280,6 +1396,9 @@ Always audit template/starter kit code before shipping. Every component that doe
 | Visible disclaimer over silent inconsistency | When a chart can't respect a filter, document the limitation visibly. An amber disclaimer is better than confusing behavior. |
 | Strip template boilerplate before deploy | Dashboard starter kits ship with user auth, search, theme switching, layout options — none needed for a static analytics portfolio. Removing dead code reduces bundle size, eliminates confusing UI elements, and prevents build errors. |
 | Cross-tabulated ETL fields for filter intersections | When two filter dimensions (transaction type × product type) are combined, the data must include intersection fields. Sequential `if` blocks that overwrite each other produce wrong results. |
+| Quote-wrap SQL column identifiers in dynamic SET clauses | Unquoted identifiers with spaces cause syntax errors. `f'"{k}" = ?'` prevents column naming bugs regardless of naming convention. |
+| DROP TABLE before CREATE TABLE AS for CSV loads | `CREATE TABLE IF NOT EXISTS` is a no-op on re-run — data never refreshes. `DROP TABLE IF EXISTS` + `CREATE TABLE` guarantees idempotent loads. |
+| Single pipeline orchestrator with per-layer reconciliation | Individual scripts called manually miss data quality issues. A single `run_pipeline.py` chains steps and verifies row counts between each layer with simple `COUNT(*)` comparisons. |
 
 ---
 

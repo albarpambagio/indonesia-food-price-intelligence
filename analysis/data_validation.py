@@ -21,44 +21,26 @@ def __():
 @app.cell
 def __(duckdb, mo):
     conn = duckdb.connect("data/wfp.duckdb")
+    conn.execute("CREATE SCHEMA IF NOT EXISTS pipeline;")
     conn.execute("CREATE SCHEMA IF NOT EXISTS raw;")
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS raw.food_prices AS
-        SELECT * FROM read_csv_auto('data/raw/wfp_food_prices_idn.csv')
-        WHERE 1=0
-        """
-    )
-    conn.execute(
-        """
-        INSERT INTO raw.food_prices
-        SELECT * FROM read_csv_auto('data/raw/wfp_food_prices_idn.csv')
-        """
-    )
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS raw.markets AS
-        SELECT * FROM read_csv_auto('data/raw/wfp_markets_idn.csv')
-        WHERE 1=0
-        """
-    )
-    conn.execute(
-        """
-        INSERT INTO raw.markets
-        SELECT * FROM read_csv_auto('data/raw/wfp_markets_idn.csv')
-        """
-    )
     fp_rows = conn.sql("SELECT COUNT(*) FROM raw.food_prices").fetchone()[0]
     mk_rows = conn.sql("SELECT COUNT(*) FROM raw.markets").fetchone()[0]
+    has_pipeline = conn.sql("SELECT COUNT(*) FROM pipeline.lineage").fetchone()[0] > 0
+    ingest_info = ""
+    if has_pipeline:
+        row = conn.sql("SELECT run_id, raw_food_prices_rows, raw_markets_rows FROM pipeline.lineage ORDER BY started_at DESC LIMIT 1").fetchone()
+        ingest_info = f"**Ingest run**: `{row[0]}` | raw.food_prices = {row[1]:,} | raw.markets = {row[2]:,}"
     mo.md(f"""
     # Data Validation Checkpoint
 
     **Dataset**: WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0)
 
-    | File | Rows Loaded |
-    |------|-------------|
-    | `wfp_food_prices_idn.csv` | {fp_rows:,} |
-    | `wfp_markets_idn.csv` | {mk_rows:,} |
+    | Table | Rows |
+    |-------|------|
+    | `raw.food_prices` | {fp_rows:,} |
+    | `raw.markets` | {mk_rows:,} |
+
+    {ingest_info}
     """)
     return conn, fp_rows, mk_rows
 

@@ -11,6 +11,15 @@
 | **Status** | Phase 0 Complete |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Next.js (Shadboard) → Cloudflare Pages |
 
+### Parallelization Opportunities
+| Phase | Can Start After | Runs Parallel With | Saves |
+|-------|----------------|-------------------|-------|
+| Phase 4 (EDA) | Phase 1 done (staging data available) | Phase 2 + Phase 3 | ~3–5 days |
+| Phase 7 (Methodology Doc) | Phase 3 started (model decisions known) | Phase 4–6 | ~2–3 days |
+| §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
+
+**Sequential chain** (must wait): Phase 0 → 1 → 2 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
+
 ---
 
 ## Phase 0 — Project Setup & Data Validation Checkpoint
@@ -35,41 +44,42 @@
 ### 1.1 Ingest
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1.1.1 | `ingest/load_raw.py` — load food_prices CSV to DuckDB raw.food_prices | ⬜ | Exact copy — no transforms |
-| 1.1.2 | `ingest/load_raw.py` — load markets CSV to DuckDB raw.markets | ⬜ | Exact copy — no transforms |
+| 1.1.1 | `ingest/load_raw.py` — load food_prices CSV to DuckDB raw.food_prices | ✅ | 325,239 rows loaded |
+| 1.1.2 | `ingest/load_raw.py` — load markets CSV to DuckDB raw.markets | ✅ | 224 rows loaded |
 | 1.1.3 | Create `ingest/config.py` with `generate_run_id()` — timestamp-based run ID | ✅ | Done in Phase 0 |
-| 1.1.4 | Create `pipeline.lineage` table — central run registry | ✅ | Done in Phase 0 (embedded in config.py) |
-| 1.1.5 | Add `init_lineage()` / `update_lineage()` helper functions | ✅ | Done in Phase 0 (embedded in config.py) |
-| 1.1.6 | Split logging into per-script files: `logs/ingest.log`, `logs/transform.log`, `logs/forecast.log`, `logs/export.log` | ⬜ | `pipeline_run.log` reserved for orchestration summary |
+| 1.1.4 | Create `pipeline.lineage` table — central run registry | ✅ | Done in Phase 0; fixed JSONB→JSON at runtime |
+| 1.1.5 | Add `init_lineage()` / `update_lineage()` helper functions | ✅ | Done in Phase 0; fix: `.replace('_', ' ')` removed from `update_lineage()` |
+| 1.1.6 | Split logging into per-script files: `logs/ingest.log`, `logs/transform.log`, `logs/forecast.log`, `logs/export.log` | ✅ | `pipeline_run.log` reserved for orchestration summary |
 
 ### 1.2 dbt Staging Models
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1.2.1 | `stg_food_prices.sql` — cast date, uppercase admin, trim, cast price to DECIMAL, rename priceflag, filter price<=0 | ⬜ | Light cleaning only — no business logic |
-| 1.2.2 | `stg_markets.sql` — snake_case columns, flag national average (market_id=974), cast coordinates to FLOAT | ⬜ | |
+| 1.2.1 | `stg_food_prices.sql` — cast date, uppercase admin, trim, cast price to DECIMAL, rename priceflag, filter price<=0 | ✅ | 0 rows filtered (all prices positive) |
+| 1.2.2 | `stg_markets.sql` — snake_case columns, flag national average (market_id=974), cast coordinates to FLOAT | ✅ | Added NULL admin→'NATIONAL' for market_id=974 |
 
 ### 1.3 dbt Tests
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1.3.1 | not_null: [date, commodity, market_id, price, price_flag] | ⬜ | stg_food_prices |
-| 1.3.2 | accepted_values: price_flag → [actual, aggregate] | ⬜ | |
-| 1.3.3 | accepted_values: pricetype → [Retail] | ⬜ | |
-| 1.3.4 | positive_values: price | ⬜ | |
-| 1.3.5 | unique: market_id | ⬜ | stg_markets |
-| 1.3.6 | not_null: [market_id, market, admin1] | ⬜ | |
+| 1.3.1 | not_null: [date, commodity, market_id, price, price_flag] | ✅ | stg_food_prices — all pass |
+| 1.3.2 | accepted_values: price_flag → [actual, aggregate] | ✅ | Uses `arguments:` syntax in schema.yml |
+| 1.3.3 | accepted_values: pricetype → [Retail] | ✅ | |
+| 1.3.4 | positive_values: price | ✅ | Custom generic test in `macros/positive_values.sql` |
+| 1.3.5 | unique: market_id | ✅ | stg_markets |
+| 1.3.6 | not_null: [market_id, market, admin1] | ✅ | 12/12 tests pass |
 
 ### 1.4 Row Count Reconciliation
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1.4.1 | Validate raw.food_prices COUNT = CSV line count - 1 | ⬜ | After ingest, before dbt |
-| 1.4.2 | Validate stg_food_prices COUNT ≤ raw COUNT (price<=0 filtered) | ⬜ | Log filtered count to `pipeline.lineage.issues_log` |
-| 1.4.3 | Update `pipeline.lineage` with source_rows, staging_rows, status | ⬜ | Completed after dbt run |
+| 1.4.1 | Validate raw.food_prices COUNT = CSV line count - 1 | ✅ | 325,239 = 325,240 - 1 ✓ |
+| 1.4.2 | Validate stg_food_prices COUNT ≤ raw COUNT (price<=0 filtered) | ✅ | 325,239 = 325,239 (no rows filtered) |
+| 1.4.3 | Update `pipeline.lineage` with source_rows, staging_rows, status | ✅ | ingest=completed, transform=completed |
 
 **Validation**: Row counts reconcile at every stage. All dbt tests pass. Run history queryable via `SELECT * FROM pipeline.lineage ORDER BY run_start DESC`.
 
 ---
 
 ## Phase 2 — dbt Transform (Intermediate + Mart) (4–5 days)
+> **Sequential** — depends on Phase 1 (staging). Phase 4 (EDA) can run alongside this.
 
 ### 2.1 Intermediate Models
 | # | Task | Status | Notes |
@@ -109,6 +119,7 @@
 ---
 
 ## Phase 3 — Forecasting (2 days)
+> **Sequential** — depends on Phase 2 (mart models). Phase 4 (EDA) and Phase 7 (doc start) can run alongside this.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
@@ -124,6 +135,7 @@
 ---
 
 ## Phase 4 — EDA (SCAN Framework) (1–2 days)
+> **Parallel** — can start after Phase 1 (staging). Runs alongside Phase 2 + Phase 3. No dependency on mart models.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
@@ -138,6 +150,7 @@
 ---
 
 ## Phase 5 — Deep Dive Analysis (North Star Method) (2–3 days)
+> **Sequential** — depends on Phase 4 (EDA findings feed into deep dives). Phase 7 can run alongside.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
@@ -153,6 +166,7 @@
 ---
 
 ## Phase 6 — Dashboard (Shadboard + Next.js) (3–4 days)
+> **Sequential (pages)** — chart implementation depends on Phase 2 (mart data) + Phase 3 (forecast) exported JSON. §6.6 init is independent.
 
 ### Page 1 — Price Trends & Forecast
 | # | Task | Status | Notes |
@@ -191,6 +205,8 @@
 | 6.4.6 | Full correlation detail table (TanStack, pre/post 2022 columns) | ⬜ | Wireframe [9] — differentiation column |
 
 ### 6.6 Dashboard Init (moved from Phase 0)
+> **Parallel** — zero data dependency. Can run any time after Phase 0. No need to wait for pipeline phases.
+
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 6.6.1 | Init Next.js from Shadboard starter-kit in `/dashboard` | ⬜ | `npx shadcn@latest init`, 4-page nav route group |
@@ -211,6 +227,7 @@
 ---
 
 ## Phase 7 — Forecasting Methodology Documentation (1 day)
+> **Parallel** — can start once Phase 3 model decisions are made (AutoARIMA vs AutoETS, CV results). Runs alongside Phase 4–6.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
@@ -225,6 +242,7 @@
 ---
 
 ## Phase 8 — Insights, Recommendations & Write-up (1 day)
+> **Sequential** — depends on all prior phases. Reads insights from Phase 4+5, screenshots from Phase 6, methodology from Phase 7.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|

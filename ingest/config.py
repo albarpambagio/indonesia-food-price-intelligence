@@ -1,10 +1,12 @@
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 import duckdb
 
-DB_PATH = "data/wfp.duckdb"
-RAW_DATA_DIR = "data/raw"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DB_PATH = str(PROJECT_ROOT / "data" / "wfp.duckdb")
+RAW_DATA_DIR = str(PROJECT_ROOT / "data" / "raw")
 
 FOOD_PRICES_CSV = f"{RAW_DATA_DIR}/wfp_food_prices_idn.csv"
 MARKETS_CSV = f"{RAW_DATA_DIR}/wfp_markets_idn.csv"
@@ -20,7 +22,7 @@ CREATE TABLE IF NOT EXISTS pipeline.lineage (
     export_status       TEXT DEFAULT 'pending',
     raw_food_prices_rows INT,
     raw_markets_rows    INT,
-    issues_log          JSONB
+    issues_log          JSON
 );
 """
 
@@ -53,7 +55,7 @@ def update_lineage(
     run_id: str,
     **kwargs: Any,
 ) -> None:
-    sets = ", ".join(f"{k.replace('_', ' ')} = ?" for k in kwargs)
+    sets = ", ".join(f'"{k}" = ?' for k in kwargs)
     if not sets:
         return
     values = list(kwargs.values())

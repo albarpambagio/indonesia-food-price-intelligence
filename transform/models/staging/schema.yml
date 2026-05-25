@@ -1,0 +1,63 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: food_prices
+      - name: markets
+
+models:
+  - name: stg_food_prices
+    description: Cleaned food prices — light transformations on raw WFP data
+    columns:
+      - name: date
+        description: Observation date (always 15th of month)
+        tests:
+          - not_null
+      - name: commodity
+        description: Commodity name (original)
+        tests:
+          - not_null
+      - name: market_id
+        description: Foreign key to stg_markets
+        tests:
+          - not_null
+      - name: price
+        description: Price in IDR
+        tests:
+          - not_null
+          - positive_values
+      - name: price_flag
+        description: actual or aggregate
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - actual
+                  - aggregate
+      - name: pricetype
+        description: Always Retail for this dataset
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - Retail
+
+  - name: stg_markets
+    description: Cleaned markets — light transformations on raw WFP market data
+    columns:
+      - name: market_id
+        description: Primary key
+        tests:
+          - unique
+          - not_null
+      - name: market
+        description: Market name
+        tests:
+          - not_null
+      - name: admin1
+        description: Province name
+        tests:
+          - not_null
