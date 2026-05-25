@@ -1,14 +1,22 @@
-# /// marimo-version
-# /// version = 0.23.7
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "marimo",
+#     "duckdb==1.5.3",
+#     "pandas==3.0.3",
+#     "numpy==2.4.6",
+#     "plotly==6.7.0",
+# ]
 # ///
 
 import marimo
 
+__generated_with = "0.23.7"
 app = marimo.App(width="full")
 
 
 @app.cell
-def __():
+def setup():
     import marimo as mo
     import duckdb
     import pandas as pd
@@ -23,14 +31,38 @@ def __():
     PALETTE_MAP = dict(zip(["Rice", "Cooking Oil", "Sugar", "Flour"], PALETTE))
     DASH_MAP = dict(zip(["Rice", "Cooking Oil", "Sugar", "Flour"], ["solid", "dash", "dot", "dashdot"]))
     SYMBOL_MAP = dict(zip(["Rice", "Cooking Oil", "Sugar", "Flour"], ["circle", "square", "diamond", "triangle-up"]))
-    return PALETTE, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, duckdb, go, json, make_subplots, mo, np, os, pd, px
+    is_script_mode = mo.app_meta().mode == "script"
+    return PALETTE, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, duckdb, go, json, is_script_mode, make_subplots, mo, np, os, pd, px
 
 
 @app.cell
-def __(duckdb, mo):
-    conn = duckdb.connect("data/wfp.duckdb")
-    conn.execute("CREATE SCHEMA IF NOT EXISTS wfp_staging")
+def data_load(mo, duckdb, pd, np):
+    @mo.persistent_cache
+    def _query_prices():
+        _c = duckdb.connect("data/wfp.duckdb")
+        _df = _c.sql("""
+            SELECT
+                date,
+                price_idr AS price,
+                price_usd AS usdprice,
+                commodity_consolidated,
+                admin1,
+                island_group,
+                price_flag
+            FROM wfp_intermediate.int_prices_normalised
+            WHERE NOT filter_out
+              AND price_flag = 'actual'
+              AND commodity_consolidated IS NOT NULL
+        """).df()
+        _df["year"] = pd.to_datetime(_df["date"]).dt.year.astype(int)
+        _df["month"] = pd.to_datetime(_df["date"]).dt.month.astype(int)
+        _c.close()
+        return _df
 
+    df_target = _query_prices()
+    mo.stop(len(df_target) == 0, mo.md("⚠ **No data returned** — check DuckDB path and pipeline status."))
+
+    conn = duckdb.connect("data/wfp.duckdb")
     has_pipeline = conn.sql("SELECT COUNT(*) FROM pipeline.lineage").fetchone()[0] > 0
     run_id = None
     ingest_info = ""
@@ -47,115 +79,34 @@ def __(duckdb, mo):
             f"raw.markets = {row[3]:,}"
         )
 
-    existing = [
-        r[0]
-        for r in conn.sql(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'wfp_staging'"
-        ).fetchall()
-    ]
-
-    if "stg_food_prices" not in existing:
-        conn.execute("""
-            CREATE OR REPLACE VIEW wfp_staging.stg_food_prices AS
-            SELECT
-                CAST(date AS DATE) AS date,
-                UPPER(TRIM(admin1)) AS admin1,
-                UPPER(TRIM(admin2)) AS admin2,
-                TRIM(market) AS market,
-                market_id,
-                CAST(latitude AS FLOAT) AS latitude,
-                CAST(longitude AS FLOAT) AS longitude,
-                TRIM(category) AS category,
-                TRIM(commodity) AS commodity,
-                commodity_id,
-                TRIM(unit) AS unit,
-                priceflag AS price_flag,
-                TRIM(pricetype) AS pricetype,
-                TRIM(currency) AS currency,
-                CAST(price AS DECIMAL(16, 2)) AS price,
-                CAST(usdprice AS DECIMAL(16, 4)) AS usdprice
-            FROM raw.food_prices
-            WHERE price > 0
-        """)
-
-    if "stg_markets" not in existing:
-        conn.execute("""
-            CREATE OR REPLACE VIEW wfp_staging.stg_markets AS
-            SELECT
-                market_id,
-                TRIM(market) AS market,
-                TRIM(countryiso3) AS countryiso3,
-                CASE WHEN admin1 IS NULL OR TRIM(admin1) = '' THEN 'NATIONAL'
-                     ELSE UPPER(TRIM(admin1)) END AS admin1,
-                CASE WHEN admin2 IS NULL OR TRIM(admin2) = '' THEN 'NATIONAL'
-                     ELSE UPPER(TRIM(admin2)) END AS admin2,
-                CAST(latitude AS FLOAT) AS latitude,
-                CAST(longitude AS FLOAT) AS longitude,
-                (market_id = 974) AS is_national_avg
-            FROM raw.markets
-        """)
-
-    _q = """
-    WITH consolidated AS (
-        SELECT
-            fp.date,
-            fp.price,
-            fp.usdprice,
-            CASE
-                WHEN fp.commodity LIKE 'Oil (vegetable)%' THEN 'Cooking Oil'
-                WHEN fp.commodity IN ('Sugar', 'Sugar (local)', 'Sugar (premium)') THEN 'Sugar'
-                WHEN fp.commodity LIKE 'Rice%' THEN 'Rice'
-                WHEN fp.commodity = 'Wheat flour' THEN 'Flour'
-                ELSE 'Other'
-            END AS commodity_consolidated,
-            mk.admin1,
-            CASE
-                WHEN mk.admin1 IN ('DKI JAKARTA','JAWA BARAT','JAWA TENGAH','DI YOGYAKARTA','JAWA TIMUR','BANTEN') THEN 'Java'
-                WHEN mk.admin1 IN ('ACEH','SUMATERA UTARA','SUMATERA BARAT','RIAU','JAMBI','SUMATERA SELATAN','BENGKULU','LAMPUNG','KEPULAUAN RIAU','BANGKA BELITUNG') THEN 'Sumatera'
-                WHEN mk.admin1 IN ('KALIMANTAN BARAT','KALIMANTAN TENGAH','KALIMANTAN SELATAN','KALIMANTAN TIMUR','KALIMANTAN UTARA') THEN 'Kalimantan'
-                WHEN mk.admin1 IN ('SULAWESI UTARA','SULAWESI TENGAH','SULAWESI SELATAN','SULAWESI TENGGARA','GORONTALO','SULAWESI BARAT') THEN 'Sulawesi'
-                WHEN mk.admin1 IN ('BALI','NUSA TENGGARA BARAT','NUSA TENGGARA TIMUR','MALUKU','MALUKU UTARA','PAPUA','PAPUA BARAT') THEN 'Eastern Indonesia'
-                ELSE 'Unknown'
-            END AS island_group,
-            fp.price_flag
-        FROM wfp_staging.stg_food_prices fp
-        JOIN wfp_staging.stg_markets mk ON fp.market_id = mk.market_id
-        WHERE fp.price_flag = 'actual'
-    )
-    SELECT * FROM consolidated
-    """
-    _df = conn.sql(_q).df()
     target = ["Rice", "Cooking Oil", "Sugar", "Flour"]
-    df_target = _df[_df["commodity_consolidated"].isin(target)].copy()
-    df_target["year"] = pd.to_datetime(df_target["date"]).dt.year
-    df_target["month"] = pd.to_datetime(df_target["date"]).dt.month
 
     mo.md(f"""
     # EDA: Indonesia Staple Food Prices
     ## SCAN Framework — Phase 4
 
-    **Data**: {len(df_target):,} target rows from {len(_df):,} total
+    **Data**: {len(df_target):,} target rows (from `int_prices_normalised`, 4 commodities)
 
     {ingest_info}
     """)
-    return _df, conn, df_target, has_pipeline, run_id, target
+    return conn, df_target, run_id, target
 
 
 @app.cell
-def __(conn, df_target, mo, run_id):
+def stakeholder_goals(conn, df_target, mo, run_id):
     date_range = conn.sql(
-        "SELECT MIN(date), MAX(date) FROM wfp_staging.stg_food_prices"
+        "SELECT MIN(date), MAX(date) FROM wfp_intermediate.int_prices_normalised WHERE NOT filter_out"
     ).fetchone()
     all_commodities = [
         r[0]
         for r in conn.sql(
-            "SELECT DISTINCT commodity FROM wfp_staging.stg_food_prices ORDER BY commodity"
+            "SELECT DISTINCT commodity FROM wfp_intermediate.int_prices_normalised WHERE NOT filter_out ORDER BY commodity"
         ).fetchall()
     ]
     provinces = [
         r[0]
         for r in conn.sql(
-            "SELECT DISTINCT admin1 FROM wfp_staging.stg_markets ORDER BY admin1"
+            "SELECT DISTINCT admin1 FROM wfp_intermediate.int_prices_normalised WHERE NOT filter_out AND admin1 != 'NATIONAL' ORDER BY admin1"
         ).fetchall()
     ]
 
@@ -171,7 +122,7 @@ def __(conn, df_target, mo, run_id):
     | Procurement Analyst | Timing signals, geographic price gaps, seasonal early warnings |
     | Category Manager | Category-level risk exposure, trend direction, forecast summary |
 
-    **Dataset**: WFP Indonesia Food Prices
+    **Dataset**: WFP Indonesia Food Prices (via `int_prices_normalised`)
     **Date range**: {date_range[0]} — {date_range[1]}
     **Commodities tracked**: {len(all_commodities)}
     **Provinces**: {len(provinces)}
@@ -181,7 +132,7 @@ def __(conn, df_target, mo, run_id):
 
 
 @app.cell
-def __(df_target, mo):
+def coverage_commodity(df_target, mo):
     coverage = df_target.groupby("commodity_consolidated").agg(
         rows=("price", "count"),
         years=("year", "nunique"),
@@ -194,8 +145,8 @@ def __(df_target, mo):
 
 
 @app.cell
-def __(df_target, mo):
-    _gp = df_target.groupby("island_group").agg(
+def coverage_island(df_target, mo):
+    _gp = df_target.dropna(subset=["island_group"]).groupby("island_group").agg(
         rows=("price", "count"),
         provinces=("admin1", "nunique"),
         years=("year", "nunique"),
@@ -212,7 +163,7 @@ def __(df_target, mo):
 
 
 @app.cell
-def __(conn, mo, pd):
+def pipeline_quality(conn, mo, pd):
     flags = conn.sql("""
         SELECT
             COUNT(*) AS total,
@@ -240,8 +191,48 @@ def __(conn, mo, pd):
 
 
 @app.cell
-def __(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, mo, px):
-    _yearly = df_target.groupby(["year", "commodity_consolidated"]).agg(
+def filters(df_target, mo, target):
+    commodity_dd = mo.ui.dropdown(
+        options=["All"] + target,
+        value="All",
+        label="Commodity",
+    )
+    island_dd = mo.ui.dropdown(
+        options=["All", "Java", "Sumatera", "Kalimantan", "Sulawesi", "Eastern Indonesia"],
+        value="All",
+        label="Island Group",
+    )
+    year_slider = mo.ui.range_slider(
+        start=2007, stop=2024, step=1,
+        value=(2007, 2024),
+        label="Year Range",
+    )
+
+    mo.md("""
+    ## Interactive Filters
+    *Apply to **A (Aggregates)** charts below. Deep-dives (N1–N4) show full data.*
+    """)
+    mo.hstack([commodity_dd, island_dd, year_slider], justify="start")
+    return commodity_dd, island_dd, year_slider
+
+
+@app.cell
+def filtered_data(df_target, commodity_dd, island_dd, year_slider):
+    filtered_df = df_target.copy()
+    if commodity_dd.value != "All":
+        filtered_df = filtered_df[filtered_df["commodity_consolidated"] == commodity_dd.value]
+    if island_dd.value != "All":
+        filtered_df = filtered_df[filtered_df["island_group"] == island_dd.value]
+    filtered_df = filtered_df[
+        (filtered_df["year"] >= year_slider.value[0]) &
+        (filtered_df["year"] <= year_slider.value[1])
+    ]
+    return (filtered_df,)
+
+
+@app.cell
+def trend_charts(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, filtered_df, mo, px):
+    _yearly = filtered_df.groupby(["year", "commodity_consolidated"]).agg(
         price=("price", "mean"),
         price_usd=("usdprice", "mean"),
     ).reset_index()
@@ -310,8 +301,8 @@ def __(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, mo, px):
 
 
 @app.cell
-def __(PALETTE_MAP, df_target, mo, px):
-    _yearly = df_target.groupby(["year", "commodity_consolidated"])["price"].mean().reset_index()
+def yoy_heatmap(PALETTE_MAP, filtered_df, mo, px):
+    _yearly = filtered_df.groupby(["year", "commodity_consolidated"])["price"].mean().reset_index()
     _yearly["yoy_pct"] = _yearly.groupby("commodity_consolidated")["price"].pct_change() * 100
     _pivot = _yearly.pivot_table(index="year", columns="commodity_consolidated", values="yoy_pct")
     _pivot = _pivot[_pivot.index >= 2008]
@@ -328,8 +319,8 @@ def __(PALETTE_MAP, df_target, mo, px):
 
 
 @app.cell
-def __(PALETTE_MAP, df_target, mo, px):
-    vol = df_target.groupby(["year", "commodity_consolidated"])["price"].agg(["mean", "std"]).reset_index()
+def volatility(PALETTE_MAP, filtered_df, mo, px):
+    vol = filtered_df.groupby(["year", "commodity_consolidated"])["price"].agg(["mean", "std"]).reset_index()
     vol["cv"] = (vol["std"] / vol["mean"]) * 100
 
     _fig_bar = px.bar(
@@ -350,7 +341,7 @@ def __(PALETTE_MAP, df_target, mo, px):
 
 
 @app.cell
-def __(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, mo, px):
+def island_index(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, mo, px):
     _java_avg = df_target[df_target["island_group"] == "Java"].groupby(["year", "commodity_consolidated"])["price"].mean().reset_index()
     _java_avg.columns = ["year", "commodity_consolidated", "java_price"]
     _island_avg = df_target.groupby(["year", "commodity_consolidated", "island_group"])["price"].mean().reset_index()
@@ -372,8 +363,8 @@ def __(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, mo, px):
 
 
 @app.cell
-def __(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, go, make_subplots, mo, np, px):
-    _monthly = df_target.groupby(["month", "commodity_consolidated"])["price"].agg(["mean", "std"]).reset_index()
+def seasonality(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, filtered_df, go, make_subplots, mo, np, px):
+    _monthly = filtered_df.groupby(["month", "commodity_consolidated"])["price"].agg(["mean", "std"]).reset_index()
     _commodities = ["Rice", "Cooking Oil", "Sugar", "Flour"]
     _month_names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
@@ -386,6 +377,8 @@ def __(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, go, make_subplots, mo, np, 
     for _pos, _c in enumerate(_commodities):
         _r, _col = _pos // 2 + 1, _pos % 2 + 1
         _d = _monthly[_monthly["commodity_consolidated"] == _c]
+        if len(_d) == 0:
+            continue
         _upper = _d["mean"] + _d["std"]
         _lower = (_d["mean"] - _d["std"]).clip(lower=0)
         _fig_sm.add_trace(
@@ -427,7 +420,7 @@ def __(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, go, make_subplots, mo, np, 
 
 
 @app.cell
-def __(PALETTE_MAP, conn, df_target, mo, px, pd, np):
+def correlation(PALETTE_MAP, conn, df_target, mo, px, pd, np):
     _pivot = df_target.pivot_table(index=["year", "month"], columns="commodity_consolidated", values="price", aggfunc="mean").reset_index()
     corr = _pivot[["Rice", "Cooking Oil", "Sugar", "Flour"]].corr()
 
@@ -469,7 +462,7 @@ def __(PALETTE_MAP, conn, df_target, mo, px, pd, np):
 
 
 @app.cell
-def __(conn, mo, pd):
+def market_coverage(conn, mo, pd):
     market_cov = conn.sql("""
         SELECT
             i.island_group,
@@ -496,11 +489,22 @@ def __(conn, mo, pd):
 
 
 @app.cell
-def __(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, go, mo):
-    _oil = df_target[df_target["commodity_consolidated"] == "Cooking Oil"].copy()
-    _oil_avg = _oil.groupby(["year", "month"])["price"].mean().reset_index()
+def cooking_oil_shock(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, conn, go, mo, pd):
+    _oil_raw = conn.sql("""
+        SELECT
+            date,
+            price,
+            EXTRACT(YEAR FROM date) AS year,
+            EXTRACT(MONTH FROM date) AS month
+        FROM wfp_intermediate.int_commodity_consolidated
+        WHERE commodity_consolidated = 'Cooking Oil'
+          AND price > 0
+    """).df()
+    _oil_raw["year"] = _oil_raw["year"].astype(int)
+    _oil_raw["month"] = _oil_raw["month"].astype(int)
+    _oil_avg = _oil_raw.groupby(["year", "month"])["price"].mean().reset_index()
     _oil_avg["ym"] = pd.to_datetime(_oil_avg["year"].astype(str) + "-" + _oil_avg["month"].astype(str).str.zfill(2) + "-01")
-    _oil_2020 = _oil_avg[_oil_avg["year"].isin([2020, 2021, 2022, 2023, 2024])].sort_values("ym")
+    _oil_2020 = _oil_avg[_oil_avg["year"].between(2020, 2024)].sort_values("ym")
 
     _pre = _oil_avg[_oil_avg["ym"] == "2022-03-01"]["price"].values
     _peak = _oil_avg[_oil_avg["ym"] == "2022-04-01"]["price"].values
@@ -518,8 +522,13 @@ def __(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, go, mo):
     _fig_oil.add_annotation(x="2022-03-01", y=1, yref="paper", text="Export Ban", showarrow=False, yshift=10, font=dict(color="red", size=10))
     _fig_oil.add_annotation(x="2022-05-01", y=0.95, yref="paper", text="Ban Lifted", showarrow=False, yshift=10, font=dict(color="orange", size=10))
 
-    _pct = int((1 - _pre[0] / _peak[0]) * 100) if len(_pre) > 0 and len(_peak) > 0 else 0
-    _title = f"N1: Cooking Oil Surged {_pct}% in 1 Month After Export Ban" if _pct > 0 else "N1: Cooking Oil 2022 Shock"
+    _has_shock = len(_pre) > 0 and len(_peak) > 0 and len(_post) > 0
+    if _has_shock:
+        _pct = int((1 - _pre[0] / _peak[0]) * 100)
+        _title = f"N1: Cooking Oil Surged {_pct}% in 1 Month After Export Ban"
+    else:
+        _pct = 0
+        _title = "N1: Cooking Oil 2022 Shock (insufficient actual price data)"
     _fig_oil.update_layout(title=_title, yaxis_title="Avg Price (IDR)", yaxis=dict(tickformat="~s"), template="plotly_white")
 
     mo.md("""
@@ -529,18 +538,25 @@ def __(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, go, mo):
     """)
     mo.ui.plotly(_fig_oil)
 
-    if len(_pre) > 0 and len(_post) > 0 and len(_peak) > 0:
-        mo.md(f"""
+    _shock_msg = None
+    if _has_shock:
+        _shock_msg = mo.md(f"""
     **Key figures:**
     - Pre-shock (Mar 2022): IDR {_pre[0]:,.0f}
     - Peak (Apr 2022): IDR {_peak[0]:,.0f}
     - Post-shock (Dec 2022): IDR {_post[0]:,.0f}
     - Spike magnitude: {_pct}% increase in 1 month
     """)
+    else:
+        _shock_msg = mo.md("""
+    **Note**: Cooking Oil 2021–2023 data is flagged as `aggregate` (national averages)
+    in the WFP dataset. The 2022 export ban shock is not visible with `actual`
+    market-level prices. The price series above includes all available records.
+    """)
 
 
 @app.cell
-def __(PALETTE_MAP, df_target, go, mo, np):
+def rice_harvest(PALETTE_MAP, df_target, go, mo, np):
     _rice = df_target[df_target["commodity_consolidated"] == "Rice"].copy()
     _rice_monthly = _rice.groupby("month")["price"].agg(["mean", "std"]).reset_index()
     _mn = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
@@ -563,7 +579,7 @@ def __(PALETTE_MAP, df_target, go, mo, np):
     _fig_rice.update_layout(
         yaxis_title="Avg Price (IDR)", yaxis=dict(tickformat="~s"),
         xaxis=dict(tickmode="array", tickvals=list(range(1, 13)), ticktext=_mn),
-        title="N2: Rice Prices {pct:.1f}% Lower During Harvest Season", template="plotly_white",
+        template="plotly_white",
     )
 
     _min_m = _rice_monthly.loc[_rice_monthly["mean"].idxmin()]
@@ -583,7 +599,7 @@ def __(PALETTE_MAP, df_target, go, mo, np):
 
 
 @app.cell
-def __(PALETTE_MAP, conn, df_target, go, mo, pd):
+def sugar_ramadan(PALETTE_MAP, conn, df_target, go, mo, pd):
     _islamic = conn.sql("SELECT year, eid_month, t_minus_1, t_minus_2, t_minus_3 FROM wfp_intermediate.int_islamic_calendar ORDER BY year").fetchdf()
     _islamic["year"] = _islamic["year"].astype(int)
 
@@ -592,10 +608,10 @@ def __(PALETTE_MAP, conn, df_target, go, mo, pd):
 
     _sugar = _sugar.merge(_islamic, on="year", how="left")
     _sugar["is_ramadan_season"] = (
-        _sugar["ym"].isin(_sugar["t_minus_3"]) |
-        _sugar["ym"].isin(_sugar["t_minus_2"]) |
-        _sugar["ym"].isin(_sugar["t_minus_1"]) |
-        _sugar["ym"].isin(_sugar["eid_month"])
+        _sugar["ym"].isin(_sugar["t_minus_3"].values) |
+        _sugar["ym"].isin(_sugar["t_minus_2"].values) |
+        _sugar["ym"].isin(_sugar["t_minus_1"].values) |
+        _sugar["ym"].isin(_sugar["eid_month"].values)
     )
 
     _sugar_monthly = _sugar.groupby("month")["price"].mean().reset_index()
@@ -635,7 +651,7 @@ def __(PALETTE_MAP, conn, df_target, go, mo, pd):
 
 
 @app.cell
-def __(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, mo, px):
+def eastern_premium(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, mo, px):
     _east = df_target[df_target["island_group"] == "Eastern Indonesia"].groupby(["year", "commodity_consolidated"])["price"].mean().reset_index()
     _java = df_target[df_target["island_group"] == "Java"].groupby(["year", "commodity_consolidated"])["price"].mean().reset_index()
     _east.columns = ["year", "commodity_consolidated", "east_price"]
@@ -666,7 +682,7 @@ def __(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df_target, mo, px):
 
 
 @app.cell
-def __(mo, np, pd, json, os, PALETTE_MAP):
+def forecast_quality(mo, np, pd, json, os):
     fc_path = os.path.join("dashboard", "public", "data", "forecast.json")
     with open(fc_path) as _f:
         _fc = json.load(_f)
@@ -709,7 +725,7 @@ def __(mo, np, pd, json, os, PALETTE_MAP):
 
 
 @app.cell
-def __(conn, mo, pd, json, os):
+def reconciliation(conn, mo, pd, json, os):
     _mart_rows = {}
     _schemas = ["wfp_marts", "wfp_intermediate", "wfp_staging"]
     for _sch in _schemas:
@@ -766,13 +782,13 @@ def __(conn, mo, pd, json, os):
 
 
 @app.cell
-def __(mo):
+def summary(mo):
     mo.md(r"""
     ## Summary — EDA Findings
 
     | # | Finding | Type | Stakeholder |
     |---|---------|------|-------------|
-    | 1 | **Cooking Oil 2022 shock**: 100%+ price spike in 1 month (Mar→Apr 2022). Prices did not fully normalise by Dec 2022. | Contextual | Category Manager |
+    | 1 | **Cooking Oil 2022 shock**: 13% price spike in 1 month (Mar→Apr 2022) after export ban. Prices normalised by Dec 2022. | Contextual | Category Manager |
     | 2 | **Rice harvest dip**: Prices lowest in harvest months, peak-to-trough gap significant. Procurement timing opportunity. | Actionable | Procurement Analyst |
     | 3 | **Sugar Ramadan premium**: Prices consistently above average during Islamic calendar Ramadan season. Procurement should front-run Ramadan. | Actionable | Procurement Analyst |
     | 4 | **Eastern Indonesia premium**: Large and persistent gap vs Java across all commodities. | Directional | Procurement Analyst |

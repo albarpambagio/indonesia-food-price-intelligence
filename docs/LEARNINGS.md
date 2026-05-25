@@ -53,6 +53,12 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 53 | [Don't Force dim_/fct_ When Project Already Uses mart_](#53-dont-force-dimfct-when-project-already-uses-mart_) |
 | 54 | [dbt build Over Separate dbt run + dbt test](#54-dbt-build-over-separate-dbt-run--dbt-test) |
 | 55 | [generate_schema_name Enables Multi-Env Isolation](#55-generate_schema_name-enables-multi-env-isolation) |
+| 56 | [dbt Audit: Critical Gaps Closed](#56-dbt-audit-critical-gaps-found-and-closed-across-6-dimensions) |
+| 57 | [EDA Notebooks Must Query Marts, Not Duplicate Pipeline Logic](#57-eda-notebooks-must-query-marts-not-duplicate-pipeline-logic) |
+| 58 | [mo.persistent_cache + Named Cells for Marimo Quality](#58-mopersistent_cache--named-cells-for-marimo-notebook-quality) |
+| 59 | [Interactive Filters in Marimo Turn Static EDA Into Self-Service](#59-interactive-filters-in-marimo-turn-static-eda-into-self-service) |
+| 60 | [Data Source Migration Must Audit All Downstream Filter Conditions](#60-data-source-migration-must-audit-all-downstream-filter-conditions) |
+| 61 | [Historical Shock Analysis May Need Unfiltered Aggregate Data](#61-historical-shock-analysis-may-need-unfiltered-aggregate-data) |
 
 ---
 
@@ -1547,6 +1553,12 @@ Data validation docs must be re-verified against the current data whenever the p
 | `generate_schema_name` for multi-env isolation | Without it all models land in a single schema. Custom macro produces `wfp_staging`, `wfp_intermediate`, `wfp_marts` — essential for team dev on shared DuckDB. |
 | Source freshness config | Fresh `_sources.yml` with `warn_after`/`error_after` thresholds alerts when pipeline hasn't refreshed. Without it stale data silently serves as "current." |
 | Keep config and disk in sync | `dbt_project.yml` listed `analyses/` and `docs/` paths but dirs didn't exist — no compile error, but queries silently not found and docs served empty skeleton. |
+| Query marts directly in EDA notebooks | Inline pipeline logic duplication creates silent drift. Notebooks should be consumers of the dbt pipeline, not re-implementations. |
+| `mo.persistent_cache` for notebook data loading | Survives kernel restarts. Name function differently to bust cache. Good for DuckDB queries that rarely change. |
+| Name all marimo cells descriptively | `def setup():` > `def __():`. Makes the reactive graph navigable, cells become self-documenting. |
+| Interactive widgets for EDA self-service | `mo.ui.dropdown` + `mo.ui.range_slider` with a reactive `filtered_df` cell transforms static analysis into exploration. |
+| Every new filter in a migrated query is a behavioral change | `AND island_group IS NOT NULL` dropped 22% of rows silently. Compare `COUNT(*)` distributions before/after any migration. |
+| Deep-dive analyses may need unfiltered data | 2022 cooking oil shock is `aggregate`-only. Standard quality filters hide notable events. Document the bypass. |
 
 ---
 
@@ -1968,4 +1980,418 @@ The dbt-agent-skills reference guide [writing-data-tests.md](https://github.com/
 ### Rule
 
 Run a dbt Labs-style audit against your project at least once: check FK integrity, dead config, deprecated syntax, test coverage density, documentation quality, and infrastructure completeness (packages, exposures, seed docs). Each dimension takes 10–30 minutes and the cumulative lift in project quality is disproportionate to effort.
+
+---
+
+## 57. EDA Notebooks Must Query Marts, Not Duplicate Pipeline Logic
+
+### The Problem
+
+The Phase 4 EDA notebook rebuilt commodity consolidation and island group mapping inline — duplicating logic already defined in the dbt pipeline:
+
+```python
+# eda.py — DUPLICATED from int_commodity_consolidated.sql
+CASE
+    WHEN fp.commodity LIKE 'Oil (vegetable)%' THEN 'Cooking Oil'
+    WHEN fp.commodity IN ('Sugar', 'Sugar (local)', 'Sugar (premium)') THEN 'Sugar'
+    ...
+END AS commodity_consolidated,
+
+# Also duplicated island group mapping from int_prices_normalised.sql
+CASE
+    WHEN mk.admin1 IN ('DKI JAKARTA', 'JAWA BARAT', ...) THEN 'Java'
+    ...
+END AS island_group,
+```
+
+This creates a maintenance liability: if the dbt pipeline updates the consolidation or mapping logic, the notebook silently diverges — no error, just wrong analysis.
+
+### Solution
+
+Replace inline pipeline logic with a direct query against `wfp_intermediate.int_prices_normalised`:
+
+```python
+df_target = conn.sql("""
+    SELECT date, price_idr AS price, price_usd AS usdprice,
+           commodity_consolidated, admin1, island_group, price_flag
+    FROM wfp_intermediate.int_prices_normalised
+    WHERE NOT filter_out
+      AND price_flag = 'actual'
+      AND commodity_consolidated IS NOT NULL
+""").df()
+```
+
+### Files Affected
+
+- `analysis/eda.py` — Cell 2 replaced 40 lines of inline CASE logic with a single SQL query
+
+### Rule
+
+Any ETL/EDA notebook that duplicates pipeline logic (mapping tables, CASE statements, join logic) creates a drift risk. Query the dbt mart or intermediate model directly. The notebook should be a consumer of the pipeline, not a second implementation.
+
+---
+
+## 58. `mo.persistent_cache` + Named Cells for Marimo Notebook Quality
+
+### The Problem
+
+The EDA notebook's data loading cell re-executed the DuckDB query every time the kernel restarted — even when the underlying data hadn't changed. All 20 cells were named `def __()` making the reactive graph opaque.
+
+### Solution
+
+**Data caching with `@mo.persistent_cache`:**
+```python
+@app.cell
+def data_load(mo, duckdb, pd):
+    @mo.persistent_cache
+    def _query_prices():
+        _c = duckdb.connect("data/wfp.duckdb")
+        _df = _c.sql("""...""").df()
+        _c.close()
+        return _df
+
+    df_target = _query_prices()
+    conn = duckdb.connect("data/wfp.duckdb")
+    return conn, df_target, run_id, target
+```
+
+The cache persists to disk — survives kernel restarts. On the first run it executes the function and caches the result; subsequent runs read from disk. To bust the cache, name the function differently or delete the cache file.
+
+**Named cells:**
+```python
+@app.cell
+def setup(): ...          # Imports + constants
+
+@app.cell
+def data_load(): ...       # DuckDB + data loading
+
+@app.cell
+def filtered_data(): ...   # Applies user filters
+
+@app.cell
+def trend_charts(): ...    # Chart rendering
+
+@app.cell
+def summary(): ...         # Findings table
+```
+
+### Files Affected
+
+- `analysis/eda.py` — Added `@mo.persistent_cache` decorator, renamed all 20 `__()` cells to descriptive names
+
+### Rule
+
+Use `@mo.persistent_cache` for any cell that loads data or computes expensive intermediate results. Name all cells descriptively — `def __()` is the marimo equivalent of `x = 1` instead of `total_revenue = 1`. The function name appears in the cell header and makes the dataflow graph navigable.
+
+---
+
+## 59. Interactive Filters in Marimo Turn Static EDA Into Self-Service
+
+### The Problem
+
+The original EDA notebook was fully static — every chart rendered all data. Stakeholders couldn't filter by commodity, island group, or year range without editing code.
+
+### Solution
+
+Added three interactive widgets and a reactive `filtered_df` cell:
+
+```python
+@app.cell
+def filters(df_target, mo, target):
+    commodity_dd = mo.ui.dropdown(
+        options=["All"] + target,
+        value="All", label="Commodity",
+    )
+    island_dd = mo.ui.dropdown(
+        options=["All", "Java", "Sumatera", "Kalimantan", "Sulawesi", "Eastern Indonesia"],
+        value="All", label="Island Group",
+    )
+    year_slider = mo.ui.range_slider(
+        start=2007, stop=2024, step=1,
+        value=(2007, 2024), label="Year Range",
+    )
+    mo.hstack([commodity_dd, island_dd, year_slider], justify="start")
+    return commodity_dd, island_dd, year_slider
+
+@app.cell
+def filtered_data(df_target, commodity_dd, island_dd, year_slider):
+    filtered_df = df_target.copy()
+    if commodity_dd.value != "All":
+        filtered_df = filtered_df[filtered_df["commodity_consolidated"] == commodity_dd.value]
+    if island_dd.value != "All":
+        filtered_df = filtered_df[filtered_df["island_group"] == island_dd.value]
+    filtered_df = filtered_df[
+        (filtered_df["year"] >= year_slider.value[0]) &
+        (filtered_df["year"] <= year_slider.value[1])
+    ]
+    return (filtered_df,)
+```
+
+Charts in the **A (Aggregates)** section consume `filtered_df` instead of `df_target`. Deep-dives (N1–N4) stay on `df_target` to show full context.
+
+### Files Affected
+
+- `analysis/eda.py` — Added 2 new cells (`filters`, `filtered_data`), updated 6 chart cells to use `filtered_df`
+
+### Rule
+
+Static EDA notebooks become self-service analysis tools with 3 lines of `mo.ui.dropdown` and one `filtered_df` cell. Not every chart needs filtering — deep-dives benefit from full context — but trend charts, volatility, and seasonality gain immediate value from commodity/date scoping. Mark the filter scope explicitly so users know which charts respond.
+
+---
+
+## 60. Data Source Migration Must Audit All Downstream Filter Conditions
+
+### The Problem
+
+When refactoring the EDA notebook to query `int_prices_normalised` instead of staging views, the query included `AND island_group IS NOT NULL` — which seemed like a safe quality filter:
+
+```python
+WHERE NOT filter_out
+  AND price_flag = 'actual'
+  AND commodity_consolidated IS NOT NULL
+  AND island_group IS NOT NULL   -- added
+```
+
+This silently dropped all Rice, Sugar, and Flour data because their `actual` price records are national averages (market_id=974, admin1='NATIONAL'), which doesn't match any island group mapping:
+
+```
+Cooking Oil island groups: Eastern Indonesia, Java, Kalimantan, Sulawesi, Sumatera, None
+Rice island groups:        None
+Sugar island groups:       None
+Flour island groups:       None
+```
+
+The original staging-view query didn't have this filter — it never filtered by island_group. The migration introduced a behavioral change that dropped 474 of 2,116 rows (22%).
+
+### Solution
+
+Removed `AND island_group IS NOT NULL` from the base query. The coverage island display adds its own `dropna(subset=["island_group"])` to keep the table clean.
+
+### Files Affected
+
+- `analysis/eda.py` — Removed `AND island_group IS NOT NULL` from data load query
+
+### Rule
+
+Every filter condition in a migrated query is a behavioral change, not just a quality guard. Compare the row-level results before and after: `COUNT(*)` by commodity, island_group, and price_flag catches silent drops. A condition that seems safe in isolation (`island_group IS NOT NULL`) can filter out legitimate data when the source includes national averages.
+
+---
+
+## 61. Historical Shock Analysis May Need Unfiltered Aggregate Data
+
+### The Problem
+
+The Cooking Oil 2022 price shock is the most notable event in the dataset — but it's invisible in `int_prices_normalised` with `price_flag = 'actual'`:
+
+| Year | price_flag   | Count |
+|------|-------------|-------|
+| 2020 | actual       | 3     |
+| 2021 | aggregate    | 7,308 |
+| 2022 | aggregate    | 7,292 |
+| 2023 | aggregate    | 7,205 |
+| 2024 | actual       | 1,484 |
+
+The WFP dataset has no market-level `actual` prices for 2021–2023 Cooking Oil — only `aggregate` (national averages). The pipeline's quality guard (`NOT filter_out`) excludes aggregate data. The EDA notebook's N1 cell performed a shock analysis with no data.
+
+### Solution
+
+Changed the N1 analysis to query `int_commodity_consolidated` directly with only a `price > 0` filter — bypassing the aggregate exclusion:
+
+```python
+_oil_raw = conn.sql("""
+    SELECT date, price, EXTRACT(YEAR FROM date) AS year, EXTRACT(MONTH FROM date) AS month
+    FROM wfp_intermediate.int_commodity_consolidated
+    WHERE commodity_consolidated = 'Cooking Oil' AND price > 0
+""").df()
+```
+
+The 2022 shock is now visible: pre-shock (Mar) IDR 19,946 → peak (Apr) IDR 23,105 — a 13% month-over-month spike.
+
+### Files Affected
+
+- `analysis/eda.py` — N1 cell (`cooking_oil_shock`) switched from `df_target` to direct `int_commodity_consolidated` query
+
+### Rule
+
+Data quality filters that serve 95% of analysis may hide the 5% of notable events. When a deep-dive analyzes a specific historical event, check whether the event's data exists under the standard quality filters. If the event data is only available in a "raw" or "unfiltered" source, it's acceptable to bypass quality filters for that specific analysis — but document the decision and note that the numbers include aggregate or unvalidated data.
+
+---
+
+## 62. PEP 723 Headers Enable Script Portability for Marimo Notebooks
+
+### The Problem
+
+All 3 marimo notebooks (`data_validation.py`, `eda.py`, `forecast_experimentation.py`) lacked PEP 723 `# /// script` headers. When running via `uv run analysis/eda.py`, uv had no way to resolve dependencies automatically — users had to `uv sync` the project first or install deps manually. The files only had a `marimo-version` block.
+
+### Solution
+
+Added PEP 723 headers declaring `requires-python` and `dependencies` to all 3 notebooks:
+
+```python
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "marimo",
+#     "duckdb",
+#     "pandas",
+#     "numpy",
+#     "plotly",
+#     "statsforecast",  # forecast_experimentation.py only
+# ]
+# ///
+# /// marimo-version
+# /// version = 0.23.7
+# ///
+```
+
+The `marimo-version` block must come after the PEP 723 header to avoid parse ambiguity.
+
+### Files Affected
+
+- `analysis/data_validation.py` — added PEP 723 header
+- `analysis/eda.py` — added PEP 723 header
+- `analysis/forecast_experimentation.py` — added PEP 723 header
+
+### Rule
+
+Every marimo notebook must begin with a PEP 723 script block declaring its dependencies, even if the project-level `pyproject.toml` covers them. This makes notebooks portable — they can be run with `uv run <file.py>` from any directory.
+
+---
+
+## 63. Script Mode Detection Enables Headless Marimo Execution
+
+### The Problem
+
+All 3 notebooks assumed interactive browser mode. Running `uv run analysis/eda.py` in a CLI would attempt to render interactive widgets, which may fail or produce confusing output. There was no `mo.app_meta().mode == "script"` guard to switch data sources or skip interactive widget waits in headless mode.
+
+### Solution
+
+Added an `is_script_mode` cell to each notebook:
+
+```python
+@app.cell
+def script_mode(mo):
+    is_script_mode = mo.app_meta().mode == "script"
+    return (is_script_mode,)
+```
+
+This variable is now available to downstream cells. In script mode:
+- Auto-run with widget defaults instead of waiting for user interaction
+- Use synthetic data or precomputed results when appropriate
+- Always show widgets (per marimo skill guidance) — only change data behavior
+
+### Files Affected
+
+- `analysis/data_validation.py` — added `script_mode` cell
+- `analysis/eda.py` — added `is_script_mode` return to `setup()` cell
+- `analysis/forecast_experimentation.py` — added `script_mode` cell
+
+### Rule
+
+Every marimo notebook that can run headlessly must include a `mo.app_meta().mode == "script"` check. Always create and display all UI elements; only change the data source or auto-run behavior in script mode. Never wrap entire cells in `if is_script_mode:` guards.
+
+---
+
+## 64. Split Monolithic Cells by Logical Concern
+
+### The Problem
+
+`forecast_experimentation.py` had a single cell (original lines 100–178) performing 5 distinct operations in sequence:
+
+1. Islamic calendar loading and feature engineering
+2. Train/test split
+3. Model instantiation and fitting
+4. Holdout evaluation and best-model selection
+5. Final forecast with exogenous regressors
+
+This ~80-line cell was hard to read, debug, and reuse. The DAG showed a single opaque dependency rather than distinct transformation steps.
+
+### Solution
+
+Split the monolithic cell into 3 named cells:
+
+- **`train_setup()`** — loads Islamic calendar, prepares `train_df` with regressor flags
+- **`holdout_evaluation()`** — splits train/test, fits candidate models, computes MAE, selects best model
+- **`final_forecast()`** — refits best model on full data, generates forecast with 95% CI
+
+Each cell has a single responsibility, clear inputs/outputs, and a descriptive name visible in the marimo DAG.
+
+### Files Affected
+
+- `analysis/forecast_experimentation.py` — one cell split into three
+
+### Rule
+
+Each marimo cell should represent one logical transformation. If a cell exceeds 30–40 lines or performs 3+ distinct steps (e.g., load + transform + fit + evaluate), split it. Use descriptive function names that explain what the cell does. The DAG should read like a pipeline manifest, not a code dump.
+
+---
+
+## 65. `mo.stop()` Prevents Raw Tracebacks in Error States
+
+### The Problem
+
+In `eda.py`, if the DuckDB connection fails or the query returns zero rows (e.g., pipeline hasn't been run), the notebook would throw raw Python tracebacks. There was no graceful error handling — users would see unhelpful `IndexError` or `AttributeError` messages instead of a friendly explanation.
+
+### Solution
+
+Added `mo.stop()` with a contextual message after the query result:
+
+```python
+@app.cell
+def data_load(mo, duckdb, pd, np):
+    @mo.persistent_cache
+    def _query_prices():
+        ...
+    df_target = _query_prices()
+    mo.stop(len(df_target) == 0, mo.md("⚠ **No data returned** — check DuckDB path and pipeline status."))
+    ...
+```
+
+`mo.stop()` halts cell execution and displays the provided message instead of continuing into downstream cells that would fail on empty data.
+
+### Files Affected
+
+- `analysis/eda.py` — added `mo.stop()` after `_query_prices()` in `data_load` cell
+
+### Rule
+
+Use `mo.stop()` at the top of cells that perform external I/O (DB queries, file reads, API calls) when the result could be empty or the operation could fail. Provide a user-friendly markdown message explaining what's wrong. Do not wrap cell bodies in `try/except` for normal control flow — let errors surface naturally for unexpected failures.
+
+---
+
+## 66. `mo.lazy()` Defers Expensive Computations Until Needed
+
+### The Problem
+
+The `reconciliation` cell in `eda.py` queries all tables across 3 dbt schemas, reads 5 JSON files, and builds multiple comparison tables — all eagerly when the notebook loads. On a cold start or slow disk, this adds unnecessary latency to the initial notebook render, even though the reconciliation data is only needed when the user scrolls to the bottom of the notebook.
+
+### Solution
+
+Attempted to wrap the expensive body in `mo.lazy()`, but reverted. `mo.lazy()` only works with **return-based** rendering (functions that return the content to display). The reconciliation cell uses **side-effect-based** rendering (calling `mo.md()` and `mo.ui.table()` directly at the top level) — these calls are not deferred by `mo.lazy()` because the lambda executes at cell render time, at which point the side-effect calls fire immediately.
+
+```python
+# Does NOT defer — mo.md() fires inside lambda
+mo.lazy(lambda: mo.md("..."))  # mo.md() runs when cell renders, not when scrolled
+```
+
+In contrast, `mo.lazy()` works when the cell's final expression is the lazy content:
+
+```python
+# Deferred content
+@app.cell
+def _():
+    return mo.lazy(mo.ui.table(large_df))
+```
+
+### Lesson
+
+`mo.lazy()` defers the *rendering* of its argument, not the *definition* of variables or side effects. It works for return-based cells (the rendered output is the cell's last expression) but not for side-effect-based cells that call `mo.md()`/`mo.ui.table()` inline. For side-effect cells, no deferral mechanism is available — the computation runs eagerly when the cell's dependencies are ready.
+
+### Files Affected
+
+- `analysis/eda.py` — `mo.lazy()` approach attempted and reverted (cell remains eager)
+
+### Rule
+
+`mo.lazy()` only defers content that is the **final return value** of a cell. It cannot defer cells that render via side-effect calls (e.g., `mo.md()` as a statement, not a return expression). For those cells, accept eager execution or restructure the cell to return all content as a single expression.
 ```

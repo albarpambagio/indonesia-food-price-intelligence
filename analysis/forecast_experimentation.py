@@ -1,14 +1,23 @@
-# /// marimo-version
-# /// version = 0.23.7
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "marimo",
+#     "duckdb",
+#     "pandas",
+#     "numpy",
+#     "plotly",
+#     "statsforecast",
+# ]
 # ///
 
 import marimo
 
+__generated_with = "0.23.7"
 app = marimo.App(width="full")
 
 
 @app.cell
-def __():
+def setup():
     import marimo as mo
     import duckdb
     import pandas as pd
@@ -24,7 +33,13 @@ def __():
 
 
 @app.cell
-def __(duckdb, mo):
+def script_mode(mo):
+    is_script_mode = mo.app_meta().mode == "script"
+    return (is_script_mode,)
+
+
+@app.cell
+def load_data(duckdb, mo):
     conn = duckdb.connect("data/wfp.duckdb", read_only=True)
     query = """
         SELECT
@@ -50,7 +65,7 @@ def __(duckdb, mo):
 
 
 @app.cell
-def __(df, commodity_dd, mo, pd):
+def filter_commodity(df, commodity_dd, mo, pd):
     selected = commodity_dd.value
     hist = df[df["commodity"] == selected].copy()
     hist = hist.sort_values("ds").reset_index(drop=True)
@@ -62,7 +77,7 @@ def __(df, commodity_dd, mo, pd):
 
 
 @app.cell
-def __(mo):
+def controls(mo):
     holdout_months = mo.ui.number_slider(
         start=3, stop=24, step=1, value=12, label="Holdout months"
     )
@@ -84,13 +99,13 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def title(mo):
     mo.md("## Forecast Experimentation")
     return
 
 
 @app.cell
-def __(data_info, mo):
+def display_controls(data_info, forecast_horizon, holdout_months, include_theta, mo, season_length, use_islamic):
     mo.vstack([data_info, mo.hstack([
         holdout_months, forecast_horizon, season_length, use_islamic, include_theta,
     ])])
@@ -98,13 +113,7 @@ def __(data_info, mo):
 
 
 @app.cell
-def __(
-    AutoARIMA, AutoETS, AutoTheta, StatsForecast, forecast_horizon, hist,
-    holdout_months, include_theta, mo, np, pd, season_length, selected, use_islamic,
-):
-    import json
-    from pathlib import Path
-
+def train_setup(hist, mo, pd, use_islamic):
     cal = pd.read_csv("transform/seeds/islamic_calendar.csv")
     for col in ["ramadan_start", "eid_date"]:
         cal[col] = pd.to_datetime(cal[col])
@@ -116,13 +125,21 @@ def __(
     train_df = hist[["commodity", "ds", "national_avg_price"]].copy()
     train_df.columns = ["unique_id", "ds", "y"]
 
-    if use_islamic:
+    if use_islamic.value:
         train_df["ym"] = train_df["ds"].dt.to_period("M").astype(str)
-        for col, flag in [("eid_month", "eid"), ("t_minus_1", "t1"), ("t_minus_2", "t2"), ("t_minus_3", "t3")]:
-            train_df[flag] = 0
-            for _, row in cal.iterrows():
-                train_df.loc[train_df["ym"] == row[col], flag] = 1
+        for _col, _flag in [("eid_month", "eid"), ("t_minus_1", "t1"), ("t_minus_2", "t2"), ("t_minus_3", "t3")]:
+            train_df[_flag] = 0
+            for _, _row in cal.iterrows():
+                train_df.loc[train_df["ym"] == _row[_col], _flag] = 1
 
+    return cal, train_df
+
+
+@app.cell
+def holdout_evaluation(
+    AutoARIMA, AutoETS, AutoTheta, StatsForecast, holdout_months, include_theta,
+    mo, np, pd, season_length, train_df,
+):
     h = int(holdout_months.value)
     cutoff = train_df["ds"].max() - pd.DateOffset(months=h)
     train = train_df[train_df["ds"] <= cutoff].reset_index(drop=True)
@@ -137,7 +154,6 @@ def __(
     sf.fit(df=train[["unique_id", "ds", "y"]])
 
     holdout_preds = sf.forecast(h=len(test), df=train[["unique_id", "ds", "y"]])
-    test_merged = test[["ds", "y"]].merge(holdout_preds, on="ds", how="left")
 
     mae_scores = {}
     for m in holdout_preds.columns:
@@ -150,8 +166,17 @@ def __(
 
     best_model = min(mae_scores, key=mae_scores.get)
 
+    mo.md(f"**Holdout MAE by model**: {mae_scores}")
+    return best_model, cutoff, h, holdout_preds, mae_scores, models, sf, test, train
+
+
+@app.cell
+def final_forecast(
+    StatsForecast, best_model, cal, forecast_horizon, models, mo, selected, train_df,
+):
     fh = int(forecast_horizon.value)
-    sf_final = StatsForecast(models=[m for m in models if best_model in str(type(m))], freq="MS", n_jobs=1)
+    chosen = [m for m in models if best_model in str(type(m))]
+    sf_final = StatsForecast(models=chosen, freq="MS", n_jobs=1)
 
     exog_cols = [c for c in ["eid", "t1", "t2", "t3"] if c in train_df.columns]
     if exog_cols:
@@ -162,36 +187,24 @@ def __(
         )
         fdf = pd.DataFrame({"unique_id": selected, "ds": future_dates})
         fdf["ym"] = fdf["ds"].dt.to_period("M").astype(str)
-        for flag in ["eid", "t1", "t2", "t3"]:
-            fdf[flag] = 0
-            for _, row in cal.iterrows():
-                fdf.loc[fdf["ym"] == row[flag.replace("eid", "eid_month").replace("t1", "t_minus_1").replace("t2", "t_minus_2").replace("t3", "t_minus_3")], flag] = 1
+        for _flag in ["eid", "t1", "t2", "t3"]:
+            fdf[_flag] = 0
+            for _, _row in cal.iterrows():
+                fdf.loc[fdf["ym"] == _row[_flag.replace("eid", "eid_month").replace("t1", "t_minus_1").replace("t2", "t_minus_2").replace("t3", "t_minus_3")], _flag] = 1
         fcast = sf_final.forecast(h=fh, df=train_df[["unique_id", "ds", "y", *exog_cols]],
                                    X_df=fdf[["unique_id", "ds", *exog_cols]], level=[95])
     else:
         sf_final.fit(df=train_df[["unique_id", "ds", "y"]])
         fcast = sf_final.forecast(h=fh, df=train_df[["unique_id", "ds", "y"]], level=[95])
 
-    return (
-        best_model, cal, cutoff, exog_cols, fcast, fh, h, holdout_preds, mae_scores,
-        models, sf, sf_final, test, test_merged, train, train_df,
-    )
+    model_cols = [c for c in fcast.columns if c not in ("unique_id", "ds") and "-lo-" not in c and "-hi-" not in c]
+    best_model_name = model_cols[0] if model_cols else "?"
+    mo.md(f"**Best model**: {best_model_name}")
+    return model_cols, exog_cols, fcast, fh, sf_final
 
 
 @app.cell
-def __(mae_scores, mo):
-    mo.md(f"**Holdout MAE by model**: {mae_scores}")
-    return
-
-
-@app.cell
-def __(mae_scores, best_model, mo):
-    mo.md(f"**Best model**: {best_model} (MAE = {mae_scores.get(best_model, 'N/A'):.2f})")
-    return
-
-
-@app.cell
-def __(fcast, go, selected, train, train_df):
+def plot_forecast(model_cols, fcast, go, selected, train, train_df):
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=train["ds"], y=train["y"], mode="lines",
@@ -201,7 +214,6 @@ def __(fcast, go, selected, train, train_df):
         y=train_df[train_df["ds"] > train["ds"].max()]["y"],
         mode="lines", name="Test (holdout)", line=dict(color="#DD8452", width=2, dash="dot")))
 
-    model_cols = [c for c in fcast.columns if c not in ("unique_id", "ds") and "-lo-" not in c and "-hi-" not in c]
     lo_col = f"{model_cols[0]}-lo-95"
     hi_col = f"{model_cols[0]}-hi-95"
 
@@ -230,13 +242,13 @@ def __(fcast, go, selected, train, train_df):
 
 
 @app.cell
-def __(mo, fig):
+def render_forecast_plot(mo, fig):
     mo.ui.plotly(fig)
     return
 
 
 @app.cell
-def __(AutoARIMA, AutoETS, AutoTheta, StatsForecast, best_model, include_theta, mo, np, season_length, train, train_df):
+def cross_validation_analysis(AutoARIMA, AutoETS, AutoTheta, StatsForecast, best_model, include_theta, mo, np, season_length, train, train_df):
     mos_models = [AutoARIMA(season_length=int(season_length.value)),
                   AutoETS(season_length=int(season_length.value))]
     if include_theta:
@@ -257,6 +269,10 @@ def __(AutoARIMA, AutoETS, AutoTheta, StatsForecast, best_model, include_theta, 
 
 
 @app.cell
-def __(mo):
+def footer(mo):
     mo.md("---\n*Run `uv run marimo edit analysis/forecast_experimentation.py` to open interactively*")
     return
+
+
+if __name__ == "__main__":
+    app.run()

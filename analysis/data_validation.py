@@ -1,14 +1,21 @@
-# /// marimo-version
-# /// version = 0.23.7
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "marimo",
+#     "duckdb",
+#     "pandas",
+#     "plotly",
+# ]
 # ///
 
 import marimo
 
+__generated_with = "0.23.7"
 app = marimo.App(width="full")
 
 
 @app.cell
-def __():
+def setup():
     import marimo as mo
     import duckdb
     import pandas as pd
@@ -19,7 +26,13 @@ def __():
 
 
 @app.cell
-def __(duckdb, mo):
+def script_mode(mo):
+    is_script_mode = mo.app_meta().mode == "script"
+    return (is_script_mode,)
+
+
+@app.cell
+def connect_db(duckdb, mo):
     conn = duckdb.connect("data/wfp.duckdb")
     conn.execute("CREATE SCHEMA IF NOT EXISTS pipeline;")
     conn.execute("CREATE SCHEMA IF NOT EXISTS raw;")
@@ -46,7 +59,7 @@ def __(duckdb, mo):
 
 
 @app.cell
-def __(conn, mo, pd):
+def load_data(conn, mo, pd):
     fp = conn.sql("SELECT * FROM raw.food_prices").df()
     mk = conn.sql("SELECT * FROM raw.markets").df()
     mo.md(f"""
@@ -59,7 +72,7 @@ def __(conn, mo, pd):
 
 
 @app.cell
-def __(fp, mo):
+def check_commodity_coverage(fp, mo):
     target = [
         "Rice", "Wheat flour", "Sugar", "Sugar (premium)",
         "Oil (vegetable)", "Oil (vegetable, bulk)", "Oil (vegetable, packaged)",
@@ -78,7 +91,7 @@ def __(fp, mo):
 
 
 @app.cell
-def __(fp_t, go, make_subplots, mo, pd):
+def coverage_chart(fp_t, go, make_subplots, mo, pd):
     _d = fp_t.copy()
     _d["year"] = _d["date"].astype(str).str[:4].astype(int)
     yearly = _d.groupby(["year", "commodity"]).size().reset_index(name="obs")
@@ -120,7 +133,7 @@ def __(fp_t, go, make_subplots, mo, pd):
 
 
 @app.cell
-def __(cov_df, mo, pct, fp_t):
+def coverage_verdict(cov_df, mo, pct, fp_t):
     all_18 = cov_df[cov_df["years_present"] == 18]
     partial = cov_df[cov_df["years_present"] < 18]
     years_sorted = sorted(fp_t["date"].astype(str).str[:4].astype(int).unique())
@@ -134,7 +147,7 @@ def __(cov_df, mo, pct, fp_t):
 
 
 @app.cell
-def __(fp, mo):
+def check_provincial_coverage(fp, mo):
     prov = fp.groupby("admin1").agg(
         obs=("price", "count"),
         markets=("market_id", "nunique"),
@@ -154,13 +167,13 @@ def __(fp, mo):
 
 
 @app.cell
-def __(mo, prov):
+def provincial_table(mo, prov):
     mo.ui.table(prov, label="Province Coverage Detail")
     return
 
 
 @app.cell
-def __(fp, mo):
+def check_priceflag(fp, mo):
     fd = fp["priceflag"].value_counts().reset_index()
     fd.columns = ["priceflag", "count"]
     fd["pct"] = (fd["count"] / fd["count"].sum() * 100).round(1)
@@ -177,7 +190,7 @@ def __(fp, mo):
 
 
 @app.cell
-def __(fp, mo, target):
+def check_unit_consistency(fp, mo, target):
     _ft = fp[fp["commodity"].isin(target)].copy()
     _ft["unit_clean"] = _ft["unit"].str.strip()
     ud = _ft.groupby(["commodity", "unit_clean"]).size().reset_index(name="obs").sort_values(["commodity", "obs"], ascending=[True, False])
@@ -193,13 +206,13 @@ def __(fp, mo, target):
 
 
 @app.cell
-def __(mo, ud):
+def unit_table(mo, ud):
     mo.ui.table(ud, label="Unit Distribution by Commodity")
     return
 
 
 @app.cell
-def __(fp, mo, px):
+def check_sugar_split(fp, mo, px):
     sugar = fp[fp["commodity"].isin(["Sugar", "Sugar (premium)"])].copy()
     sugar["year"] = sugar["date"].astype(str).str[:4].astype(int)
     sugar_avg = sugar.groupby(["year", "commodity"])["price"].mean().reset_index()
@@ -221,7 +234,7 @@ def __(fp, mo, px):
 
 
 @app.cell
-def __(fp, mo, px):
+def check_oil_split(fp, mo, px):
     oil = fp[fp["commodity"].str.startswith("Oil")].copy()
     oil["year"] = oil["date"].astype(str).str[:4].astype(int)
     oil_avg = oil.groupby(["year", "commodity"])["price"].mean().reset_index()
@@ -237,7 +250,7 @@ def __(fp, mo, px):
 
 
 @app.cell
-def __(mo, oil_avg):
+def oil_correlation(mo, oil_avg):
     oil_pivot = oil_avg.pivot(index="year", columns="commodity", values="price").reset_index()
     oil_cols = [c for c in oil_pivot.columns if c != "year"]
     pairs = []
@@ -255,7 +268,7 @@ def __(mo, oil_avg):
 
 
 @app.cell
-def __(fp, mo):
+def check_secondary_enrichment(fp, mo):
     has_usd = fp["usdprice"].notna().mean() * 100
     cpi_cols = [c for c in fp.columns if "cpi" in c.lower()]
     mo.md(f"""
@@ -270,7 +283,7 @@ def __(fp, mo):
 
 
 @app.cell
-def __(mo):
+def scoping_decisions(mo):
     mo.md(r"""
     ## Scoping Decisions
 
@@ -287,7 +300,7 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def footer(mo):
     mo.md("---\n*Validation complete.*")
 
 

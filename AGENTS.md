@@ -384,10 +384,23 @@ This project shares the same dashboard stack (Next.js + Shadboard + Recharts + T
 
 ### Marimo Notebooks
 - Save as .py files (marimo's standard format)
+- **PEP 723 header**: Every notebook starts with `# /// script` declaring `requires-python` + `dependencies` (marimo, duckdb, pandas, plotly, numpy, statsforecast)
+- **Script mode detection**: Use `mo.app_meta().mode == "script"` to handle headless CLI vs interactive browser execution; always show widgets, change only data source in script mode
+- **Cell naming**: Use descriptive function names (`def setup():`, `def data_load():`) not anonymous `__` — enables readable DAG visualization
+- **One transformation per cell**: Split complex logic across cells, not one 80-line cell doing 5 things
+- **No `if` cell guards**: Let the reactivity DAG handle execution order — don't wrap cells in `if training_results:` guards
+- **No try/except for control flow**: Let errors surface naturally; use `mo.stop()` for graceful error states (DB failure, empty data)
+- **`mo.stop()`** for graceful error states: `mo.stop(data is None, mo.md("Waiting for data..."))` — prevents raw tracebacks
+- **`mo.persistent_cache`** for expensive queries: `@mo.persistent_cache` on DB query functions avoids re-execution
+- **`mo.lazy()`** for deferred computation: `mo.lazy(lambda: expensive_query())` delays work until needed (e.g., tabs, scroll-into-view)
+- **`mo.md()` + `return` ordering**: Final expression renders — ensure `mo.md()` is the last expression before `return`, not an intermediate statement
+- **No `mo.state()` unless needed**: 99% of cases handled by reactivity reading `widget.value` across cells
+- **No cross-cell mutations**: Create new objects via `items + [4]`, not `items.append(4)`
 - Use `mo.md()` for markdown explanations
-- Use `mo.ui` widgets for interactivity (dropdowns, sliders)
-- Use `mo.as_html(fig)` for Plotly/Altair chart integration
+- Use `mo.ui` widgets for interactivity (dropdowns, sliders, tables)
+- Use `mo.ui.plotly(fig)` for Plotly chart integration
 - Also runnable headlessly: `uv run python analysis/eda.py`
+- Validate with: `uvx marimo check <notebook.py>` before committing
 
 ---
 
