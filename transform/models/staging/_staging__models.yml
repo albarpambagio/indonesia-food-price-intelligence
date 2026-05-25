@@ -1,12 +1,5 @@
 version: 2
 
-sources:
-  - name: raw
-    schema: raw
-    tables:
-      - name: food_prices
-      - name: markets
-
 models:
   - name: stg_food_prices
     description: Cleaned food prices — light transformations on raw WFP data

@@ -50,9 +50,13 @@ uv run marimo edit analysis/forecast_experimentation.py # Phase 3 — model sele
 ```bash
 cd transform
 dbt seed             # Load seed data (islamic_calendar.csv)
+dbt build            # Run + test all models in DAG order (staging → intermediate → marts)
 dbt run              # Run all models (staging → intermediate → marts)
 dbt test             # Run data tests (33 tests across all layers)
 dbt docs generate    # Generate lineage docs
+dbt docs serve       # Serve docs locally (default: http://localhost:8080)
+dbt compile          # Compile SQL without running
+dbt ls               # List models in project
 ```
 
 ### Forecasting
@@ -100,19 +104,34 @@ indonesia-food-price-intelligence/
 ├── transform/                  # dbt project root
 │   ├── dbt_project.yml
 │   ├── profiles.yml
+│   ├── macros/
+│   │   ├── generate_schema_name.sql
+│   │   └── positive_values.sql
+│   ├── analyses/
+│   ├── tests/
+│   │   └── assert_mart_rows_positive.sql
+│   ├── seeds/
+│   │   └── islamic_calendar.csv
+│   ├── docs/
 │   └── models/
+│       ├── sources/            # Source definitions with freshness config
+│       │   └── _sources.yml
 │       ├── staging/            # 1:1 with raw tables, light cleaning
+│       │   ├── _staging__models.yml
 │       │   ├── stg_food_prices.sql
 │       │   └── stg_markets.sql
 │       ├── intermediate/       # Business logic, joins, normalisation
+│       │   ├── _intermediate__models.yml
 │       │   ├── int_commodity_consolidated.sql
 │       │   ├── int_prices_normalised.sql
 │       │   └── int_islamic_calendar.sql
 │       └── marts/              # Final analytical models (one per page)
+│           ├── _marts__models.yml
 │           ├── mart_price_trends.sql
 │           ├── mart_seasonal_patterns.sql
 │           ├── mart_geo_disparity.sql
-│           └── mart_commodity_correlation.sql
+│           ├── mart_commodity_correlation.sql
+│           └── mart_correlation_summary.sql
 ├── forecast/
 │   └── run_forecast.py         # statsforecast models → forecast JSON
 ├── export/
@@ -179,6 +198,7 @@ indonesia-food-price-intelligence/
 ### dbt Model Architecture
 ```
 raw.food_prices          raw.markets          islamic_calendar.csv
+  (source, fresh.)        (source, fresh.)        (dbt seed)
        │                      │                       │
        ▼                      ▼                       ▼
 stg_food_prices          stg_markets           (dbt seed)
@@ -189,12 +209,12 @@ stg_food_prices          stg_markets           (dbt seed)
      int_prices_normalised                             │
      int_islamic_calendar ◄────────────────────────────┘
                   │
-       ┌──────────┼──────────┬──────────┐
-       ▼          ▼          ▼          ▼
-mart_price   mart_seasonal  mart_geo   mart_commodity
-_trends      _patterns      _disparity _correlation
-       │          │          │          │
-       └──────────┴──────────┴──────────┘
+       ┌──────────┼──────────┬──────────┬──────────┐
+       ▼          ▼          ▼          ▼          ▼
+mart_price   mart_seasonal  mart_geo   mart_commodity   mart_correlation
+_trends      _patterns      _disparity _correlation     _summary
+       │          │          │          │                 │
+       └──────────┴──────────┴──────────┴─────────────────┘
                   │
            export_json.py
            run_forecast.py
@@ -388,6 +408,7 @@ This project shares the same dashboard stack (Next.js + Shadboard + Recharts + T
 ### Verify dbt
 ```bash
 cd transform
+dbt build       # Run + test all models (staging → intermediate → marts)
 dbt test        # All model tests must pass
 dbt docs serve  # View lineage documentation
 ```

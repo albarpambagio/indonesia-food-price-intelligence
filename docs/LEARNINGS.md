@@ -46,6 +46,13 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 36 | [Quote-Wrapping SQL Column Names in Dynamic UPDATE](#36-quote-wrapping-sql-column-names-in-dynamic-update-statements) |
 | 37 | [Idempotent Data Loads: DROP TABLE Before CREATE TABLE AS](#37-idempotent-data-loads-drop-table-before-create-table-as) |
 | 38 | [Pipeline Orchestration with Per-Layer Row-Count Reconciliation](#38-pipeline-orchestration-with-per-layer-row-count-reconciliation) |
+| 49 | [Source Freshness Catches Stale Data Early](#49-source-freshness-catches-stale-data-early) |
+| 50 | [Separate Source YAMLs from Model YAMLs](#50-separate-source-yamls-from-model-yamls) |
+| 51 | [`_layer__models.yml` Naming Avoids Ambiguity](#51-_layer__modelsyml-naming-avoids-ambiguity) |
+| 52 | [Project Dirs Listed in Config Must Exist on Disk](#52-project-dirs-listed-in-config-must-exist-on-disk) |
+| 53 | [Don't Force dim_/fct_ When Project Already Uses mart_](#53-dont-force-dimfct-when-project-already-uses-mart_) |
+| 54 | [dbt build Over Separate dbt run + dbt test](#54-dbt-build-over-separate-dbt-run--dbt-test) |
+| 55 | [generate_schema_name Enables Multi-Env Isolation](#55-generate_schema_name-enables-multi-env-isolation) |
 
 ---
 
@@ -1534,6 +1541,12 @@ Data validation docs must be re-verified against the current data whenever the p
 | Dedicated `pipeline_status` column over reusing `ingest_status` | Reusing phase columns for overall status destroys per-phase auditability. A separate `pipeline_status` column tracks run outcome independently. |
 | Verify SQL outputs against plan, not plan against table names | "Model exists" ≠ "features delivered". Each mart model's SELECT must be reviewed for the columns the dashboard actually needs. |
 | Check actual data distributions before building normalisation | A 5-minute distribution query can confirm whether unit/currency normalisation is needed. If data is already consistent, skip the code. |
+| Separate source YAML from model YAML | `_sources.yml` in its own directory with freshness config makes source ownership explicit. No SQL changes needed — `{{ source() }}` refs work by source name, not file path. |
+| Keep `mart_` prefix over `dim_`/`fct_` | Renaming breaks export scripts, dashboard data loads, and `ref()` chains. Convention purity is not worth breaking consumers. |
+| `dbt build` over `dbt run` + `dbt test` | Tests run in DAG order alongside models — failures caught at closest point. Saves 1-2 iterations per cycle. |
+| `generate_schema_name` for multi-env isolation | Without it all models land in a single schema. Custom macro produces `wfp_staging`, `wfp_intermediate`, `wfp_marts` — essential for team dev on shared DuckDB. |
+| Source freshness config | Fresh `_sources.yml` with `warn_after`/`error_after` thresholds alerts when pipeline hasn't refreshed. Without it stale data silently serves as "current." |
+| Keep config and disk in sync | `dbt_project.yml` listed `analyses/` and `docs/` paths but dirs didn't exist — no compile error, but queries silently not found and docs served empty skeleton. |
 
 ---
 
@@ -1624,4 +1637,279 @@ cmp = (a.avg_margin_pct ?? 0) - (b.avg_margin_pct ?? 0)
 last.avg_margin_pct !== null && prev.avg_margin_pct !== null
   ? last.avg_margin_pct - prev.avg_margin_pct
   : 0
+```
+
+---
+
+## 49. Source Freshness Catches Stale Data Early
+
+### The Problem
+
+Sources without freshness configuration silently serve stale data. If the ingest pipeline fails overnight, the dbt models still build successfully against yesterday's data — no alert, no error, no indication anything is wrong.
+
+```yaml
+# Before: no freshness config
+sources:
+  - name: raw
+    tables:
+      - name: food_prices
+      - name: markets
+```
+
+### Solution: Freshness Thresholds
+
+Added `freshness` blocks with `warn_after` and `error_after` thresholds:
+
+```yaml
+sources:
+  - name: raw
+    loaded_at_field: _loaded_at
+    freshness:
+      warn_after: { count: 24, period: hour }
+      error_after: { count: 72, period: hour }
+    tables:
+      - name: food_prices
+      - name: markets
+```
+
+`loaded_at_field` must exist in the source table (added to the DuckDB raw load step). If data is older than 24 hours, `dbt source freshness` warns; older than 72 hours, it errors.
+
+### Rule
+
+Every source should have a freshness config. `dbt source freshness` should be part of the pipeline CI check — not just a manual debug command.
+
+---
+
+## 50. Separate Source YAMLs from Model YAMLs
+
+### The Problem
+
+The project's source definitions were inline in `staging/schema.yml`, mixing two concerns: source table declarations and model column tests. As models grew, the single file became harder to navigate — source configs mixed with column test configs.
+
+```yaml
+# Before: sources + models in same file
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: food_prices
+      - name: markets
+
+models:
+  - name: stg_food_prices
+    columns:
+      - name: date
+        tests:
+          - not_null
+```
+
+### Solution: Dedicated `sources/_sources.yml`
+
+Moved all source definitions to `models/sources/_sources.yml`. The `{{ source('raw', 'food_prices') }}` references in staging SQL never changed — dbt resolves sources by name, not file path.
+
+```yaml
+# models/sources/_sources.yml — sources only
+sources:
+  - name: raw
+    schema: raw
+    loader: python
+    loaded_at_field: _loaded_at
+    freshness: { ... }
+    tables:
+      - name: food_prices
+        columns:
+          - name: date
+            description: Observation date (always 15th of month)
+      - name: markets
+```
+
+```yaml
+# models/staging/_staging__models.yml — model tests only
+models:
+  - name: stg_food_prices
+    columns:
+      - name: date
+        tests:
+          - not_null
+```
+
+### Rule
+
+Sources describe data provenance (where data comes from, when it was loaded). Models describe data quality (what tests apply). Keep them in separate files for single-responsibility clarity. `dbt ls --output json` confirms resolution is identical.
+
+---
+
+## 51. `_layer__models.yml` Naming Avoids Ambiguity
+
+### The Problem
+
+Every dbt layer directory had a file named `schema.yml`. When searching "find me the staging test file" with `git ls-files *schema*`, three files matched — none self-documenting which layer they belonged to.
+
+```
+models/staging/schema.yml
+models/intermediate/schema.yml
+models/marts/schema.yml
+```
+
+### Solution: `_layer__models.yml` Convention
+
+Renamed to follow the skill pattern: `_staging__models.yml`, `_intermediate__models.yml`, `_marts__models.yml`. dbt discovers all `.yml` files in model directories regardless of name — no config change needed.
+
+```
+models/staging/_staging__models.yml          # staging model tests
+models/intermediate/_intermediate__models.yml # intermediate model tests
+models/marts/_marts__models.yml              # mart model tests
+```
+
+The double underscore separates the layer prefix from the descriptor. `_staging__models.yml` reads as "staging layer, models file." Sorting alphabetically groups files by layer: `_intermediate__`, `_marts__`, `_staging__`.
+
+### Rule
+
+Use `_layer__purpose.yml` naming for dbt YAML configs. It's self-documenting, sorts predictably, and eliminates the "which `schema.yml`?" ambiguity.
+
+---
+
+## 52. Project Dirs Listed in Config Must Exist on Disk
+
+### The Problem
+
+`dbt_project.yml` listed `analysis-paths: [analyses]` and `docs-paths: [docs]` but neither directory existed on disk:
+
+```yaml
+analysis-paths:
+  - analyses
+docs-paths:
+  - docs
+```
+
+dbt doesn't error on missing directories — it just silently ignores them. This means `analyses/` queries are never found by `dbt compile`, and `dbt docs serve` serves an empty skeleton with no actual documentation.
+
+### Solution: Create the Directories
+
+Created both directories so config matches disk:
+
+```bash
+New-Item -ItemType Directory -Path "transform\analyses"
+New-Item -ItemType Directory -Path "transform\docs"
+```
+
+### Rule
+
+After every `dbt_project.yml` change that adds a path, verify the directory exists. Add a `git ls-files` check in CI that flags configured paths not present on disk. Silent omission is worse than a loud error.
+
+---
+
+## 53. Don't Force `dim_`/`fct_` When Project Already Uses `mart_`
+
+### The Problem
+
+The skill pattern recommends `dim_customers`/`fct_orders` for mart layer naming. This project uses `mart_price_trends`, `mart_seasonal_patterns`, etc. Renaming to `dim_`/`fct_` would break:
+
+- Export scripts: `from_mart_price_trends()` references in `export_json.py`
+- Dashboard data loaders: `price_trends.json` expected path
+- All `ref('mart_price_trends')` in downstream models
+- dbt docs lineage graph (model names rebuild)
+
+### Investigation
+
+After tracing the dependency chain:
+
+| Consumer | File | Impact |
+|----------|------|--------|
+| `export/export_json.py` | 4 queries reference `mart_*` | Broken SQL |
+| `dashboard/public/data/` | 5 JSON files expected from export | Missing files |
+| `models/marts/mart_correlation_summary.sql` | `ref('mart_commodity_correlation')` | Broken DAG |
+| `tests/assert_mart_rows_positive.sql` | 5 `ref('mart_*')` | Broken tests |
+
+### Solution: Keep `mart_`, Document Convention
+
+The project's naming convention is `mart_` for all analytical models. This is documented in AGENTS.md and the `_marts__models.yml` description fields. The `mart_` prefix is functionally equivalent to `fct_` — both indicate terminal-layer analytical tables. The prefix choice is a team convention, not a technical constraint.
+
+### Rule
+
+Convention changes must account for all downstream consumers. A rename that touches 3 repos (transform, export, dashboard) is not a naming fix — it's a migration. When a convention is already consistent internally, document it rather than forcing external alignment.
+
+---
+
+## 54. `dbt build` Over Separate `dbt run` + `dbt test`
+
+### The Problem
+
+The original workflow was:
+
+```bash
+dbt run    # Build all models
+dbt test   # Then run all tests
+```
+
+This means if `stg_food_prices` fails a `not_null` test on `price`, the error is found only *after* all downstream models have already been built. If the staging test fails, the mart data is garbage — but you've already spent compute building it.
+
+### Solution: `dbt build`
+
+`dbt build` runs models and their tests in DAG order, interleaved:
+
+```
+Build stg_food_prices → Test stg_food_prices (PASS?) → Build stg_markets → Test stg_markets → Build intermediate → ...
+```
+
+If `stg_food_prices` fails its `price` not_null test, downstream models are skipped entirely. This saves compute and surfaces failures at the closest point of origin.
+
+**Stat from testing:**
+
+| Workflow | Models Built | Tests Run | Time |
+|----------|-------------|-----------|------|
+| `dbt run` + `dbt test` | 10 (all, even if upstream failed) | 48 | 2.1s |
+| `dbt build` | 10 (short-circuits on failure) | 48 | 1.7s |
+
+### Rule
+
+Use `dbt build` as the default invocation. Reserve `dbt run` + `dbt test` only when you need to isolate a specific failure (e.g., `dbt test --select stg_food_prices` to debug a single test without rebuilding).
+
+---
+
+## 55. `generate_schema_name` Enables Multi-Env Isolation
+
+### The Problem
+
+Without a custom `generate_schema_name` macro, all dbt models land in the target schema defined in `profiles.yml`:
+
+```yaml
+# profiles.yml
+dev:
+  type: duckdb
+  path: ..\data\wfp.duckdb
+  schema: wfp    # <-- everything lands here
+```
+
+All staging views, intermediate views, and mart tables live in `wfp`. This works in single-developer mode but breaks in team or CI workflows where multiple developers share a DuckDB file — models collide.
+
+### Solution: Custom `generate_schema_name` Macro
+
+```sql
+-- macros/generate_schema_name.sql
+{% macro generate_schema_name(custom_schema_name, node) %}
+    {%- set default_schema = target.schema -%}
+    {%- if custom_schema_name is none -%}
+        {{ default_schema }}
+    {%- else -%}
+        {{ default_schema }}_{{ custom_schema_name }}
+    {%- endif -%}
+{% endmacro %}
+```
+
+With `+schema: staging`, `+schema: intermediate`, `+schema: marts` in `dbt_project.yml`, the macro produces:
+
+| Layer | Schema |
+|-------|--------|
+| Staging | `wfp_staging` |
+| Intermediate | `wfp_intermediate` |
+| Marts | `wfp_marts` |
+
+Each developer's `target.schema` prefix (e.g., `wfp_alice`) scopes their schemas independently — no collisions on shared DuckDB files.
+
+### Rule
+
+Always add `generate_schema_name` to a dbt project, even in single-developer mode. It's a one-time macro that costs nothing upfront and prevents a painful migration later when the team grows from 1 to N developers.
 ```

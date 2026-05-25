@@ -1,0 +1,39 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw WFP food price data loaded via ingest/load_raw.py
+    schema: raw
+    loader: python
+    loaded_at_field: _loaded_at
+    freshness:
+      warn_after:
+        count: 24
+        period: hour
+      error_after:
+        count: 72
+        period: hour
+    tables:
+      - name: food_prices
+        description: WFP food price records — monthly, 2007–2024, Indonesia
+        columns:
+          - name: date
+            description: Observation date (always 15th of month)
+          - name: commodity
+            description: Commodity name (original with variants)
+          - name: price
+            description: Price in IDR
+          - name: priceflag
+            description: actual or aggregate
+          - name: market_id
+            description: Foreign key to raw.markets
+
+      - name: markets
+        description: WFP market reference data — 224 markets
+        columns:
+          - name: market_id
+            description: Primary key
+          - name: market
+            description: Market name
+          - name: admin1
+            description: Province name
