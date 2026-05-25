@@ -1,0 +1,146 @@
+[
+  {
+    "commodity_pair": "oil-flour",
+    "lag_months": 0,
+    "pearson_r": 0.8777,
+    "rank_for_commodity": 4
+  },
+  {
+    "commodity_pair": "oil-flour",
+    "lag_months": 1,
+    "pearson_r": 0.882,
+    "rank_for_commodity": 3
+  },
+  {
+    "commodity_pair": "oil-flour",
+    "lag_months": 2,
+    "pearson_r": 0.8852,
+    "rank_for_commodity": 2
+  },
+  {
+    "commodity_pair": "oil-flour",
+    "lag_months": 3,
+    "pearson_r": 0.8885,
+    "rank_for_commodity": 1
+  },
+  {
+    "commodity_pair": "oil-sugar",
+    "lag_months": 0,
+    "pearson_r": 0.746,
+    "rank_for_commodity": 5
+  },
+  {
+    "commodity_pair": "oil-sugar",
+    "lag_months": 1,
+    "pearson_r": 0.7385,
+    "rank_for_commodity": 6
+  },
+  {
+    "commodity_pair": "oil-sugar",
+    "lag_months": 2,
+    "pearson_r": 0.7306,
+    "rank_for_commodity": 7
+  },
+  {
+    "commodity_pair": "oil-sugar",
+    "lag_months": 3,
+    "pearson_r": 0.7228,
+    "rank_for_commodity": 8
+  },
+  {
+    "commodity_pair": "rice-flour",
+    "lag_months": 0,
+    "pearson_r": 0.7727,
+    "rank_for_commodity": 9
+  },
+  {
+    "commodity_pair": "rice-flour",
+    "lag_months": 1,
+    "pearson_r": 0.7719,
+    "rank_for_commodity": 10
+  },
+  {
+    "commodity_pair": "rice-flour",
+    "lag_months": 2,
+    "pearson_r": 0.7708,
+    "rank_for_commodity": 11
+  },
+  {
+    "commodity_pair": "rice-flour",
+    "lag_months": 3,
+    "pearson_r": 0.7708,
+    "rank_for_commodity": 12
+  },
+  {
+    "commodity_pair": "rice-oil",
+    "lag_months": 0,
+    "pearson_r": 0.8599,
+    "rank_for_commodity": 4
+  },
+  {
+    "commodity_pair": "rice-oil",
+    "lag_months": 1,
+    "pearson_r": 0.8296,
+    "rank_for_commodity": 6
+  },
+  {
+    "commodity_pair": "rice-oil",
+    "lag_months": 2,
+    "pearson_r": 0.8039,
+    "rank_for_commodity": 7
+  },
+  {
+    "commodity_pair": "rice-oil",
+    "lag_months": 3,
+    "pearson_r": 0.7817,
+    "rank_for_commodity": 8
+  },
+  {
+    "commodity_pair": "rice-sugar",
+    "lag_months": 0,
+    "pearson_r": 0.871,
+    "rank_for_commodity": 1
+  },
+  {
+    "commodity_pair": "rice-sugar",
+    "lag_months": 1,
+    "pearson_r": 0.8666,
+    "rank_for_commodity": 2
+  },
+  {
+    "commodity_pair": "rice-sugar",
+    "lag_months": 2,
+    "pearson_r": 0.8622,
+    "rank_for_commodity": 3
+  },
+  {
+    "commodity_pair": "rice-sugar",
+    "lag_months": 3,
+    "pearson_r": 0.858,
+    "rank_for_commodity": 5
+  },
+  {
+    "commodity_pair": "sugar-flour",
+    "lag_months": 0,
+    "pearson_r": 0.7311,
+    "rank_for_commodity": 1
+  },
+  {
+    "commodity_pair": "sugar-flour",
+    "lag_months": 1,
+    "pearson_r": 0.7178,
+    "rank_for_commodity": 2
+  },
+  {
+    "commodity_pair": "sugar-flour",
+    "lag_months": 2,
+    "pearson_r": 0.7058,
+    "rank_for_commodity": 3
+  },
+  {
+    "commodity_pair": "sugar-flour",
+    "lag_months": 3,
+    "pearson_r": 0.6952,
+    "rank_for_commodity": 4
+  }
+]

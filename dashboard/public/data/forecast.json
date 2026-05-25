@@ -1,0 +1,4229 @@
+{
+  "metadata": {
+    "generated_at": "2026-05-25T06:13:09.273680+00:00",
+    "data_end": "2024-05-01",
+    "forecast_horizon": "6_months",
+    "forecast_start": "2024-06-01",
+    "forecast_end": "2024-11-01",
+    "models": {
+      "Rice": {
+        "selected": "AutoETS",
+        "holdout_mae": 794.2,
+        "mae_scores": {
+          "AutoARIMA": 1112.04,
+          "AutoETS": 794.2
+        }
+      },
+      "Cooking Oil": {
+        "selected": "AutoARIMA",
+        "holdout_mae": 1714.22,
+        "mae_scores": {
+          "AutoARIMA": 1714.22,
+          "AutoETS": 1738.72
+        }
+      },
+      "Cooking Oil_post2022_robustness": {
+        "selected": "AutoARIMA",
+        "holdout_mae": 1710.83
+      },
+      "Sugar": {
+        "selected": "AutoETS",
+        "holdout_mae": 1230.42,
+        "mae_scores": {
+          "AutoARIMA": 1585.98,
+          "AutoETS": 1230.42
+        }
+      },
+      "Flour": {
+        "selected": "AutoETS",
+        "holdout_mae": 23.1,
+        "mae_scores": {
+          "AutoARIMA": 97.44,
+          "AutoETS": 23.1
+        }
+      }
+    },
+    "limitations": "Forecast assumes no structural breaks (policy interventions, import tariff changes, El Nino cycles). 1-2 month forecasts more reliable than 5-6 month. Confidence intervals widen explicitly with horizon. Cooking Oil includes a post-2022 robustness check due to the 2022 price shock."
+  },
+  "data": [
+    {
+      "date": "2007-01-01",
+      "commodity": "Rice",
+      "actual_price": 5941.98
+    },
+    {
+      "date": "2007-02-01",
+      "commodity": "Rice",
+      "actual_price": 6445.0
+    },
+    {
+      "date": "2007-03-01",
+      "commodity": "Rice",
+      "actual_price": 6414.0
+    },
+    {
+      "date": "2007-04-01",
+      "commodity": "Rice",
+      "actual_price": 6083.0
+    },
+    {
+      "date": "2007-05-01",
+      "commodity": "Rice",
+      "actual_price": 5955.0
+    },
+    {
+      "date": "2007-06-01",
+      "commodity": "Rice",
+      "actual_price": 5949.0
+    },
+    {
+      "date": "2007-07-01",
+      "commodity": "Rice",
+      "actual_price": 5944.0
+    },
+    {
+      "date": "2007-08-01",
+      "commodity": "Rice",
+      "actual_price": 5965.0
+    },
+    {
+      "date": "2007-09-01",
+      "commodity": "Rice",
+      "actual_price": 5977.0
+    },
+    {
+      "date": "2007-10-01",
+      "commodity": "Rice",
+      "actual_price": 5981.0
+    },
+    {
+      "date": "2007-11-01",
+      "commodity": "Rice",
+      "actual_price": 5985.0
+    },
+    {
+      "date": "2007-12-01",
+      "commodity": "Rice",
+      "actual_price": 6147.0
+    },
+    {
+      "date": "2008-01-01",
+      "commodity": "Rice",
+      "actual_price": 6405.0
+    },
+    {
+      "date": "2008-02-01",
+      "commodity": "Rice",
+      "actual_price": 6375.0
+    },
+    {
+      "date": "2008-03-01",
+      "commodity": "Rice",
+      "actual_price": 6221.0
+    },
+    {
+      "date": "2008-04-01",
+      "commodity": "Rice",
+      "actual_price": 6132.0
+    },
+    {
+      "date": "2008-05-01",
+      "commodity": "Rice",
+      "actual_price": 6253.0
+    },
+    {
+      "date": "2008-06-01",
+      "commodity": "Rice",
+      "actual_price": 6406.0
+    },
+    {
+      "date": "2008-07-01",
+      "commodity": "Rice",
+      "actual_price": 6405.0
+    },
+    {
+      "date": "2008-08-01",
+      "commodity": "Rice",
+      "actual_price": 6404.0
+    },
+    {
+      "date": "2008-09-01",
+      "commodity": "Rice",
+      "actual_price": 6436.0
+    },
+    {
+      "date": "2008-10-01",
+      "commodity": "Rice",
+      "actual_price": 6440.0
+    },
+    {
+      "date": "2008-11-01",
+      "commodity": "Rice",
+      "actual_price": 6441.0
+    },
+    {
+      "date": "2008-12-01",
+      "commodity": "Rice",
+      "actual_price": 6504.0
+    },
+    {
+      "date": "2009-01-01",
+      "commodity": "Rice",
+      "actual_price": 6591.0
+    },
+    {
+      "date": "2009-02-01",
+      "commodity": "Rice",
+      "actual_price": 6725.0
+    },
+    {
+      "date": "2009-03-01",
+      "commodity": "Rice",
+      "actual_price": 6706.0
+    },
+    {
+      "date": "2009-04-01",
+      "commodity": "Rice",
+      "actual_price": 6643.0
+    },
+    {
+      "date": "2009-05-01",
+      "commodity": "Rice",
+      "actual_price": 6641.0
+    },
+    {
+      "date": "2009-06-01",
+      "commodity": "Rice",
+      "actual_price": 6640.06
+    },
+    {
+      "date": "2009-07-01",
+      "commodity": "Rice",
+      "actual_price": 6640.18
+    },
+    {
+      "date": "2009-08-01",
+      "commodity": "Rice",
+      "actual_price": 6658.78
+    },
+    {
+      "date": "2009-09-01",
+      "commodity": "Rice",
+      "actual_price": 6699.4
+    },
+    {
+      "date": "2009-10-01",
+      "commodity": "Rice",
+      "actual_price": 6705.42
+    },
+    {
+      "date": "2009-11-01",
+      "commodity": "Rice",
+      "actual_price": 6706.77
+    },
+    {
+      "date": "2009-12-01",
+      "commodity": "Rice",
+      "actual_price": 6938.15
+    },
+    {
+      "date": "2010-01-01",
+      "commodity": "Rice",
+      "actual_price": 7494.59
+    },
+    {
+      "date": "2010-02-01",
+      "commodity": "Rice",
+      "actual_price": 7720.93
+    },
+    {
+      "date": "2010-03-01",
+      "commodity": "Rice",
+      "actual_price": 7491.61
+    },
+    {
+      "date": "2010-04-01",
+      "commodity": "Rice",
+      "actual_price": 7392.72
+    },
+    {
+      "date": "2010-05-01",
+      "commodity": "Rice",
+      "actual_price": 7403.07
+    },
+    {
+      "date": "2010-06-01",
+      "commodity": "Rice",
+      "actual_price": 7600.74
+    },
+    {
+      "date": "2010-07-01",
+      "commodity": "Rice",
+      "actual_price": 8037.02
+    },
+    {
+      "date": "2010-08-01",
+      "commodity": "Rice",
+      "actual_price": 8382.61
+    },
+    {
+      "date": "2010-09-01",
+      "commodity": "Rice",
+      "actual_price": 8430.0
+    },
+    {
+      "date": "2010-10-01",
+      "commodity": "Rice",
+      "actual_price": 8493.0
+    },
+    {
+      "date": "2010-11-01",
+      "commodity": "Rice",
+      "actual_price": 8668.0
+    },
+    {
+      "date": "2010-12-01",
+      "commodity": "Rice",
+      "actual_price": 9082.0
+    },
+    {
+      "date": "2011-01-01",
+      "commodity": "Rice",
+      "actual_price": 9244.0
+    },
+    {
+      "date": "2011-02-01",
+      "commodity": "Rice",
+      "actual_price": 9118.0
+    },
+    {
+      "date": "2011-03-01",
+      "commodity": "Rice",
+      "actual_price": 8795.0
+    },
+    {
+      "date": "2011-04-01",
+      "commodity": "Rice",
+      "actual_price": 8711.0
+    },
+    {
+      "date": "2011-05-01",
+      "commodity": "Rice",
+      "actual_price": 8741.0
+    },
+    {
+      "date": "2011-06-01",
+      "commodity": "Rice",
+      "actual_price": 8870.0
+    },
+    {
+      "date": "2011-07-01",
+      "commodity": "Rice",
+      "actual_price": 9297.0
+    },
+    {
+      "date": "2011-08-01",
+      "commodity": "Rice",
+      "actual_price": 9504.0
+    },
+    {
+      "date": "2011-09-01",
+      "commodity": "Rice",
+      "actual_price": 9644.0
+    },
+    {
+      "date": "2011-10-01",
+      "commodity": "Rice",
+      "actual_price": 9768.0
+    },
+    {
+      "date": "2011-11-01",
+      "commodity": "Rice",
+      "actual_price": 9781.0
+    },
+    {
+      "date": "2011-12-01",
+      "commodity": "Rice",
+      "actual_price": 10100.0
+    },
+    {
+      "date": "2012-01-01",
+      "commodity": "Rice",
+      "actual_price": 10439.0
+    },
+    {
+      "date": "2012-02-01",
+      "commodity": "Rice",
+      "actual_price": 10520.0
+    },
+    {
+      "date": "2012-03-01",
+      "commodity": "Rice",
+      "actual_price": 10406.0
+    },
+    {
+      "date": "2012-04-01",
+      "commodity": "Rice",
+      "actual_price": 10339.0
+    },
+    {
+      "date": "2012-05-01",
+      "commodity": "Rice",
+      "actual_price": 10286.0
+    },
+    {
+      "date": "2012-06-01",
+      "commodity": "Rice",
+      "actual_price": 10309.0
+    },
+    {
+      "date": "2012-07-01",
+      "commodity": "Rice",
+      "actual_price": 10385.0
+    },
+    {
+      "date": "2012-08-01",
+      "commodity": "Rice",
+      "actual_price": 10391.0
+    },
+    {
+      "date": "2012-09-01",
+      "commodity": "Rice",
+      "actual_price": 10414.0
+    },
+    {
+      "date": "2012-10-01",
+      "commodity": "Rice",
+      "actual_price": 10421.0
+    },
+    {
+      "date": "2012-11-01",
+      "commodity": "Rice",
+      "actual_price": 10482.0
+    },
+    {
+      "date": "2012-12-01",
+      "commodity": "Rice",
+      "actual_price": 10718.0
+    },
+    {
+      "date": "2013-01-01",
+      "commodity": "Rice",
+      "actual_price": 10821.0
+    },
+    {
+      "date": "2013-02-01",
+      "commodity": "Rice",
+      "actual_price": 10819.0
+    },
+    {
+      "date": "2013-03-01",
+      "commodity": "Rice",
+      "actual_price": 10748.0
+    },
+    {
+      "date": "2013-04-01",
+      "commodity": "Rice",
+      "actual_price": 10646.0
+    },
+    {
+      "date": "2013-05-01",
+      "commodity": "Rice",
+      "actual_price": 10646.0
+    },
+    {
+      "date": "2013-06-01",
+      "commodity": "Rice",
+      "actual_price": 10718.0
+    },
+    {
+      "date": "2013-07-01",
+      "commodity": "Rice",
+      "actual_price": 10874.0
+    },
+    {
+      "date": "2013-08-01",
+      "commodity": "Rice",
+      "actual_price": 10938.0
+    },
+    {
+      "date": "2013-09-01",
+      "commodity": "Rice",
+      "actual_price": 10969.0
+    },
+    {
+      "date": "2013-10-01",
+      "commodity": "Rice",
+      "actual_price": 10987.0
+    },
+    {
+      "date": "2013-11-01",
+      "commodity": "Rice",
+      "actual_price": 11011.0
+    },
+    {
+      "date": "2013-12-01",
+      "commodity": "Rice",
+      "actual_price": 11073.0
+    },
+    {
+      "date": "2014-01-01",
+      "commodity": "Rice",
+      "actual_price": 11224.0
+    },
+    {
+      "date": "2014-02-01",
+      "commodity": "Rice",
+      "actual_price": 11389.0
+    },
+    {
+      "date": "2014-03-01",
+      "commodity": "Rice",
+      "actual_price": 11564.0
+    },
+    {
+      "date": "2014-04-01",
+      "commodity": "Rice",
+      "actual_price": 11313.0
+    },
+    {
+      "date": "2014-05-01",
+      "commodity": "Rice",
+      "actual_price": 11219.0
+    },
+    {
+      "date": "2014-06-01",
+      "commodity": "Rice",
+      "actual_price": 11259.0
+    },
+    {
+      "date": "2014-07-01",
+      "commodity": "Rice",
+      "actual_price": 11321.0
+    },
+    {
+      "date": "2014-08-01",
+      "commodity": "Rice",
+      "actual_price": 11390.0
+    },
+    {
+      "date": "2014-09-01",
+      "commodity": "Rice",
+      "actual_price": 11433.0
+    },
+    {
+      "date": "2014-10-01",
+      "commodity": "Rice",
+      "actual_price": 11522.0
+    },
+    {
+      "date": "2014-11-01",
+      "commodity": "Rice",
+      "actual_price": 11691.0
+    },
+    {
+      "date": "2014-12-01",
+      "commodity": "Rice",
+      "actual_price": 12210.0
+    },
+    {
+      "date": "2015-01-01",
+      "commodity": "Rice",
+      "actual_price": 12444.0
+    },
+    {
+      "date": "2015-02-01",
+      "commodity": "Rice",
+      "actual_price": 12802.0
+    },
+    {
+      "date": "2015-03-01",
+      "commodity": "Rice",
+      "actual_price": 13089.0
+    },
+    {
+      "date": "2015-04-01",
+      "commodity": "Rice",
+      "actual_price": 12458.0
+    },
+    {
+      "date": "2015-05-01",
+      "commodity": "Rice",
+      "actual_price": 12348.0
+    },
+    {
+      "date": "2015-06-01",
+      "commodity": "Rice",
+      "actual_price": 12425.0
+    },
+    {
+      "date": "2015-07-01",
+      "commodity": "Rice",
+      "actual_price": 12509.0
+    },
+    {
+      "date": "2015-08-01",
+      "commodity": "Rice",
+      "actual_price": 12709.0
+    },
+    {
+      "date": "2015-09-01",
+      "commodity": "Rice",
+      "actual_price": 12968.0
+    },
+    {
+      "date": "2015-10-01",
+      "commodity": "Rice",
+      "actual_price": 13067.0
+    },
+    {
+      "date": "2015-11-01",
+      "commodity": "Rice",
+      "actual_price": 13139.0
+    },
+    {
+      "date": "2015-12-01",
+      "commodity": "Rice",
+      "actual_price": 13217.0
+    },
+    {
+      "date": "2016-01-01",
+      "commodity": "Rice",
+      "actual_price": 13319.0
+    },
+    {
+      "date": "2016-02-01",
+      "commodity": "Rice",
+      "actual_price": 13376.0
+    },
+    {
+      "date": "2016-03-01",
+      "commodity": "Rice",
+      "actual_price": 13301.0
+    },
+    {
+      "date": "2016-04-01",
+      "commodity": "Rice",
+      "actual_price": 13105.0
+    },
+    {
+      "date": "2016-05-01",
+      "commodity": "Rice",
+      "actual_price": 13039.0
+    },
+    {
+      "date": "2016-06-01",
+      "commodity": "Rice",
+      "actual_price": 13115.0
+    },
+    {
+      "date": "2016-07-01",
+      "commodity": "Rice",
+      "actual_price": 11018.91
+    },
+    {
+      "date": "2016-08-01",
+      "commodity": "Rice",
+      "actual_price": 10986.75
+    },
+    {
+      "date": "2016-09-01",
+      "commodity": "Rice",
+      "actual_price": 10952.46
+    },
+    {
+      "date": "2016-10-01",
+      "commodity": "Rice",
+      "actual_price": 10914.46
+    },
+    {
+      "date": "2016-11-01",
+      "commodity": "Rice",
+      "actual_price": 10899.23
+    },
+    {
+      "date": "2016-12-01",
+      "commodity": "Rice",
+      "actual_price": 10966.08
+    },
+    {
+      "date": "2017-01-01",
+      "commodity": "Rice",
+      "actual_price": 13222.0
+    },
+    {
+      "date": "2017-02-01",
+      "commodity": "Rice",
+      "actual_price": 13202.0
+    },
+    {
+      "date": "2017-03-01",
+      "commodity": "Rice",
+      "actual_price": 10958.93
+    },
+    {
+      "date": "2017-04-01",
+      "commodity": "Rice",
+      "actual_price": 13074.0
+    },
+    {
+      "date": "2017-05-01",
+      "commodity": "Rice",
+      "actual_price": 13096.0
+    },
+    {
+      "date": "2017-06-01",
+      "commodity": "Rice",
+      "actual_price": 13125.0
+    },
+    {
+      "date": "2017-08-01",
+      "commodity": "Rice",
+      "actual_price": 13095.0
+    },
+    {
+      "date": "2017-09-01",
+      "commodity": "Rice",
+      "actual_price": 13215.0
+    },
+    {
+      "date": "2017-10-01",
+      "commodity": "Rice",
+      "actual_price": 13346.0
+    },
+    {
+      "date": "2017-11-01",
+      "commodity": "Rice",
+      "actual_price": 13429.0
+    },
+    {
+      "date": "2017-12-01",
+      "commodity": "Rice",
+      "actual_price": 13676.0
+    },
+    {
+      "date": "2018-01-01",
+      "commodity": "Rice",
+      "actual_price": 14531.0
+    },
+    {
+      "date": "2018-02-01",
+      "commodity": "Rice",
+      "actual_price": 14697.0
+    },
+    {
+      "date": "2018-03-01",
+      "commodity": "Rice",
+      "actual_price": 14347.0
+    },
+    {
+      "date": "2018-04-01",
+      "commodity": "Rice",
+      "actual_price": 14056.0
+    },
+    {
+      "date": "2018-05-01",
+      "commodity": "Rice",
+      "actual_price": 13900.0
+    },
+    {
+      "date": "2018-06-01",
+      "commodity": "Rice",
+      "actual_price": 13835.0
+    },
+    {
+      "date": "2018-07-01",
+      "commodity": "Rice",
+      "actual_price": 13838.0
+    },
+    {
+      "date": "2018-08-01",
+      "commodity": "Rice",
+      "actual_price": 13837.0
+    },
+    {
+      "date": "2018-09-01",
+      "commodity": "Rice",
+      "actual_price": 13877.0
+    },
+    {
+      "date": "2018-10-01",
+      "commodity": "Rice",
+      "actual_price": 13910.0
+    },
+    {
+      "date": "2018-11-01",
+      "commodity": "Rice",
+      "actual_price": 14007.0
+    },
+    {
+      "date": "2018-12-01",
+      "commodity": "Rice",
+      "actual_price": 14119.0
+    },
+    {
+      "date": "2019-01-01",
+      "commodity": "Rice",
+      "actual_price": 14274.0
+    },
+    {
+      "date": "2019-02-01",
+      "commodity": "Rice",
+      "actual_price": 14313.0
+    },
+    {
+      "date": "2019-03-01",
+      "commodity": "Rice",
+      "actual_price": 14211.0
+    },
+    {
+      "date": "2019-04-01",
+      "commodity": "Rice",
+      "actual_price": 14021.0
+    },
+    {
+      "date": "2019-05-01",
+      "commodity": "Rice",
+      "actual_price": 13958.0
+    },
+    {
+      "date": "2019-06-01",
+      "commodity": "Rice",
+      "actual_price": 13951.0
+    },
+    {
+      "date": "2019-07-01",
+      "commodity": "Rice",
+      "actual_price": 13957.0
+    },
+    {
+      "date": "2019-08-01",
+      "commodity": "Rice",
+      "actual_price": 13944.0
+    },
+    {
+      "date": "2019-09-01",
+      "commodity": "Rice",
+      "actual_price": 13961.0
+    },
+    {
+      "date": "2019-10-01",
+      "commodity": "Rice",
+      "actual_price": 13978.0
+    },
+    {
+      "date": "2019-11-01",
+      "commodity": "Rice",
+      "actual_price": 13995.0
+    },
+    {
+      "date": "2019-12-01",
+      "commodity": "Rice",
+      "actual_price": 14019.0
+    },
+    {
+      "date": "2020-01-01",
+      "commodity": "Rice",
+      "actual_price": 11578.2
+    },
+    {
+      "date": "2020-02-01",
+      "commodity": "Rice",
+      "actual_price": 11603.22
+    },
+    {
+      "date": "2020-03-01",
+      "commodity": "Rice",
+      "actual_price": 11624.36
+    },
+    {
+      "date": "2020-04-01",
+      "commodity": "Rice",
+      "actual_price": 11648.91
+    },
+    {
+      "date": "2020-05-01",
+      "commodity": "Rice",
+      "actual_price": 11615.1
+    },
+    {
+      "date": "2020-06-01",
+      "commodity": "Rice",
+      "actual_price": 11581.68
+    },
+    {
+      "date": "2020-07-01",
+      "commodity": "Rice",
+      "actual_price": 11576.95
+    },
+    {
+      "date": "2020-08-01",
+      "commodity": "Rice",
+      "actual_price": 11562.6
+    },
+    {
+      "date": "2020-09-01",
+      "commodity": "Rice",
+      "actual_price": 11549.09
+    },
+    {
+      "date": "2020-10-01",
+      "commodity": "Rice",
+      "actual_price": 11540.97
+    },
+    {
+      "date": "2020-11-01",
+      "commodity": "Rice",
+      "actual_price": 11531.34
+    },
+    {
+      "date": "2020-12-01",
+      "commodity": "Rice",
+      "actual_price": 11534.14
+    },
+    {
+      "date": "2021-01-01",
+      "commodity": "Rice",
+      "actual_price": 11560.51
+    },
+    {
+      "date": "2021-02-01",
+      "commodity": "Rice",
+      "actual_price": 11554.97
+    },
+    {
+      "date": "2021-03-01",
+      "commodity": "Rice",
+      "actual_price": 11543.56
+    },
+    {
+      "date": "2021-04-01",
+      "commodity": "Rice",
+      "actual_price": 11504.52
+    },
+    {
+      "date": "2021-05-01",
+      "commodity": "Rice",
+      "actual_price": 11477.99
+    },
+    {
+      "date": "2021-06-01",
+      "commodity": "Rice",
+      "actual_price": 11469.66
+    },
+    {
+      "date": "2021-07-01",
+      "commodity": "Rice",
+      "actual_price": 11436.34
+    },
+    {
+      "date": "2021-08-01",
+      "commodity": "Rice",
+      "actual_price": 11405.19
+    },
+    {
+      "date": "2021-09-01",
+      "commodity": "Rice",
+      "actual_price": 11401.23
+    },
+    {
+      "date": "2021-10-01",
+      "commodity": "Rice",
+      "actual_price": 11399.1
+    },
+    {
+      "date": "2021-11-01",
+      "commodity": "Rice",
+      "actual_price": 11402.41
+    },
+    {
+      "date": "2021-12-01",
+      "commodity": "Rice",
+      "actual_price": 11446.21
+    },
+    {
+      "date": "2022-01-01",
+      "commodity": "Rice",
+      "actual_price": 11539.84
+    },
+    {
+      "date": "2022-02-01",
+      "commodity": "Rice",
+      "actual_price": 11566.04
+    },
+    {
+      "date": "2022-03-01",
+      "commodity": "Rice",
+      "actual_price": 11557.37
+    },
+    {
+      "date": "2022-04-01",
+      "commodity": "Rice",
+      "actual_price": 11559.05
+    },
+    {
+      "date": "2022-05-01",
+      "commodity": "Rice",
+      "actual_price": 11538.15
+    },
+    {
+      "date": "2022-06-01",
+      "commodity": "Rice",
+      "actual_price": 11519.52
+    },
+    {
+      "date": "2022-07-01",
+      "commodity": "Rice",
+      "actual_price": 11524.67
+    },
+    {
+      "date": "2022-08-01",
+      "commodity": "Rice",
+      "actual_price": 11619.22
+    },
+    {
+      "date": "2022-09-01",
+      "commodity": "Rice",
+      "actual_price": 11811.0
+    },
+    {
+      "date": "2022-10-01",
+      "commodity": "Rice",
+      "actual_price": 11941.35
+    },
+    {
+      "date": "2022-11-01",
+      "commodity": "Rice",
+      "actual_price": 12011.51
+    },
+    {
+      "date": "2022-12-01",
+      "commodity": "Rice",
+      "actual_price": 12277.46
+    },
+    {
+      "date": "2023-01-01",
+      "commodity": "Rice",
+      "actual_price": 12534.14
+    },
+    {
+      "date": "2023-02-01",
+      "commodity": "Rice",
+      "actual_price": 12905.69
+    },
+    {
+      "date": "2023-03-01",
+      "commodity": "Rice",
+      "actual_price": 13035.32
+    },
+    {
+      "date": "2023-04-01",
+      "commodity": "Rice",
+      "actual_price": 13126.14
+    },
+    {
+      "date": "2023-05-01",
+      "commodity": "Rice",
+      "actual_price": 13162.14
+    },
+    {
+      "date": "2023-06-01",
+      "commodity": "Rice",
+      "actual_price": 13213.89
+    },
+    {
+      "date": "2023-07-01",
+      "commodity": "Rice",
+      "actual_price": 13249.72
+    },
+    {
+      "date": "2023-08-01",
+      "commodity": "Rice",
+      "actual_price": 13356.71
+    },
+    {
+      "date": "2023-09-01",
+      "commodity": "Rice",
+      "actual_price": 13953.79
+    },
+    {
+      "date": "2023-10-01",
+      "commodity": "Rice",
+      "actual_price": 14322.68
+    },
+    {
+      "date": "2023-11-01",
+      "commodity": "Rice",
+      "actual_price": 14409.6
+    },
+    {
+      "date": "2023-12-01",
+      "commodity": "Rice",
+      "actual_price": 14460.49
+    },
+    {
+      "date": "2024-01-01",
+      "commodity": "Rice",
+      "actual_price": 14506.98
+    },
+    {
+      "date": "2024-02-01",
+      "commodity": "Rice",
+      "actual_price": 14860.2
+    },
+    {
+      "date": "2024-03-01",
+      "commodity": "Rice",
+      "actual_price": 15328.18
+    },
+    {
+      "date": "2024-04-01",
+      "commodity": "Rice",
+      "actual_price": 14932.0
+    },
+    {
+      "date": "2024-05-01",
+      "commodity": "Rice",
+      "actual_price": 14695.91
+    },
+    {
+      "date": "2024-06-01",
+      "commodity": "Rice",
+      "forecast_price": 14780.29,
+      "lower_95": 13825.93,
+      "upper_95": 15734.66,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2024-07-01",
+      "commodity": "Rice",
+      "forecast_price": 14831.73,
+      "lower_95": 13545.19,
+      "upper_95": 16118.28,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2024-08-01",
+      "commodity": "Rice",
+      "forecast_price": 14883.17,
+      "lower_95": 13332.19,
+      "upper_95": 16434.16,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2024-09-01",
+      "commodity": "Rice",
+      "forecast_price": 14934.61,
+      "lower_95": 13156.44,
+      "upper_95": 16712.79,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2024-10-01",
+      "commodity": "Rice",
+      "forecast_price": 14986.05,
+      "lower_95": 13005.07,
+      "upper_95": 16967.04,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2024-11-01",
+      "commodity": "Rice",
+      "forecast_price": 15037.49,
+      "lower_95": 12871.22,
+      "upper_95": 17203.77,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2007-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 8178.86
+    },
+    {
+      "date": "2007-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 8405.0
+    },
+    {
+      "date": "2007-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 8513.0
+    },
+    {
+      "date": "2007-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 8788.0
+    },
+    {
+      "date": "2007-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 9319.0
+    },
+    {
+      "date": "2007-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 9853.0
+    },
+    {
+      "date": "2007-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 10018.0
+    },
+    {
+      "date": "2007-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 10453.0
+    },
+    {
+      "date": "2007-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 10608.0
+    },
+    {
+      "date": "2007-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 10669.0
+    },
+    {
+      "date": "2007-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 10768.0
+    },
+    {
+      "date": "2007-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 10953.0
+    },
+    {
+      "date": "2008-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11381.0
+    },
+    {
+      "date": "2008-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11954.0
+    },
+    {
+      "date": "2008-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12914.0
+    },
+    {
+      "date": "2008-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12809.0
+    },
+    {
+      "date": "2008-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12944.0
+    },
+    {
+      "date": "2008-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13045.0
+    },
+    {
+      "date": "2008-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12973.0
+    },
+    {
+      "date": "2008-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12799.0
+    },
+    {
+      "date": "2008-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12527.0
+    },
+    {
+      "date": "2008-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12143.0
+    },
+    {
+      "date": "2008-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11697.0
+    },
+    {
+      "date": "2008-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11598.0
+    },
+    {
+      "date": "2009-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11614.0
+    },
+    {
+      "date": "2009-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11567.0
+    },
+    {
+      "date": "2009-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11576.0
+    },
+    {
+      "date": "2009-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11636.0
+    },
+    {
+      "date": "2009-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11766.07
+    },
+    {
+      "date": "2009-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11646.29
+    },
+    {
+      "date": "2009-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11413.21
+    },
+    {
+      "date": "2009-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11423.48
+    },
+    {
+      "date": "2009-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11409.0
+    },
+    {
+      "date": "2009-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11264.0
+    },
+    {
+      "date": "2009-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11147.0
+    },
+    {
+      "date": "2009-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11195.0
+    },
+    {
+      "date": "2010-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11368.0
+    },
+    {
+      "date": "2010-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11315.0
+    },
+    {
+      "date": "2010-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11341.0
+    },
+    {
+      "date": "2010-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11249.0
+    },
+    {
+      "date": "2010-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11260.0
+    },
+    {
+      "date": "2010-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11247.0
+    },
+    {
+      "date": "2010-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11195.0
+    },
+    {
+      "date": "2010-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11325.0
+    },
+    {
+      "date": "2010-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11376.0
+    },
+    {
+      "date": "2010-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11453.0
+    },
+    {
+      "date": "2010-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 11832.0
+    },
+    {
+      "date": "2010-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12302.0
+    },
+    {
+      "date": "2011-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12764.0
+    },
+    {
+      "date": "2011-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13013.0
+    },
+    {
+      "date": "2011-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13025.0
+    },
+    {
+      "date": "2011-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12884.0
+    },
+    {
+      "date": "2011-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12918.0
+    },
+    {
+      "date": "2011-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12947.0
+    },
+    {
+      "date": "2011-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12898.0
+    },
+    {
+      "date": "2011-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12932.0
+    },
+    {
+      "date": "2011-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12989.0
+    },
+    {
+      "date": "2011-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12863.0
+    },
+    {
+      "date": "2011-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12841.0
+    },
+    {
+      "date": "2011-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12833.0
+    },
+    {
+      "date": "2012-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13141.0
+    },
+    {
+      "date": "2012-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13142.0
+    },
+    {
+      "date": "2012-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13211.0
+    },
+    {
+      "date": "2012-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13371.0
+    },
+    {
+      "date": "2012-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13250.0
+    },
+    {
+      "date": "2012-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13091.0
+    },
+    {
+      "date": "2012-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13166.0
+    },
+    {
+      "date": "2012-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13249.0
+    },
+    {
+      "date": "2012-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13229.0
+    },
+    {
+      "date": "2012-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13020.0
+    },
+    {
+      "date": "2012-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12853.0
+    },
+    {
+      "date": "2012-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12711.0
+    },
+    {
+      "date": "2013-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12664.0
+    },
+    {
+      "date": "2013-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12607.0
+    },
+    {
+      "date": "2013-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12554.0
+    },
+    {
+      "date": "2013-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12531.0
+    },
+    {
+      "date": "2013-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12441.0
+    },
+    {
+      "date": "2013-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12461.0
+    },
+    {
+      "date": "2013-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12502.0
+    },
+    {
+      "date": "2013-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12464.0
+    },
+    {
+      "date": "2013-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12651.0
+    },
+    {
+      "date": "2013-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12684.0
+    },
+    {
+      "date": "2013-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12807.0
+    },
+    {
+      "date": "2013-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12958.0
+    },
+    {
+      "date": "2014-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13077.0
+    },
+    {
+      "date": "2014-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13188.0
+    },
+    {
+      "date": "2014-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13468.0
+    },
+    {
+      "date": "2014-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13735.0
+    },
+    {
+      "date": "2014-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13817.0
+    },
+    {
+      "date": "2014-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13853.0
+    },
+    {
+      "date": "2014-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13925.0
+    },
+    {
+      "date": "2014-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13947.0
+    },
+    {
+      "date": "2014-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13915.0
+    },
+    {
+      "date": "2014-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13879.0
+    },
+    {
+      "date": "2014-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13911.0
+    },
+    {
+      "date": "2014-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13950.0
+    },
+    {
+      "date": "2015-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13919.0
+    },
+    {
+      "date": "2015-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13895.0
+    },
+    {
+      "date": "2015-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13910.0
+    },
+    {
+      "date": "2015-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13820.0
+    },
+    {
+      "date": "2015-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13743.0
+    },
+    {
+      "date": "2015-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13824.0
+    },
+    {
+      "date": "2015-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13838.0
+    },
+    {
+      "date": "2015-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13790.0
+    },
+    {
+      "date": "2015-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13521.0
+    },
+    {
+      "date": "2015-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13436.0
+    },
+    {
+      "date": "2015-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13302.0
+    },
+    {
+      "date": "2015-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13310.0
+    },
+    {
+      "date": "2016-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13277.0
+    },
+    {
+      "date": "2016-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13313.0
+    },
+    {
+      "date": "2016-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13466.0
+    },
+    {
+      "date": "2016-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13649.0
+    },
+    {
+      "date": "2016-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13885.0
+    },
+    {
+      "date": "2016-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13941.0
+    },
+    {
+      "date": "2016-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12712.06
+    },
+    {
+      "date": "2016-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12996.37
+    },
+    {
+      "date": "2016-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13367.64
+    },
+    {
+      "date": "2016-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13188.82
+    },
+    {
+      "date": "2016-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13135.78
+    },
+    {
+      "date": "2016-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13279.29
+    },
+    {
+      "date": "2017-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14349.0
+    },
+    {
+      "date": "2017-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14567.0
+    },
+    {
+      "date": "2017-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13618.01
+    },
+    {
+      "date": "2017-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14546.0
+    },
+    {
+      "date": "2017-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14610.0
+    },
+    {
+      "date": "2017-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14629.0
+    },
+    {
+      "date": "2017-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14575.0
+    },
+    {
+      "date": "2017-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14588.0
+    },
+    {
+      "date": "2017-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14595.0
+    },
+    {
+      "date": "2017-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14542.0
+    },
+    {
+      "date": "2017-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14522.0
+    },
+    {
+      "date": "2018-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14518.0
+    },
+    {
+      "date": "2018-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14486.0
+    },
+    {
+      "date": "2018-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14500.0
+    },
+    {
+      "date": "2018-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14483.0
+    },
+    {
+      "date": "2018-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14428.0
+    },
+    {
+      "date": "2018-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14422.0
+    },
+    {
+      "date": "2018-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14449.0
+    },
+    {
+      "date": "2018-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14430.0
+    },
+    {
+      "date": "2018-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14367.0
+    },
+    {
+      "date": "2018-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14272.0
+    },
+    {
+      "date": "2018-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14178.0
+    },
+    {
+      "date": "2018-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14134.0
+    },
+    {
+      "date": "2019-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14145.0
+    },
+    {
+      "date": "2019-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14070.0
+    },
+    {
+      "date": "2019-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14062.0
+    },
+    {
+      "date": "2019-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14037.0
+    },
+    {
+      "date": "2019-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14031.0
+    },
+    {
+      "date": "2019-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13961.0
+    },
+    {
+      "date": "2019-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13855.0
+    },
+    {
+      "date": "2019-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13795.0
+    },
+    {
+      "date": "2019-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13838.0
+    },
+    {
+      "date": "2019-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13846.0
+    },
+    {
+      "date": "2019-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13850.0
+    },
+    {
+      "date": "2019-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14056.0
+    },
+    {
+      "date": "2020-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13385.25
+    },
+    {
+      "date": "2020-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13427.28
+    },
+    {
+      "date": "2020-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13179.6
+    },
+    {
+      "date": "2020-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13238.76
+    },
+    {
+      "date": "2020-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13072.47
+    },
+    {
+      "date": "2020-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12952.63
+    },
+    {
+      "date": "2020-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 12971.26
+    },
+    {
+      "date": "2020-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13232.57
+    },
+    {
+      "date": "2020-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13492.38
+    },
+    {
+      "date": "2020-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13762.69
+    },
+    {
+      "date": "2020-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 13952.15
+    },
+    {
+      "date": "2020-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14073.16
+    },
+    {
+      "date": "2021-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14157.6
+    },
+    {
+      "date": "2021-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14140.94
+    },
+    {
+      "date": "2021-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14305.46
+    },
+    {
+      "date": "2021-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14494.8
+    },
+    {
+      "date": "2021-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14851.16
+    },
+    {
+      "date": "2021-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 14977.09
+    },
+    {
+      "date": "2021-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 15045.12
+    },
+    {
+      "date": "2021-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 15551.92
+    },
+    {
+      "date": "2021-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 15865.44
+    },
+    {
+      "date": "2021-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 16515.28
+    },
+    {
+      "date": "2021-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18017.23
+    },
+    {
+      "date": "2021-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 19093.72
+    },
+    {
+      "date": "2022-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 19766.87
+    },
+    {
+      "date": "2022-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18444.2
+    },
+    {
+      "date": "2022-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 19946.21
+    },
+    {
+      "date": "2022-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 23105.3
+    },
+    {
+      "date": "2022-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 22644.32
+    },
+    {
+      "date": "2022-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 21982.82
+    },
+    {
+      "date": "2022-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 20452.43
+    },
+    {
+      "date": "2022-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 19031.3
+    },
+    {
+      "date": "2022-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18277.8
+    },
+    {
+      "date": "2022-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 17960.78
+    },
+    {
+      "date": "2022-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18041.12
+    },
+    {
+      "date": "2022-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18216.67
+    },
+    {
+      "date": "2023-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18403.2
+    },
+    {
+      "date": "2023-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18466.83
+    },
+    {
+      "date": "2023-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18454.12
+    },
+    {
+      "date": "2023-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18423.49
+    },
+    {
+      "date": "2023-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18420.09
+    },
+    {
+      "date": "2023-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18358.13
+    },
+    {
+      "date": "2023-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18235.31
+    },
+    {
+      "date": "2023-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18141.39
+    },
+    {
+      "date": "2023-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18042.28
+    },
+    {
+      "date": "2023-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 17928.44
+    },
+    {
+      "date": "2023-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 17889.75
+    },
+    {
+      "date": "2023-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 17906.15
+    },
+    {
+      "date": "2024-01-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 17874.5
+    },
+    {
+      "date": "2024-02-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 17659.73
+    },
+    {
+      "date": "2024-03-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18475.84
+    },
+    {
+      "date": "2024-04-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18725.93
+    },
+    {
+      "date": "2024-05-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 18547.09
+    },
+    {
+      "date": "2024-06-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 20342.18
+    },
+    {
+      "date": "2024-07-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 20344.84
+    },
+    {
+      "date": "2024-08-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 20391.04
+    },
+    {
+      "date": "2024-09-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 20404.11
+    },
+    {
+      "date": "2024-10-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 20425.7
+    },
+    {
+      "date": "2024-11-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 20693.31
+    },
+    {
+      "date": "2024-12-01",
+      "commodity": "Cooking Oil",
+      "actual_price": 21031.94
+    },
+    {
+      "date": "2025-01-01",
+      "commodity": "Cooking Oil",
+      "forecast_price": 21210.47,
+      "lower_95": 20430.44,
+      "upper_95": 21990.51,
+      "model_used": "AutoARIMA"
+    },
+    {
+      "date": "2025-02-01",
+      "commodity": "Cooking Oil",
+      "forecast_price": 21222.05,
+      "lower_95": 19932.44,
+      "upper_95": 22511.67,
+      "model_used": "AutoARIMA"
+    },
+    {
+      "date": "2025-03-01",
+      "commodity": "Cooking Oil",
+      "forecast_price": 21301.42,
+      "lower_95": 19713.37,
+      "upper_95": 22889.47,
+      "model_used": "AutoARIMA"
+    },
+    {
+      "date": "2025-04-01",
+      "commodity": "Cooking Oil",
+      "forecast_price": 21353.27,
+      "lower_95": 19493.75,
+      "upper_95": 23212.78,
+      "model_used": "AutoARIMA"
+    },
+    {
+      "date": "2025-05-01",
+      "commodity": "Cooking Oil",
+      "forecast_price": 21416.29,
+      "lower_95": 19327.75,
+      "upper_95": 23504.82,
+      "model_used": "AutoARIMA"
+    },
+    {
+      "date": "2025-06-01",
+      "commodity": "Cooking Oil",
+      "forecast_price": 21474.77,
+      "lower_95": 19177.16,
+      "upper_95": 23772.37,
+      "model_used": "AutoARIMA"
+    },
+    {
+      "date": "2025-01-01",
+      "commodity": "Cooking Oil",
+      "forecast_price": 20840.3,
+      "model_used": "AutoARIMA",
+      "scenario": "post2022_robustness"
+    },
+    {
+      "date": "2025-02-01",
+      "commodity": "Cooking Oil",
+      "forecast_price": 20471.14,
+      "model_used": "AutoARIMA",
+      "scenario": "post2022_robustness"
+    },
+    {
+      "date": "2025-03-01",
+      "commodity": "Cooking Oil",
+      "forecast_price": 20101.57,
+      "model_used": "AutoARIMA",
+      "scenario": "post2022_robustness"
+    },
+    {
+      "date": "2025-04-01",
+      "commodity": "Cooking Oil",
+      "forecast_price": 19803.35,
+      "model_used": "AutoARIMA",
+      "scenario": "post2022_robustness"
+    },
+    {
+      "date": "2025-05-01",
+      "commodity": "Cooking Oil",
+      "forecast_price": 19591.72,
+      "model_used": "AutoARIMA",
+      "scenario": "post2022_robustness"
+    },
+    {
+      "date": "2025-06-01",
+      "commodity": "Cooking Oil",
+      "forecast_price": 19456.08,
+      "model_used": "AutoARIMA",
+      "scenario": "post2022_robustness"
+    },
+    {
+      "date": "2007-01-01",
+      "commodity": "Sugar",
+      "actual_price": 6554.75
+    },
+    {
+      "date": "2007-02-01",
+      "commodity": "Sugar",
+      "actual_price": 6598.0
+    },
+    {
+      "date": "2007-03-01",
+      "commodity": "Sugar",
+      "actual_price": 6603.0
+    },
+    {
+      "date": "2007-04-01",
+      "commodity": "Sugar",
+      "actual_price": 6645.0
+    },
+    {
+      "date": "2007-05-01",
+      "commodity": "Sugar",
+      "actual_price": 6630.0
+    },
+    {
+      "date": "2007-06-01",
+      "commodity": "Sugar",
+      "actual_price": 6579.0
+    },
+    {
+      "date": "2007-07-01",
+      "commodity": "Sugar",
+      "actual_price": 6527.0
+    },
+    {
+      "date": "2007-08-01",
+      "commodity": "Sugar",
+      "actual_price": 6575.0
+    },
+    {
+      "date": "2007-09-01",
+      "commodity": "Sugar",
+      "actual_price": 6559.0
+    },
+    {
+      "date": "2007-10-01",
+      "commodity": "Sugar",
+      "actual_price": 6545.0
+    },
+    {
+      "date": "2007-11-01",
+      "commodity": "Sugar",
+      "actual_price": 6527.0
+    },
+    {
+      "date": "2007-12-01",
+      "commodity": "Sugar",
+      "actual_price": 6478.0
+    },
+    {
+      "date": "2008-01-01",
+      "commodity": "Sugar",
+      "actual_price": 6519.0
+    },
+    {
+      "date": "2008-02-01",
+      "commodity": "Sugar",
+      "actual_price": 6531.0
+    },
+    {
+      "date": "2008-03-01",
+      "commodity": "Sugar",
+      "actual_price": 6540.0
+    },
+    {
+      "date": "2008-04-01",
+      "commodity": "Sugar",
+      "actual_price": 6561.0
+    },
+    {
+      "date": "2008-05-01",
+      "commodity": "Sugar",
+      "actual_price": 6533.0
+    },
+    {
+      "date": "2008-06-01",
+      "commodity": "Sugar",
+      "actual_price": 6540.0
+    },
+    {
+      "date": "2008-07-01",
+      "commodity": "Sugar",
+      "actual_price": 6524.0
+    },
+    {
+      "date": "2008-08-01",
+      "commodity": "Sugar",
+      "actual_price": 6516.0
+    },
+    {
+      "date": "2008-09-01",
+      "commodity": "Sugar",
+      "actual_price": 6555.0
+    },
+    {
+      "date": "2008-10-01",
+      "commodity": "Sugar",
+      "actual_price": 6538.0
+    },
+    {
+      "date": "2008-11-01",
+      "commodity": "Sugar",
+      "actual_price": 6525.0
+    },
+    {
+      "date": "2008-12-01",
+      "commodity": "Sugar",
+      "actual_price": 6560.0
+    },
+    {
+      "date": "2009-01-01",
+      "commodity": "Sugar",
+      "actual_price": 6713.0
+    },
+    {
+      "date": "2009-02-01",
+      "commodity": "Sugar",
+      "actual_price": 7352.0
+    },
+    {
+      "date": "2009-03-01",
+      "commodity": "Sugar",
+      "actual_price": 7687.0
+    },
+    {
+      "date": "2009-04-01",
+      "commodity": "Sugar",
+      "actual_price": 7789.0
+    },
+    {
+      "date": "2009-05-01",
+      "commodity": "Sugar",
+      "actual_price": 8012.97
+    },
+    {
+      "date": "2009-06-01",
+      "commodity": "Sugar",
+      "actual_price": 8162.6
+    },
+    {
+      "date": "2009-07-01",
+      "commodity": "Sugar",
+      "actual_price": 8315.03
+    },
+    {
+      "date": "2009-08-01",
+      "commodity": "Sugar",
+      "actual_price": 8795.64
+    },
+    {
+      "date": "2009-09-01",
+      "commodity": "Sugar",
+      "actual_price": 9822.0
+    },
+    {
+      "date": "2009-10-01",
+      "commodity": "Sugar",
+      "actual_price": 9940.0
+    },
+    {
+      "date": "2009-11-01",
+      "commodity": "Sugar",
+      "actual_price": 9916.0
+    },
+    {
+      "date": "2009-12-01",
+      "commodity": "Sugar",
+      "actual_price": 10375.0
+    },
+    {
+      "date": "2010-01-01",
+      "commodity": "Sugar",
+      "actual_price": 11079.0
+    },
+    {
+      "date": "2010-02-01",
+      "commodity": "Sugar",
+      "actual_price": 11202.0
+    },
+    {
+      "date": "2010-03-01",
+      "commodity": "Sugar",
+      "actual_price": 11105.0
+    },
+    {
+      "date": "2010-04-01",
+      "commodity": "Sugar",
+      "actual_price": 10801.0
+    },
+    {
+      "date": "2010-05-01",
+      "commodity": "Sugar",
+      "actual_price": 10676.0
+    },
+    {
+      "date": "2010-06-01",
+      "commodity": "Sugar",
+      "actual_price": 10379.0
+    },
+    {
+      "date": "2010-07-01",
+      "commodity": "Sugar",
+      "actual_price": 10521.0
+    },
+    {
+      "date": "2010-08-01",
+      "commodity": "Sugar",
+      "actual_price": 10655.0
+    },
+    {
+      "date": "2010-09-01",
+      "commodity": "Sugar",
+      "actual_price": 10687.0
+    },
+    {
+      "date": "2010-10-01",
+      "commodity": "Sugar",
+      "actual_price": 10959.0
+    },
+    {
+      "date": "2010-11-01",
+      "commodity": "Sugar",
+      "actual_price": 11087.0
+    },
+    {
+      "date": "2010-12-01",
+      "commodity": "Sugar",
+      "actual_price": 11125.0
+    },
+    {
+      "date": "2011-01-01",
+      "commodity": "Sugar",
+      "actual_price": 11162.0
+    },
+    {
+      "date": "2011-02-01",
+      "commodity": "Sugar",
+      "actual_price": 11114.0
+    },
+    {
+      "date": "2011-03-01",
+      "commodity": "Sugar",
+      "actual_price": 11032.0
+    },
+    {
+      "date": "2011-04-01",
+      "commodity": "Sugar",
+      "actual_price": 10933.0
+    },
+    {
+      "date": "2011-05-01",
+      "commodity": "Sugar",
+      "actual_price": 10725.0
+    },
+    {
+      "date": "2011-06-01",
+      "commodity": "Sugar",
+      "actual_price": 10590.0
+    },
+    {
+      "date": "2011-07-01",
+      "commodity": "Sugar",
+      "actual_price": 10629.0
+    },
+    {
+      "date": "2011-08-01",
+      "commodity": "Sugar",
+      "actual_price": 10701.0
+    },
+    {
+      "date": "2011-09-01",
+      "commodity": "Sugar",
+      "actual_price": 10732.0
+    },
+    {
+      "date": "2011-10-01",
+      "commodity": "Sugar",
+      "actual_price": 10715.0
+    },
+    {
+      "date": "2011-11-01",
+      "commodity": "Sugar",
+      "actual_price": 10728.0
+    },
+    {
+      "date": "2011-12-01",
+      "commodity": "Sugar",
+      "actual_price": 10734.0
+    },
+    {
+      "date": "2012-01-01",
+      "commodity": "Sugar",
+      "actual_price": 10861.0
+    },
+    {
+      "date": "2012-02-01",
+      "commodity": "Sugar",
+      "actual_price": 10941.0
+    },
+    {
+      "date": "2012-03-01",
+      "commodity": "Sugar",
+      "actual_price": 11076.0
+    },
+    {
+      "date": "2012-04-01",
+      "commodity": "Sugar",
+      "actual_price": 11405.0
+    },
+    {
+      "date": "2012-05-01",
+      "commodity": "Sugar",
+      "actual_price": 11535.0
+    },
+    {
+      "date": "2012-06-01",
+      "commodity": "Sugar",
+      "actual_price": 11986.0
+    },
+    {
+      "date": "2012-07-01",
+      "commodity": "Sugar",
+      "actual_price": 12607.0
+    },
+    {
+      "date": "2012-08-01",
+      "commodity": "Sugar",
+      "actual_price": 12710.0
+    },
+    {
+      "date": "2012-09-01",
+      "commodity": "Sugar",
+      "actual_price": 12655.0
+    },
+    {
+      "date": "2012-10-01",
+      "commodity": "Sugar",
+      "actual_price": 12577.0
+    },
+    {
+      "date": "2012-11-01",
+      "commodity": "Sugar",
+      "actual_price": 12600.0
+    },
+    {
+      "date": "2012-12-01",
+      "commodity": "Sugar",
+      "actual_price": 12584.0
+    },
+    {
+      "date": "2013-01-01",
+      "commodity": "Sugar",
+      "actual_price": 12557.0
+    },
+    {
+      "date": "2013-02-01",
+      "commodity": "Sugar",
+      "actual_price": 12554.0
+    },
+    {
+      "date": "2013-03-01",
+      "commodity": "Sugar",
+      "actual_price": 12579.0
+    },
+    {
+      "date": "2013-04-01",
+      "commodity": "Sugar",
+      "actual_price": 12609.0
+    },
+    {
+      "date": "2013-05-01",
+      "commodity": "Sugar",
+      "actual_price": 12601.0
+    },
+    {
+      "date": "2013-06-01",
+      "commodity": "Sugar",
+      "actual_price": 12600.0
+    },
+    {
+      "date": "2013-07-01",
+      "commodity": "Sugar",
+      "actual_price": 12601.0
+    },
+    {
+      "date": "2013-08-01",
+      "commodity": "Sugar",
+      "actual_price": 12597.0
+    },
+    {
+      "date": "2013-09-01",
+      "commodity": "Sugar",
+      "actual_price": 12562.0
+    },
+    {
+      "date": "2013-10-01",
+      "commodity": "Sugar",
+      "actual_price": 12523.0
+    },
+    {
+      "date": "2013-11-01",
+      "commodity": "Sugar",
+      "actual_price": 12442.0
+    },
+    {
+      "date": "2013-12-01",
+      "commodity": "Sugar",
+      "actual_price": 12267.0
+    },
+    {
+      "date": "2014-01-01",
+      "commodity": "Sugar",
+      "actual_price": 12188.0
+    },
+    {
+      "date": "2014-02-01",
+      "commodity": "Sugar",
+      "actual_price": 12131.0
+    },
+    {
+      "date": "2014-03-01",
+      "commodity": "Sugar",
+      "actual_price": 11922.0
+    },
+    {
+      "date": "2014-04-01",
+      "commodity": "Sugar",
+      "actual_price": 11806.0
+    },
+    {
+      "date": "2014-05-01",
+      "commodity": "Sugar",
+      "actual_price": 11738.0
+    },
+    {
+      "date": "2014-06-01",
+      "commodity": "Sugar",
+      "actual_price": 11738.0
+    },
+    {
+      "date": "2014-07-01",
+      "commodity": "Sugar",
+      "actual_price": 11731.0
+    },
+    {
+      "date": "2014-08-01",
+      "commodity": "Sugar",
+      "actual_price": 11667.0
+    },
+    {
+      "date": "2014-09-01",
+      "commodity": "Sugar",
+      "actual_price": 11608.0
+    },
+    {
+      "date": "2014-10-01",
+      "commodity": "Sugar",
+      "actual_price": 11595.0
+    },
+    {
+      "date": "2014-11-01",
+      "commodity": "Sugar",
+      "actual_price": 11630.0
+    },
+    {
+      "date": "2014-12-01",
+      "commodity": "Sugar",
+      "actual_price": 11637.0
+    },
+    {
+      "date": "2015-01-01",
+      "commodity": "Sugar",
+      "actual_price": 11632.0
+    },
+    {
+      "date": "2015-02-01",
+      "commodity": "Sugar",
+      "actual_price": 11722.0
+    },
+    {
+      "date": "2015-03-01",
+      "commodity": "Sugar",
+      "actual_price": 11831.0
+    },
+    {
+      "date": "2015-04-01",
+      "commodity": "Sugar",
+      "actual_price": 12188.0
+    },
+    {
+      "date": "2015-05-01",
+      "commodity": "Sugar",
+      "actual_price": 12509.0
+    },
+    {
+      "date": "2015-06-01",
+      "commodity": "Sugar",
+      "actual_price": 12941.0
+    },
+    {
+      "date": "2015-07-01",
+      "commodity": "Sugar",
+      "actual_price": 13065.0
+    },
+    {
+      "date": "2015-08-01",
+      "commodity": "Sugar",
+      "actual_price": 13013.0
+    },
+    {
+      "date": "2015-09-01",
+      "commodity": "Sugar",
+      "actual_price": 12906.0
+    },
+    {
+      "date": "2015-10-01",
+      "commodity": "Sugar",
+      "actual_price": 12918.0
+    },
+    {
+      "date": "2015-11-01",
+      "commodity": "Sugar",
+      "actual_price": 13308.0
+    },
+    {
+      "date": "2015-12-01",
+      "commodity": "Sugar",
+      "actual_price": 13116.0
+    },
+    {
+      "date": "2016-01-01",
+      "commodity": "Sugar",
+      "actual_price": 13208.0
+    },
+    {
+      "date": "2016-02-01",
+      "commodity": "Sugar",
+      "actual_price": 13310.0
+    },
+    {
+      "date": "2016-03-01",
+      "commodity": "Sugar",
+      "actual_price": 13415.0
+    },
+    {
+      "date": "2016-04-01",
+      "commodity": "Sugar",
+      "actual_price": 13463.0
+    },
+    {
+      "date": "2016-05-01",
+      "commodity": "Sugar",
+      "actual_price": 14459.0
+    },
+    {
+      "date": "2016-06-01",
+      "commodity": "Sugar",
+      "actual_price": 15327.0
+    },
+    {
+      "date": "2016-07-01",
+      "commodity": "Sugar",
+      "actual_price": 17296.55
+    },
+    {
+      "date": "2016-08-01",
+      "commodity": "Sugar",
+      "actual_price": 16984.83
+    },
+    {
+      "date": "2016-09-01",
+      "commodity": "Sugar",
+      "actual_price": 16605.7
+    },
+    {
+      "date": "2016-10-01",
+      "commodity": "Sugar",
+      "actual_price": 16197.51
+    },
+    {
+      "date": "2016-11-01",
+      "commodity": "Sugar",
+      "actual_price": 16016.29
+    },
+    {
+      "date": "2016-12-01",
+      "commodity": "Sugar",
+      "actual_price": 15947.35
+    },
+    {
+      "date": "2017-01-01",
+      "commodity": "Sugar",
+      "actual_price": 14628.0
+    },
+    {
+      "date": "2017-02-01",
+      "commodity": "Sugar",
+      "actual_price": 14546.0
+    },
+    {
+      "date": "2017-03-01",
+      "commodity": "Sugar",
+      "actual_price": 15807.17
+    },
+    {
+      "date": "2017-04-01",
+      "commodity": "Sugar",
+      "actual_price": 13791.0
+    },
+    {
+      "date": "2017-05-01",
+      "commodity": "Sugar",
+      "actual_price": 13402.0
+    },
+    {
+      "date": "2017-06-01",
+      "commodity": "Sugar",
+      "actual_price": 13306.0
+    },
+    {
+      "date": "2017-08-01",
+      "commodity": "Sugar",
+      "actual_price": 13160.0
+    },
+    {
+      "date": "2017-09-01",
+      "commodity": "Sugar",
+      "actual_price": 13034.0
+    },
+    {
+      "date": "2017-10-01",
+      "commodity": "Sugar",
+      "actual_price": 12910.0
+    },
+    {
+      "date": "2017-11-01",
+      "commodity": "Sugar",
+      "actual_price": 12814.0
+    },
+    {
+      "date": "2017-12-01",
+      "commodity": "Sugar",
+      "actual_price": 12729.0
+    },
+    {
+      "date": "2018-01-01",
+      "commodity": "Sugar",
+      "actual_price": 12618.0
+    },
+    {
+      "date": "2018-02-01",
+      "commodity": "Sugar",
+      "actual_price": 12542.0
+    },
+    {
+      "date": "2018-03-01",
+      "commodity": "Sugar",
+      "actual_price": 12488.0
+    },
+    {
+      "date": "2018-04-01",
+      "commodity": "Sugar",
+      "actual_price": 12483.0
+    },
+    {
+      "date": "2018-05-01",
+      "commodity": "Sugar",
+      "actual_price": 12454.0
+    },
+    {
+      "date": "2018-06-01",
+      "commodity": "Sugar",
+      "actual_price": 12442.0
+    },
+    {
+      "date": "2018-07-01",
+      "commodity": "Sugar",
+      "actual_price": 12452.0
+    },
+    {
+      "date": "2018-08-01",
+      "commodity": "Sugar",
+      "actual_price": 12386.0
+    },
+    {
+      "date": "2018-09-01",
+      "commodity": "Sugar",
+      "actual_price": 12303.0
+    },
+    {
+      "date": "2018-10-01",
+      "commodity": "Sugar",
+      "actual_price": 12238.0
+    },
+    {
+      "date": "2018-11-01",
+      "commodity": "Sugar",
+      "actual_price": 12163.0
+    },
+    {
+      "date": "2018-12-01",
+      "commodity": "Sugar",
+      "actual_price": 12142.0
+    },
+    {
+      "date": "2019-01-01",
+      "commodity": "Sugar",
+      "actual_price": 12130.0
+    },
+    {
+      "date": "2019-02-01",
+      "commodity": "Sugar",
+      "actual_price": 12071.0
+    },
+    {
+      "date": "2019-03-01",
+      "commodity": "Sugar",
+      "actual_price": 12153.0
+    },
+    {
+      "date": "2019-04-01",
+      "commodity": "Sugar",
+      "actual_price": 12233.0
+    },
+    {
+      "date": "2019-05-01",
+      "commodity": "Sugar",
+      "actual_price": 12495.0
+    },
+    {
+      "date": "2019-06-01",
+      "commodity": "Sugar",
+      "actual_price": 12610.0
+    },
+    {
+      "date": "2019-07-01",
+      "commodity": "Sugar",
+      "actual_price": 12585.0
+    },
+    {
+      "date": "2019-08-01",
+      "commodity": "Sugar",
+      "actual_price": 12541.0
+    },
+    {
+      "date": "2019-09-01",
+      "commodity": "Sugar",
+      "actual_price": 12510.0
+    },
+    {
+      "date": "2019-10-01",
+      "commodity": "Sugar",
+      "actual_price": 12504.0
+    },
+    {
+      "date": "2019-11-01",
+      "commodity": "Sugar",
+      "actual_price": 12562.0
+    },
+    {
+      "date": "2019-12-01",
+      "commodity": "Sugar",
+      "actual_price": 12619.0
+    },
+    {
+      "date": "2020-01-01",
+      "commodity": "Sugar",
+      "actual_price": 14408.77
+    },
+    {
+      "date": "2020-02-01",
+      "commodity": "Sugar",
+      "actual_price": 14719.93
+    },
+    {
+      "date": "2020-03-01",
+      "commodity": "Sugar",
+      "actual_price": 16617.52
+    },
+    {
+      "date": "2020-04-01",
+      "commodity": "Sugar",
+      "actual_price": 18040.56
+    },
+    {
+      "date": "2020-05-01",
+      "commodity": "Sugar",
+      "actual_price": 17621.02
+    },
+    {
+      "date": "2020-06-01",
+      "commodity": "Sugar",
+      "actual_price": 16591.03
+    },
+    {
+      "date": "2020-07-01",
+      "commodity": "Sugar",
+      "actual_price": 15468.67
+    },
+    {
+      "date": "2020-08-01",
+      "commodity": "Sugar",
+      "actual_price": 15162.37
+    },
+    {
+      "date": "2020-09-01",
+      "commodity": "Sugar",
+      "actual_price": 14956.88
+    },
+    {
+      "date": "2020-10-01",
+      "commodity": "Sugar",
+      "actual_price": 14776.21
+    },
+    {
+      "date": "2020-11-01",
+      "commodity": "Sugar",
+      "actual_price": 14755.59
+    },
+    {
+      "date": "2020-12-01",
+      "commodity": "Sugar",
+      "actual_price": 14793.85
+    },
+    {
+      "date": "2021-01-01",
+      "commodity": "Sugar",
+      "actual_price": 14785.12
+    },
+    {
+      "date": "2021-02-01",
+      "commodity": "Sugar",
+      "actual_price": 14727.43
+    },
+    {
+      "date": "2021-03-01",
+      "commodity": "Sugar",
+      "actual_price": 14700.27
+    },
+    {
+      "date": "2021-04-01",
+      "commodity": "Sugar",
+      "actual_price": 14671.54
+    },
+    {
+      "date": "2021-05-01",
+      "commodity": "Sugar",
+      "actual_price": 14645.71
+    },
+    {
+      "date": "2021-06-01",
+      "commodity": "Sugar",
+      "actual_price": 14583.46
+    },
+    {
+      "date": "2021-07-01",
+      "commodity": "Sugar",
+      "actual_price": 14499.17
+    },
+    {
+      "date": "2021-08-01",
+      "commodity": "Sugar",
+      "actual_price": 14434.07
+    },
+    {
+      "date": "2021-09-01",
+      "commodity": "Sugar",
+      "actual_price": 14400.44
+    },
+    {
+      "date": "2021-10-01",
+      "commodity": "Sugar",
+      "actual_price": 14389.81
+    },
+    {
+      "date": "2021-11-01",
+      "commodity": "Sugar",
+      "actual_price": 14406.18
+    },
+    {
+      "date": "2021-12-01",
+      "commodity": "Sugar",
+      "actual_price": 14412.86
+    },
+    {
+      "date": "2022-01-01",
+      "commodity": "Sugar",
+      "actual_price": 14696.82
+    },
+    {
+      "date": "2022-02-01",
+      "commodity": "Sugar",
+      "actual_price": 14931.27
+    },
+    {
+      "date": "2022-03-01",
+      "commodity": "Sugar",
+      "actual_price": 15108.39
+    },
+    {
+      "date": "2022-04-01",
+      "commodity": "Sugar",
+      "actual_price": 15528.29
+    },
+    {
+      "date": "2022-05-01",
+      "commodity": "Sugar",
+      "actual_price": 15609.92
+    },
+    {
+      "date": "2022-06-01",
+      "commodity": "Sugar",
+      "actual_price": 15491.7
+    },
+    {
+      "date": "2022-07-01",
+      "commodity": "Sugar",
+      "actual_price": 15359.23
+    },
+    {
+      "date": "2022-08-01",
+      "commodity": "Sugar",
+      "actual_price": 15300.76
+    },
+    {
+      "date": "2022-09-01",
+      "commodity": "Sugar",
+      "actual_price": 15249.17
+    },
+    {
+      "date": "2022-10-01",
+      "commodity": "Sugar",
+      "actual_price": 15218.99
+    },
+    {
+      "date": "2022-11-01",
+      "commodity": "Sugar",
+      "actual_price": 15224.26
+    },
+    {
+      "date": "2022-12-01",
+      "commodity": "Sugar",
+      "actual_price": 15237.8
+    },
+    {
+      "date": "2023-01-01",
+      "commodity": "Sugar",
+      "actual_price": 15230.01
+    },
+    {
+      "date": "2023-02-01",
+      "commodity": "Sugar",
+      "actual_price": 15271.24
+    },
+    {
+      "date": "2023-03-01",
+      "commodity": "Sugar",
+      "actual_price": 15297.65
+    },
+    {
+      "date": "2023-04-01",
+      "commodity": "Sugar",
+      "actual_price": 15321.55
+    },
+    {
+      "date": "2023-05-01",
+      "commodity": "Sugar",
+      "actual_price": 15377.06
+    },
+    {
+      "date": "2023-06-01",
+      "commodity": "Sugar",
+      "actual_price": 15461.2
+    },
+    {
+      "date": "2023-07-01",
+      "commodity": "Sugar",
+      "actual_price": 15500.86
+    },
+    {
+      "date": "2023-08-01",
+      "commodity": "Sugar",
+      "actual_price": 15561.15
+    },
+    {
+      "date": "2023-09-01",
+      "commodity": "Sugar",
+      "actual_price": 15746.52
+    },
+    {
+      "date": "2023-10-01",
+      "commodity": "Sugar",
+      "actual_price": 16207.57
+    },
+    {
+      "date": "2023-11-01",
+      "commodity": "Sugar",
+      "actual_price": 17011.37
+    },
+    {
+      "date": "2023-12-01",
+      "commodity": "Sugar",
+      "actual_price": 17647.9
+    },
+    {
+      "date": "2024-01-01",
+      "commodity": "Sugar",
+      "actual_price": 17715.15
+    },
+    {
+      "date": "2024-02-01",
+      "commodity": "Sugar",
+      "actual_price": 17792.97
+    },
+    {
+      "date": "2024-03-01",
+      "commodity": "Sugar",
+      "actual_price": 18205.26
+    },
+    {
+      "date": "2024-04-01",
+      "commodity": "Sugar",
+      "actual_price": 18300.55
+    },
+    {
+      "date": "2024-05-01",
+      "commodity": "Sugar",
+      "actual_price": 18679.63
+    },
+    {
+      "date": "2024-06-01",
+      "commodity": "Sugar",
+      "forecast_price": 18743.38,
+      "lower_95": 17692.67,
+      "upper_95": 19794.09,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2024-07-01",
+      "commodity": "Sugar",
+      "forecast_price": 18807.16,
+      "lower_95": 17318.4,
+      "upper_95": 20295.92,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2024-08-01",
+      "commodity": "Sugar",
+      "forecast_price": 18870.94,
+      "lower_95": 17044.06,
+      "upper_95": 20697.82,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2024-09-01",
+      "commodity": "Sugar",
+      "forecast_price": 18934.72,
+      "lower_95": 16821.12,
+      "upper_95": 21048.32,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2024-10-01",
+      "commodity": "Sugar",
+      "forecast_price": 18998.5,
+      "lower_95": 16630.82,
+      "upper_95": 21366.17,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2024-11-01",
+      "commodity": "Sugar",
+      "forecast_price": 19062.28,
+      "lower_95": 16463.58,
+      "upper_95": 21660.98,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2007-01-01",
+      "commodity": "Flour",
+      "actual_price": 4328.26
+    },
+    {
+      "date": "2007-02-01",
+      "commodity": "Flour",
+      "actual_price": 4386.0
+    },
+    {
+      "date": "2007-03-01",
+      "commodity": "Flour",
+      "actual_price": 4416.0
+    },
+    {
+      "date": "2007-04-01",
+      "commodity": "Flour",
+      "actual_price": 4459.0
+    },
+    {
+      "date": "2007-05-01",
+      "commodity": "Flour",
+      "actual_price": 4475.0
+    },
+    {
+      "date": "2007-06-01",
+      "commodity": "Flour",
+      "actual_price": 4499.0
+    },
+    {
+      "date": "2007-07-01",
+      "commodity": "Flour",
+      "actual_price": 4558.0
+    },
+    {
+      "date": "2007-08-01",
+      "commodity": "Flour",
+      "actual_price": 4717.0
+    },
+    {
+      "date": "2007-09-01",
+      "commodity": "Flour",
+      "actual_price": 4975.0
+    },
+    {
+      "date": "2007-10-01",
+      "commodity": "Flour",
+      "actual_price": 5300.0
+    },
+    {
+      "date": "2007-11-01",
+      "commodity": "Flour",
+      "actual_price": 5426.0
+    },
+    {
+      "date": "2007-12-01",
+      "commodity": "Flour",
+      "actual_price": 5846.0
+    },
+    {
+      "date": "2008-01-01",
+      "commodity": "Flour",
+      "actual_price": 6474.0
+    },
+    {
+      "date": "2008-02-01",
+      "commodity": "Flour",
+      "actual_price": 6970.0
+    },
+    {
+      "date": "2008-03-01",
+      "commodity": "Flour",
+      "actual_price": 7101.0
+    },
+    {
+      "date": "2008-04-01",
+      "commodity": "Flour",
+      "actual_price": 7062.0
+    },
+    {
+      "date": "2008-05-01",
+      "commodity": "Flour",
+      "actual_price": 7080.0
+    },
+    {
+      "date": "2008-06-01",
+      "commodity": "Flour",
+      "actual_price": 7110.0
+    },
+    {
+      "date": "2008-07-01",
+      "commodity": "Flour",
+      "actual_price": 7078.0
+    },
+    {
+      "date": "2008-08-01",
+      "commodity": "Flour",
+      "actual_price": 7105.0
+    },
+    {
+      "date": "2008-09-01",
+      "commodity": "Flour",
+      "actual_price": 7276.0
+    },
+    {
+      "date": "2008-10-01",
+      "commodity": "Flour",
+      "actual_price": 7326.0
+    },
+    {
+      "date": "2008-11-01",
+      "commodity": "Flour",
+      "actual_price": 7277.0
+    },
+    {
+      "date": "2008-12-01",
+      "commodity": "Flour",
+      "actual_price": 7218.0
+    },
+    {
+      "date": "2009-01-01",
+      "commodity": "Flour",
+      "actual_price": 7294.0
+    },
+    {
+      "date": "2009-02-01",
+      "commodity": "Flour",
+      "actual_price": 7352.0
+    },
+    {
+      "date": "2009-03-01",
+      "commodity": "Flour",
+      "actual_price": 7437.0
+    },
+    {
+      "date": "2009-04-01",
+      "commodity": "Flour",
+      "actual_price": 7423.0
+    },
+    {
+      "date": "2009-05-01",
+      "commodity": "Flour",
+      "actual_price": 7380.33
+    },
+    {
+      "date": "2009-06-01",
+      "commodity": "Flour",
+      "actual_price": 7374.93
+    },
+    {
+      "date": "2009-07-01",
+      "commodity": "Flour",
+      "actual_price": 7392.31
+    },
+    {
+      "date": "2009-08-01",
+      "commodity": "Flour",
+      "actual_price": 7387.87
+    },
+    {
+      "date": "2009-09-01",
+      "commodity": "Flour",
+      "actual_price": 7406.0
+    },
+    {
+      "date": "2009-10-01",
+      "commodity": "Flour",
+      "actual_price": 7374.0
+    },
+    {
+      "date": "2009-11-01",
+      "commodity": "Flour",
+      "actual_price": 7364.0
+    },
+    {
+      "date": "2009-12-01",
+      "commodity": "Flour",
+      "actual_price": 7366.0
+    },
+    {
+      "date": "2010-01-01",
+      "commodity": "Flour",
+      "actual_price": 7376.0
+    },
+    {
+      "date": "2010-02-01",
+      "commodity": "Flour",
+      "actual_price": 7375.0
+    },
+    {
+      "date": "2010-03-01",
+      "commodity": "Flour",
+      "actual_price": 7303.0
+    },
+    {
+      "date": "2010-04-01",
+      "commodity": "Flour",
+      "actual_price": 7239.0
+    },
+    {
+      "date": "2010-05-01",
+      "commodity": "Flour",
+      "actual_price": 7189.0
+    },
+    {
+      "date": "2010-06-01",
+      "commodity": "Flour",
+      "actual_price": 7141.0
+    },
+    {
+      "date": "2010-07-01",
+      "commodity": "Flour",
+      "actual_price": 7091.0
+    },
+    {
+      "date": "2010-08-01",
+      "commodity": "Flour",
+      "actual_price": 7120.0
+    },
+    {
+      "date": "2010-09-01",
+      "commodity": "Flour",
+      "actual_price": 7189.0
+    },
+    {
+      "date": "2010-10-01",
+      "commodity": "Flour",
+      "actual_price": 7194.0
+    },
+    {
+      "date": "2010-11-01",
+      "commodity": "Flour",
+      "actual_price": 7196.0
+    },
+    {
+      "date": "2010-12-01",
+      "commodity": "Flour",
+      "actual_price": 7182.0
+    },
+    {
+      "date": "2011-01-01",
+      "commodity": "Flour",
+      "actual_price": 7179.0
+    },
+    {
+      "date": "2011-02-01",
+      "commodity": "Flour",
+      "actual_price": 7179.0
+    },
+    {
+      "date": "2011-03-01",
+      "commodity": "Flour",
+      "actual_price": 7179.0
+    },
+    {
+      "date": "2011-04-01",
+      "commodity": "Flour",
+      "actual_price": 7171.0
+    },
+    {
+      "date": "2011-05-01",
+      "commodity": "Flour",
+      "actual_price": 7138.0
+    },
+    {
+      "date": "2011-06-01",
+      "commodity": "Flour",
+      "actual_price": 7176.0
+    },
+    {
+      "date": "2011-07-01",
+      "commodity": "Flour",
+      "actual_price": 7185.0
+    },
+    {
+      "date": "2011-08-01",
+      "commodity": "Flour",
+      "actual_price": 7155.0
+    },
+    {
+      "date": "2011-09-01",
+      "commodity": "Flour",
+      "actual_price": 7362.0
+    },
+    {
+      "date": "2011-10-01",
+      "commodity": "Flour",
+      "actual_price": 7375.0
+    },
+    {
+      "date": "2011-11-01",
+      "commodity": "Flour",
+      "actual_price": 7366.0
+    },
+    {
+      "date": "2011-12-01",
+      "commodity": "Flour",
+      "actual_price": 7361.0
+    },
+    {
+      "date": "2012-01-01",
+      "commodity": "Flour",
+      "actual_price": 7391.0
+    },
+    {
+      "date": "2012-02-01",
+      "commodity": "Flour",
+      "actual_price": 7387.0
+    },
+    {
+      "date": "2012-03-01",
+      "commodity": "Flour",
+      "actual_price": 7381.0
+    },
+    {
+      "date": "2012-04-01",
+      "commodity": "Flour",
+      "actual_price": 7378.0
+    },
+    {
+      "date": "2012-05-01",
+      "commodity": "Flour",
+      "actual_price": 7365.0
+    },
+    {
+      "date": "2012-06-01",
+      "commodity": "Flour",
+      "actual_price": 7354.0
+    },
+    {
+      "date": "2012-07-01",
+      "commodity": "Flour",
+      "actual_price": 7361.0
+    },
+    {
+      "date": "2012-08-01",
+      "commodity": "Flour",
+      "actual_price": 7354.0
+    },
+    {
+      "date": "2012-09-01",
+      "commodity": "Flour",
+      "actual_price": 7379.0
+    },
+    {
+      "date": "2012-10-01",
+      "commodity": "Flour",
+      "actual_price": 7371.0
+    },
+    {
+      "date": "2012-11-01",
+      "commodity": "Flour",
+      "actual_price": 7364.0
+    },
+    {
+      "date": "2012-12-01",
+      "commodity": "Flour",
+      "actual_price": 7382.0
+    },
+    {
+      "date": "2013-01-01",
+      "commodity": "Flour",
+      "actual_price": 7395.0
+    },
+    {
+      "date": "2013-02-01",
+      "commodity": "Flour",
+      "actual_price": 7390.0
+    },
+    {
+      "date": "2013-03-01",
+      "commodity": "Flour",
+      "actual_price": 7364.0
+    },
+    {
+      "date": "2013-04-01",
+      "commodity": "Flour",
+      "actual_price": 7361.0
+    },
+    {
+      "date": "2013-05-01",
+      "commodity": "Flour",
+      "actual_price": 7350.0
+    },
+    {
+      "date": "2013-06-01",
+      "commodity": "Flour",
+      "actual_price": 7356.0
+    },
+    {
+      "date": "2013-07-01",
+      "commodity": "Flour",
+      "actual_price": 7388.0
+    },
+    {
+      "date": "2013-08-01",
+      "commodity": "Flour",
+      "actual_price": 7438.0
+    },
+    {
+      "date": "2013-09-01",
+      "commodity": "Flour",
+      "actual_price": 7471.0
+    },
+    {
+      "date": "2013-10-01",
+      "commodity": "Flour",
+      "actual_price": 7511.0
+    },
+    {
+      "date": "2013-11-01",
+      "commodity": "Flour",
+      "actual_price": 7583.0
+    },
+    {
+      "date": "2013-12-01",
+      "commodity": "Flour",
+      "actual_price": 7694.0
+    },
+    {
+      "date": "2014-01-01",
+      "commodity": "Flour",
+      "actual_price": 7759.0
+    },
+    {
+      "date": "2014-02-01",
+      "commodity": "Flour",
+      "actual_price": 7754.0
+    },
+    {
+      "date": "2014-03-01",
+      "commodity": "Flour",
+      "actual_price": 7766.0
+    },
+    {
+      "date": "2014-04-01",
+      "commodity": "Flour",
+      "actual_price": 7758.0
+    },
+    {
+      "date": "2014-05-01",
+      "commodity": "Flour",
+      "actual_price": 7750.0
+    },
+    {
+      "date": "2014-06-01",
+      "commodity": "Flour",
+      "actual_price": 7773.0
+    },
+    {
+      "date": "2014-07-01",
+      "commodity": "Flour",
+      "actual_price": 7790.0
+    },
+    {
+      "date": "2014-08-01",
+      "commodity": "Flour",
+      "actual_price": 7792.0
+    },
+    {
+      "date": "2014-09-01",
+      "commodity": "Flour",
+      "actual_price": 7831.0
+    },
+    {
+      "date": "2014-10-01",
+      "commodity": "Flour",
+      "actual_price": 7803.0
+    },
+    {
+      "date": "2014-11-01",
+      "commodity": "Flour",
+      "actual_price": 7794.0
+    },
+    {
+      "date": "2014-12-01",
+      "commodity": "Flour",
+      "actual_price": 7800.0
+    },
+    {
+      "date": "2015-01-01",
+      "commodity": "Flour",
+      "actual_price": 7850.0
+    },
+    {
+      "date": "2015-02-01",
+      "commodity": "Flour",
+      "actual_price": 7850.0
+    },
+    {
+      "date": "2015-03-01",
+      "commodity": "Flour",
+      "actual_price": 7852.0
+    },
+    {
+      "date": "2015-04-01",
+      "commodity": "Flour",
+      "actual_price": 7854.0
+    },
+    {
+      "date": "2015-05-01",
+      "commodity": "Flour",
+      "actual_price": 7826.0
+    },
+    {
+      "date": "2015-06-01",
+      "commodity": "Flour",
+      "actual_price": 7834.0
+    },
+    {
+      "date": "2015-07-01",
+      "commodity": "Flour",
+      "actual_price": 7927.0
+    },
+    {
+      "date": "2015-08-01",
+      "commodity": "Flour",
+      "actual_price": 7953.0
+    },
+    {
+      "date": "2015-09-01",
+      "commodity": "Flour",
+      "actual_price": 7951.0
+    },
+    {
+      "date": "2015-10-01",
+      "commodity": "Flour",
+      "actual_price": 7955.0
+    },
+    {
+      "date": "2015-11-01",
+      "commodity": "Flour",
+      "actual_price": 7938.0
+    },
+    {
+      "date": "2015-12-01",
+      "commodity": "Flour",
+      "actual_price": 7961.0
+    },
+    {
+      "date": "2016-01-01",
+      "commodity": "Flour",
+      "actual_price": 7986.0
+    },
+    {
+      "date": "2016-02-01",
+      "commodity": "Flour",
+      "actual_price": 7980.0
+    },
+    {
+      "date": "2016-03-01",
+      "commodity": "Flour",
+      "actual_price": 7985.0
+    },
+    {
+      "date": "2016-04-01",
+      "commodity": "Flour",
+      "actual_price": 8007.0
+    },
+    {
+      "date": "2016-05-01",
+      "commodity": "Flour",
+      "actual_price": 7990.0
+    },
+    {
+      "date": "2016-06-01",
+      "commodity": "Flour",
+      "actual_price": 8019.0
+    },
+    {
+      "date": "2016-07-01",
+      "commodity": "Flour",
+      "actual_price": 8042.0
+    },
+    {
+      "date": "2016-08-01",
+      "commodity": "Flour",
+      "actual_price": 8064.0
+    },
+    {
+      "date": "2016-09-01",
+      "commodity": "Flour",
+      "actual_price": 8054.0
+    },
+    {
+      "date": "2016-10-01",
+      "commodity": "Flour",
+      "actual_price": 8048.0
+    },
+    {
+      "date": "2016-11-01",
+      "commodity": "Flour",
+      "actual_price": 8006.0
+    },
+    {
+      "date": "2016-12-01",
+      "commodity": "Flour",
+      "actual_price": 8014.0
+    },
+    {
+      "date": "2017-01-01",
+      "commodity": "Flour",
+      "actual_price": 8030.0
+    },
+    {
+      "date": "2017-02-01",
+      "commodity": "Flour",
+      "actual_price": 8020.0
+    },
+    {
+      "date": "2017-03-01",
+      "commodity": "Flour",
+      "actual_price": 7998.0
+    },
+    {
+      "date": "2017-04-01",
+      "commodity": "Flour",
+      "actual_price": 7922.0
+    },
+    {
+      "date": "2017-05-01",
+      "commodity": "Flour",
+      "actual_price": 7895.0
+    },
+    {
+      "date": "2017-06-01",
+      "commodity": "Flour",
+      "actual_price": 7929.0
+    },
+    {
+      "date": "2017-08-01",
+      "commodity": "Flour",
+      "actual_price": 8005.0
+    },
+    {
+      "date": "2017-09-01",
+      "commodity": "Flour",
+      "actual_price": 8159.0
+    },
+    {
+      "date": "2017-10-01",
+      "commodity": "Flour",
+      "actual_price": 8244.0
+    },
+    {
+      "date": "2017-11-01",
+      "commodity": "Flour",
+      "actual_price": 8258.0
+    },
+    {
+      "date": "2017-12-01",
+      "commodity": "Flour",
+      "actual_price": 8296.0
+    },
+    {
+      "date": "2018-01-01",
+      "commodity": "Flour",
+      "actual_price": 8303.0
+    },
+    {
+      "date": "2018-02-01",
+      "commodity": "Flour",
+      "actual_price": 8352.0
+    },
+    {
+      "date": "2018-03-01",
+      "commodity": "Flour",
+      "actual_price": 8375.0
+    },
+    {
+      "date": "2018-04-01",
+      "commodity": "Flour",
+      "actual_price": 8337.0
+    },
+    {
+      "date": "2018-05-01",
+      "commodity": "Flour",
+      "actual_price": 8219.0
+    },
+    {
+      "date": "2018-06-01",
+      "commodity": "Flour",
+      "actual_price": 8170.0
+    },
+    {
+      "date": "2018-07-01",
+      "commodity": "Flour",
+      "actual_price": 8185.0
+    },
+    {
+      "date": "2018-08-01",
+      "commodity": "Flour",
+      "actual_price": 8180.0
+    },
+    {
+      "date": "2018-09-01",
+      "commodity": "Flour",
+      "actual_price": 8196.0
+    },
+    {
+      "date": "2018-10-01",
+      "commodity": "Flour",
+      "actual_price": 8230.0
+    },
+    {
+      "date": "2018-11-01",
+      "commodity": "Flour",
+      "actual_price": 8274.0
+    },
+    {
+      "date": "2018-12-01",
+      "commodity": "Flour",
+      "actual_price": 8304.0
+    },
+    {
+      "date": "2019-01-01",
+      "commodity": "Flour",
+      "actual_price": 8316.0
+    },
+    {
+      "date": "2019-02-01",
+      "commodity": "Flour",
+      "actual_price": 8338.0
+    },
+    {
+      "date": "2019-03-01",
+      "commodity": "Flour",
+      "actual_price": 8370.0
+    },
+    {
+      "date": "2019-04-01",
+      "commodity": "Flour",
+      "actual_price": 8388.0
+    },
+    {
+      "date": "2019-05-01",
+      "commodity": "Flour",
+      "actual_price": 8370.0
+    },
+    {
+      "date": "2019-06-01",
+      "commodity": "Flour",
+      "actual_price": 8385.0
+    },
+    {
+      "date": "2019-07-01",
+      "commodity": "Flour",
+      "actual_price": 8401.0
+    },
+    {
+      "date": "2019-08-01",
+      "commodity": "Flour",
+      "actual_price": 8405.0
+    },
+    {
+      "date": "2019-09-01",
+      "commodity": "Flour",
+      "actual_price": 8406.0
+    },
+    {
+      "date": "2019-10-01",
+      "commodity": "Flour",
+      "actual_price": 8424.0
+    },
+    {
+      "date": "2019-11-01",
+      "commodity": "Flour",
+      "actual_price": 8432.0
+    },
+    {
+      "date": "2019-12-01",
+      "commodity": "Flour",
+      "actual_price": 8478.0
+    },
+    {
+      "date": "2020-01-01",
+      "commodity": "Flour",
+      "actual_price": 8503.0
+    },
+    {
+      "date": "2020-02-01",
+      "commodity": "Flour",
+      "actual_price": 8481.0
+    },
+    {
+      "date": "2020-03-01",
+      "commodity": "Flour",
+      "actual_price": 8478.0
+    },
+    {
+      "date": "2020-04-01",
+      "commodity": "Flour",
+      "forecast_price": 8482.09,
+      "lower_95": 8333.85,
+      "upper_95": 8630.34,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2020-05-01",
+      "commodity": "Flour",
+      "forecast_price": 8486.18,
+      "lower_95": 8256.63,
+      "upper_95": 8715.74,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2020-06-01",
+      "commodity": "Flour",
+      "forecast_price": 8489.91,
+      "lower_95": 8185.52,
+      "upper_95": 8794.31,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2020-07-01",
+      "commodity": "Flour",
+      "forecast_price": 8493.31,
+      "lower_95": 8116.36,
+      "upper_95": 8870.27,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2020-08-01",
+      "commodity": "Flour",
+      "forecast_price": 8496.41,
+      "lower_95": 8048.02,
+      "upper_95": 8944.81,
+      "model_used": "AutoETS"
+    },
+    {
+      "date": "2020-09-01",
+      "commodity": "Flour",
+      "forecast_price": 8499.23,
+      "lower_95": 7980.17,
+      "upper_95": 9018.3,
+      "model_used": "AutoETS"
+    }
+  ]
+}

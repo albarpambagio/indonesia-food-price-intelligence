@@ -36,3 +36,5 @@ dashboard/out/
 
 # dbt user config
 transform/.user.yml
+
+transform/dbt_packages/

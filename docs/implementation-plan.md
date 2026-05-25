@@ -8,7 +8,7 @@
 | **Data First Accessed** | 2026-05-22 |
 | **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
 | **Target Completion** | ~16–20 working days |
-| **Status** | Phase 2 Complete (+ Phase 2.5 corrections applied) |
+| **Status** | Phase 3 In Progress (forecast + export) |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Next.js (Shadboard) → Cloudflare Pages |
 
 ### Parallelization Opportunities
@@ -19,7 +19,7 @@
 | §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
 
 **Sequential chain** (must wait): Phase 0 → 1 → 2 → 2.5 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
-> **Current**: Phase 1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 4 ✅ (parallel). Next: Phase 3 (Forecasting).
+> **Current**: Phase 1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 4 ✅ (parallel). Phase 3 🔄 In Progress (forecast + export). Phase 6 deferred.
 
 ---
 
@@ -143,19 +143,24 @@
 
 ---
 
-## Phase 3 — Forecasting (2 days)
-> **Sequential** — depends on Phase 2 (mart models). Phase 4 (EDA) and Phase 7 (doc start) can run alongside this.
+## Phase 3 — Forecasting + Export (2–3 days)
+> **Sequential** — depends on Phase 2 (mart models). Phase 7 (doc start) runs alongside this.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 3.1 | `forecast/run_forecast.py` — AutoARIMA + AutoETS per commodity on national avg prices | ⬜ | Compare AIC/BIC, cross-validation MAE on 12-month holdout |
-| 3.2 | Islamic calendar exogenous variables (Ramadan/Eid binary flags) | ⬜ | Add to training data before model fit |
-| 3.3 | Generate 6-month forecast (Jun–Nov 2024) with 95% CI | ⬜ | Output: `{date, commodity, forecast_price, lower_95, upper_95, model_used}` |
-| 3.4 | Validate forecast output: check for NaN, negative prices, CI bounds reversal (lower > upper) | ⬜ | `validate_forecast()` logs issues to `logs/forecast.log` + updates `pipeline.lineage.forecast_status` |
-| 3.5 | Create **`analysis/forecast_experimentation.py`** (marimo notebook, optional) | ⬜ | Interactive model selection: compare models per commodity live |
-| 3.6 | Write `docs/model_methodology.md` | ⬜ | 7 required sections per plan |
+| 3.1 | **Gap fix**: Add `_loaded_at` column to `load_raw.py` — `CURRENT_TIMESTAMP` on ingest | ⬜ | Required for `dbt source freshness` to work; LEARNINGS.md §49 identified, never implemented |
+| 3.2 | `forecast/run_forecast.py` — AutoARIMA + AutoETS per commodity on national avg prices | ⬜ | Compare AIC/BIC on 12-month holdout; model per commodity |
+| 3.3 | Islamic calendar exogenous variables (Ramadan/Eid binary flags) | ⬜ | Add to training data before model fit |
+| 3.4 | Generate 6-month forecast (Jun–Nov 2024) with 95% CI | ⬜ | Output: `{date, commodity, forecast_price, lower_95, upper_95, model_used}` |
+| 3.5 | Validate forecast output: NaN, negative prices, CI reversal (lower > upper) | ⬜ | `validate_forecast()` logs to `logs/forecast.log` + updates `pipeline.lineage.forecast_status` |
+| 3.6 | `export/export_json.py` — query 4 mart models + forecast → static JSON | ⬜ | Missing module — must be built from scratch. Writes to `dashboard/public/data/` |
+| 3.7 | `verify_export()` — validate mart row count matches JSON record count | ⬜ | Per-file check: missing columns, row count, nulls in critical fields |
+| 3.8 | Log export results to `logs/export.log` + update `pipeline.lineage.export_status` | ⬜ | |
+| 3.9 | Update `run_pipeline.py` — add forecast + export steps, parameterize schema refs | ⬜ | Orchestrator currently missing both steps; schema names hardcoded (`wfp_*`) |
+| 3.10 | Create **`analysis/forecast_experimentation.py`** (marimo notebook, optional) | ⬜ | Interactive model selection per commodity |
+| 3.11 | Write `docs/model_methodology.md` | ⬜ | 7 required sections per plan |
 
-**Key Deliverable**: `forecast.json` (validated) + `docs/model_methodology.md`
+**Key Deliverable**: `forecast.json` (validated) + `price_trends.json` + all 4 mart JSONs + `docs/model_methodology.md`
 
 ---
 
@@ -197,7 +202,8 @@
 
 ---
 
-## Phase 6 — Dashboard (Shadboard + Next.js) (3–4 days)
+## Phase 6 — Dashboard (Shadboard + Next.js) (3–4 days) [DEFERRED]
+> **⚠ Deferred to after Phase 3 — Dashboard init and all 4 pages postponed. Export step (3.6–3.8) runs during Phase 3 to produce static JSONs so dashboard has data when development starts.**
 > **Sequential (pages)** — chart implementation depends on Phase 2 (mart data) + Phase 3 (forecast) exported JSON. §6.6 init is independent.
 
 ### Page 1 — Price Trends & Forecast
@@ -306,19 +312,22 @@
 - [x] Phase 2.5 corrections: Ramadan flags joined, YoY delta added, correlation summary created, DATE_TRUNC centralized, lineage table fixed
 - [x] dbt audit (6 dimensions): FK relationships test, packages.yml, exposures, seed YAML, filter_out invariant, unit accepted_values, dead config cleanup, expanded source column docs (5→13 food_prices, 3→7 markets)
 - [x] All generic tests verified with correct `arguments:` nested syntax (dbt 1.11.11)
+- [x] EDA: ≥6 findings in insights log
+- [ ] Source freshness column `_loaded_at` added to raw load
+- [ ] `forecast/run_forecast.py` — trains AutoARIMA/AutoETS per commodity
+- [ ] Ramadan/Eid binary flags used as exogenous regressors
+- [ ] 6-month forecast with 95% CI generated
 - [ ] Forecast output validated (no NaN, negative, or reversed CI)
+- [ ] `forecast_status` and `export_status` updated in pipeline lineage
+- [ ] `export/export_json.py` — all 4 mart models + forecast → JSON
 - [ ] Export verified: JSON record count == mart row count
-- [ ] EDA: ≥6 findings in insights log
-- [ ] Deep dive: all 4 exec questions answered with quantified findings
-- [ ] All 4 dashboard pages functional with global filters
-- [ ] Page 1: forecast with CI, buy signals, YoY table, limitations footnote
-- [ ] Page 2: action cards, heatmap, Ramadan overlay, driver toggle
-- [ ] Page 3: choropleth map with year slider, province table with coverage column
-- [ ] Page 4: correlation matrix, scatter, stability chart, implication card
-- [ ] Mobile responsive on all pages
-- [ ] Static export build passes
-- [ ] Cloudflare Pages deployment successful
-- [ ] README complete with live URL
+- [ ] `run_pipeline.py` updated with forecast + export steps + parameterized schemas
+- [ ] `docs/model_methodology.md` written (7 sections)
+- [ ] `analysis/forecast_experimentation.py` created (optional notebook)
+- [ ] DEFERRED to Phase 6: All 4 dashboard pages
+- [ ] DEFERRED to Phase 6: Mobile responsive
+- [ ] DEFERRED to Phase 6: Cloudflare Pages deploy
+- [ ] DEFERRED to Phase 6: README complete with live URL
 
 ---
 
@@ -343,12 +352,14 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 2 | `feat: dbt intermediate + mart models` | Analytical core |
 | Phase 2.5 | `fix: post-implementation corrections (ramadan, correlation, lineage, docs)` | Gap fixes |
 | Phase 2.5a | `fix: dbt audit — FK test, packages, exposures, seed YAML, invariants, docs` | 9 audit gaps closed, 33→55 tests |
-| Phase 3 | `feat: forecast models + methodology doc` | Modelling |
+| Phase 3a | `feat: forecast engine — run_forecast.py` | AutoARIMA/AutoETS, exogenous regressors, validation |
+| Phase 3b | `feat: export engine — export_json.py` | Mart queries → JSON, verify_export(), lineage |
+| Phase 3c | `fix: pipeline orchestrator + _loaded_at` | `run_pipeline.py` forecast/export steps, schema parameterization, source freshness |
 | Phase 4 | `feat: EDA notebook + insights log` | Analysis |
 | Phase 5 | `feat: deep dive analysis notebook` | Analysis |
+| Phase 3d | `docs: forecasting methodology` | `model_methodology.md` |
 | Phase 6 | `feat: dashboard (Next.js + Shadboard + export)` | Frontend |
-| Phase 7 | `docs: methodology documentation` | Docs |
-| Phase 8 | `docs: README, insights, recommendations` | Final packaging |
+| Phase 7 | `docs: README, insights, recommendations` | Final packaging |
 
 **Rules**:
 - Conventional Commits (`feat:`, `docs:`, `fix:`)
@@ -364,3 +375,5 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 |------|---------|------------|
 | 2026-05-25 | **Data Finding**: Rice/Sugar/Flour have no market-level `actual` prices — only national average (market_id=974, price_flag='actual'). Cooking Oil is the only commodity with province-level actual price data (4,236 rows). | Accepted as WFP data constraint. `mart_commodity_correlation` provides all 4 at national level (158 months). Dashboard Pages 2/3 will document limitation. |
 | 2026-05-25 | **dbt evaluation per dbt-agent-skills**: audit found 9 gaps — missing FK relationships test, no packages.yml, no exposures, no seed YAML, dead config, unused column, insufficient column docs, missing unit test, deprecated test syntax. | All 9 closed. Tests expanded from 33→55. `dbt build` passes 66/66 with 0 errors, 0 warnings. Documented in AGENTS.md § "dbt Implementation Evaluation" and LEARNINGS.md §56. |
+| 2026-05-26 | **Pre-Phase 3 gap analysis**: `forecast/run_forecast.py` missing, `export/export_json.py` missing, `run_pipeline.py` lacks forecast/export steps, source freshness broken (no `_loaded_at`), `docs/model_methodology.md` missing, `analysis/forecast_experimentation.py` missing. | All must be built during Phase 3. Dashboard init (Phase 6) deferred to later phase. See gap-analysis above. |
+| 2026-05-26 | **`mart_commodity_correlation` granularity mismatch**: Cooking Oil averaged across hundreds of markets; Rice/Sugar/Flour from single national avg market (974). | Cross-correlation coefficients may be misleading. Flag in `model_methodology.md` and dashboard footnote. |

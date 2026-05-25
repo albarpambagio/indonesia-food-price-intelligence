@@ -32,6 +32,24 @@ def step(name: str) -> None:
     logger.info("=== STEP: %s ===", name)
 
 
+def run_python(script_path: str, cwd: str, step_label: str) -> None:
+    logger.info("Running %s ...", step_label)
+    result = subprocess.run(
+        ["uv", "run", "python", script_path],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        logger.error("%s FAILED\n%s", step_label, result.stderr.strip() or result.stdout.strip())
+        raise RuntimeError(f"{step_label} failed")
+    logger.info("%s OK", step_label)
+    for line in result.stdout.splitlines():
+        line = line.strip()
+        if line and not line.startswith("="):
+            logger.info("  %s", line)
+
+
 def run_dbt(command: list[str]) -> None:
     logger.info("Running dbt %s ...", " ".join(command))
     result = subprocess.run(
@@ -147,7 +165,21 @@ def main() -> None:
         )
         conn.close()
 
-        # --- Step 6: Complete ---
+        # --- Step 6: Forecast ---
+        step("Forecast")
+        conn = get_connection()
+        update_lineage(conn, run_id, forecast_status="running")
+        conn.close()
+        run_python("forecast/run_forecast.py", ".", "Forecast")
+
+        # --- Step 7: Export to JSON ---
+        step("Export to JSON")
+        conn = get_connection()
+        update_lineage(conn, run_id, export_status="running")
+        conn.close()
+        run_python("export/export_json.py", ".", "Export")
+
+        # --- Step 8: Complete ---
         conn = get_connection()
         complete_lineage(conn, run_id, "completed")
         conn.close()
