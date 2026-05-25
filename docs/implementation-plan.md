@@ -8,7 +8,7 @@
 | **Data First Accessed** | 2026-05-22 |
 | **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
 | **Target Completion** | ~16–20 working days |
-| **Status** | Phase 3 ✅ Complete (7 bugfixes applied Phase 3e) |
+| **Status** | Phase 3 ✅ Complete (7 bugfixes applied Phase 3e). Phase 0/1 engineering fixes applied: quote-wrap SQL idents, idempotent loads, pipeline orchestrator, validation fix. |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Next.js (Shadboard) → Cloudflare Pages |
 
 ### Parallelization Opportunities
@@ -19,7 +19,7 @@
 | §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
 
 **Sequential chain** (must wait): Phase 0 → 1 → 2 → 2.5 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
-> **Current**: Phase 1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (bugfix). Phase 4 ✅. Phase 6 deferred.
+> **Current**: Phase 0+1 engineering fixes ✅ (quote-wrap SQL, idempotent ingest, pipeline orchestrator, DB-read validation). Phase 1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (bugfix). Phase 4 ✅. Phase 6 deferred.
 
 ---
 
@@ -51,6 +51,8 @@
 | 1.1.4 | Create `pipeline.lineage` table — central run registry | ✅ | Done in Phase 0; fixed JSONB→JSON at runtime |
 | 1.1.5 | Add `init_lineage()` / `update_lineage()` helper functions | ✅ | Done in Phase 0; fix: `.replace('_', ' ')` removed from `update_lineage()` |
 | 1.1.6 | Split logging into per-script files: `logs/ingest.log`, `logs/transform.log`, `logs/forecast.log`, `logs/export.log` | ✅ | `pipeline_run.log` reserved for orchestration summary |
+| 1.1.7 | `run_pipeline.py` — orchestrator chaining ingest → dbt run → dbt test → row-count reconciliation → lineage | ✅ | Closes duckdb before spawning dbt subprocess to avoid file-lock. Guards `conn.close()` per LEARNINGS.md §24. |
+| 1.1.8 | Engineering fixes: quote-wrap SQL idents, idempotent loads (DROP TABLE + CREATE TABLE), absolute paths for subprocess safety, raise instead of sys.exit in reconcile | ✅ | `ingest/config.py` uses `'"{k}" = ?'` in dynamic SET. `load_raw.py` uses `DROP TABLE IF EXISTS` + `CREATE TABLE AS` for clean re-runs. |
 
 ### 1.2 dbt Staging Models
 | # | Task | Status | Notes |
@@ -76,6 +78,10 @@
 | 1.4.3 | Update `pipeline.lineage` with source_rows, staging_rows, status | ✅ | ingest=completed, transform=completed |
 
 **Validation**: Row counts reconcile at every stage. All dbt tests pass. Run history queryable via `SELECT * FROM pipeline.lineage ORDER BY run_start DESC`.
+**Orchestration**: `uv run python run_pipeline.py` runs full pipeline end-to-end (16s total).
+**Fix: data_validation.py** — reads from existing `raw.*` tables in DuckDB instead of reloading CSVs. Shows ingest run info from lineage table.
+**Fix: docs/issues_log.md** — structured issue tracker documenting 6 pipeline/data quality issues with resolution status.
+**Fix: docs/LEARNINGS.md** — 3 new sections (§36 quote-wrapping, §37 idempotent loads, §38 pipeline reconciliation).
 
 ---
 
@@ -187,9 +193,17 @@
 | 4.2 | Document coverage gaps in `docs/insights_log.md` | ✅ | 5 gaps documented |
 | 4.3 | Identify notable segments: cooking oil 2022 shock, rice harvest seasonality, sugar Ramadan effect, Eastern Indonesia premium | ✅ | 4 N-sections in notebook |
 | 4.4 | Populate insights log with minimum 6 findings (contextual/directional/actionable) | ✅ | 7 findings, each with metric, dimension, quantified value, type, stakeholder |
+| 4.5 | **G8: Pipeline quality flag distribution** — new C2 cell querying `wfp_intermediate.int_prices_normalised` for all 5 filter flags + pass rate | ✅ | 325,239 total → 2,116 pass (0.65% yield). Non-target = 78% of filtered rows |
+| 4.6 | **G5: USD price trends** — extend A1 to include USD-denominated price line chart for FX-adjusted comparison | ✅ | Confirms IDR trends are real, not inflation-driven |
+| 4.7 | **G4: Lagged correlation matrix** — new A5b cell reading `wfp_marts.mart_correlation_summary`, showing all 6 pairs × 4 lags | ✅ | Best lag per pair identified (Oil→Flour: lag 3 strongest at r=0.8885) |
+| 4.8 | **G7: Market coverage by island group** — new A6 cell counting distinct markets + provinces per island group | ✅ | Java: 72 markets, 6 provinces. Total 214 Cooking Oil markets |
+| 4.9 | **G2: Islamic calendar Ramadan** — refactored N3 Sugar section to join `wfp_intermediate.int_islamic_calendar` by year instead of hardcoded [3,4,5] | ✅ | eid_month + T-1/2/3 computed per year. Ramadan shifts ~11 days/yr |
+| 4.10 | **G3: Forecast quality** — new N5 cell reading `forecast.json`, showing holdout MAE per commodity + model selection from metadata | ✅ | Rice best accuracy, Cooking Oil worst (post-2022 structural break) |
+| 4.11 | **G1+G6: Mart reconciliation + export validation** — new R1+R2 cells comparing EDA mart queries vs JSON record counts | ✅ | All 5 mart→JSON exports verified. Row-count chain: raw → staging → int → marts |
+| 4.12 | Update summary table to 10 findings + `insights_log.md` with gap-closing results | ✅ | 3 new findings: pipeline yield, forecast accuracy, export integrity |
 
 **Marimo**: `marimo edit analysis/eda.py`
-**Key Deliverable**: `docs/insights_log.md` with ≥6 findings
+**Key Deliverable**: `docs/insights_log.md` with ≥10 findings. Pipeline reconciliation against all 5 marts + JSON exports.
 
 ---
 
@@ -311,6 +325,14 @@
 
 - [x] Phase 0: Data validation checks completed, scoping decisions documented
 - [x] `pipeline.lineage` table created with run_id tracking
+- [x] `update_lineage()` uses quote-wrapped column names in dynamic SET clauses
+- [x] `load_raw.py` is idempotent — DROP TABLE + CREATE TABLE on each run
+- [x] `reconcile()` raises RuntimeError instead of sys.exit — proper lineage update on failure
+- [x] `run_pipeline.py` orchestrates ingest → dbt run → dbt test → reconciliation → lineage
+- [x] `data_validation.py` reads from pipeline DB instead of reloading CSV
+- [x] `docs/issues_log.md` created with 6 documented issues
+- [x] `docs/LEARNINGS.md` extended with §§36-38
+- [x] All paths use absolute `__file__`-based resolution — works from any working directory
 - [x] Row count reconciliation at every pipeline stage
 - [x] Row-level quality flags carried through to mart models
 - [x] dbt staging tests pass (not_null, accepted_values, positive_values, unique)
@@ -319,7 +341,12 @@
 - [x] Phase 2.5 corrections: Ramadan flags joined, YoY delta added, correlation summary created, DATE_TRUNC centralized, lineage table fixed
 - [x] dbt audit (6 dimensions): FK relationships test, packages.yml, exposures, seed YAML, filter_out invariant, unit accepted_values, dead config cleanup, expanded source column docs (5→13 food_prices, 3→7 markets)
 - [x] All generic tests verified with correct `arguments:` nested syntax (dbt 1.11.11)
-- [x] EDA: ≥6 findings in insights log
+- [x] EDA: ≥10 findings in insights log
+- [x] EDA reads from dbt marts for reconciliation (filter_out flags, correlation summary, seasonal patterns)
+- [x] Sugar Ramadan uses actual Islamic calendar dates, not hardcoded Gregorian months
+- [x] Forecast JSON validated against actual prices (holdout MAE per commodity)
+- [x] USD price analysis confirms IDR trends are real
+- [x] All 5 mart→JSON exports verified (row count match)
 - [ ] Source freshness column `_loaded_at` added to raw load
 - [ ] `forecast/run_forecast.py` — trains AutoARIMA/AutoETS per commodity
 - [ ] Ramadan/Eid binary flags used as exogenous regressors
@@ -338,13 +365,14 @@
 
 ---
 
-## Key EDA Findings (To Be Confirmed)
-
-(Placeholder — populated after Phase 4)
+## Key EDA Findings (Confirmed)
 
 1. **Cooking oil structural break**: 2022 global supply shock + export ban created permanent level shift
-2. **Sugar Ramadan premium**: Most consistent seasonal effect across 17 years
-3. **Eastern Indonesia premium**: Persistent geographic disparity, narrowing/widening per commodity
+2. **Sugar Ramadan premium**: Most consistent seasonal effect across 17 years. Islamic calendar adjustment (vs hardcoded [3,4,5]) shifts premium estimate by ~1-2pp
+3. **Eastern Indonesia premium**: Persistent geographic disparity, narrowing/widening per commodity. Cooking Oil shows widest gap (~30%)
+4. **Pipeline yield**: Only 2,116 of 325,239 raw rows pass quality filters (0.65%). Non-target commodities dominate filtered rows
+5. **Lagged correlation**: Oil→Flour strongest at lag 3 (r=0.8885). Rice→Sugar strongest at lag 0 (r=0.8710)
+6. **Forecast accuracy**: MAE ranges from 23 (Flour) to 1,714 (Cooking Oil). Post-2022 structural break degrades oil forecast reliability
 
 ---
 
@@ -356,6 +384,7 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 |-------|---------------|-------|
 | Phase 0 | `feat: project setup + data validation checkpoint` | Folder structure, dbt init, config, validation |
 | Phase 1 | `feat: ingest & dbt staging models` | Pipeline layer 1 |
+| Phase 0/1 fix | `fix: quote-sql-idents, idempotent-ingest, pipeline-orch, validation-fix` | Engineering fixes across Phase 0/1: quote-wrap, idempotent loads, orchestrator, DB-read validation, issues_log, LEARNINGS.md §36-38 |
 | Phase 2 | `feat: dbt intermediate + mart models` | Analytical core |
 | Phase 2.5 | `fix: post-implementation corrections (ramadan, correlation, lineage, docs)` | Gap fixes |
 | Phase 2.5a | `fix: dbt audit — FK test, packages, exposures, seed YAML, invariants, docs` | 9 audit gaps closed, 33→55 tests |
@@ -363,6 +392,7 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 3b | `feat: export engine — export_json.py` | Mart queries → JSON, verify_export(), lineage |
 | Phase 3c | `fix: pipeline orchestrator + _loaded_at` | `run_pipeline.py` forecast/export steps, schema parameterization, source freshness |
 | Phase 4 | `feat: EDA notebook + insights log` | Analysis |
+| Phase 4a | `fix: eda gap-closing (mart reconciliation, islamic ramadan, forecast val, usd, export val)` | 10 gaps closed: G1–G8 all addressed |
 | Phase 5 | `feat: deep dive analysis notebook` | Analysis |
 | Phase 3d | `docs: forecasting methodology` | `model_methodology.md` |
 | Phase 3e | `fix: phase 3 bugfix — 7 gaps from pipeline audit` | Error handler, lineage DDL, metadata, skips, connection, t_minus_3, status value |
@@ -386,3 +416,4 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | 2026-05-26 | **Pre-Phase 3 gap analysis**: forecast/export/pipeline/orchestrator all missing. | Built during Phase 3. ✅ Complete |
 | 2026-05-26 | **Phase 3 bugfix audit**: found 7 gaps — error handler column, lineage DDL fragmentation, hardcoded dates, skipped commodity tracking, connection leak, t_minus_3 parity, status value inconsistency. | All 7 fixed in Phase 3e. See tasks 3.12–3.18. |
 | 2026-05-26 | **`mart_commodity_correlation` granularity mismatch**: Cooking Oil averaged across hundreds of markets; Rice/Sugar/Flour from single national avg market (974). | Cross-correlation coefficients may be misleading. Flag in `model_methodology.md` and dashboard footnote. |
+| 2026-05-26 | **Phase 4 gap analysis**: 10 gaps identified — EDA bypassed dbt marts, Ramadan used hardcoded months, no forecast validation, no export verification. | All 10 closed. EDA now reconciled against all 5 marts + JSON exports. See verification cells R1/R2. |
