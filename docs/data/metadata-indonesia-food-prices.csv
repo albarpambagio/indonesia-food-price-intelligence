@@ -1,0 +1,14 @@
+Field,Label,Value
+created,Created,2018-09-26T15:38:29.532786
+description,Description,Food prices data
+format,File Format,CSV
+download_url,Download URL,https://data.humdata.org/dataset/72cc0659-142b-41af-821a-cb981a852617/resource/2c0e732c-1d93-4366-8f19-0397064ac5d7/download/wfp_food_prices_idn.csv
+id,Resource ID,2c0e732c-1d93-4366-8f19-0397064ac5d7
+last_modified,Updated,2026-05-17T11:46:27.267264
+metadata_modified,Metadata Updated,2026-05-17T11:46:32.043327
+microdata,Microdata,False
+dataset_id,Dataset ID,72cc0659-142b-41af-821a-cb981a852617
+resource_type,Resource Type,file.upload
+name,Resource Name,Indonesia - Food Prices
+mimetype,MIME Type,
+size,Size,46.8M

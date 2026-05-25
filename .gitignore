@@ -1,0 +1,35 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+
+# DuckDB database (generated from CSVs)
+data/wfp.duckdb
+data/wfp.duckdb.wal
+
+# dbt
+transform/logs/
+transform/target/
+
+# Pipeline logs
+logs/*.log
+
+# Dashboard
+dashboard/node_modules/
+dashboard/.next/
+dashboard/out/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# dbt user config
+transform/.user.yml

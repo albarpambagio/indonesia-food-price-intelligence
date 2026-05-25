@@ -1,0 +1,21 @@
+[project]
+name = "indonesia-food-price-intelligence"
+version = "0.1.0"
+description = "End-to-end data pipeline + forecasting + dashboard for Indonesian staple food prices"
+requires-python = ">=3.11"
+dependencies = [
+    "duckdb>=1.0.0",
+    "dbt-duckdb>=1.8.0",
+    "statsforecast>=1.7.0",
+    "pandas>=2.2.0",
+    "marimo>=0.23.0",
+    "plotly>=6.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.1.0",
+]
+
+[tool.ruff]
+line-length = 100

@@ -1,0 +1,36 @@
+name: indonesia_food_price_intelligence
+version: 1.0.0
+config-version: 2
+
+profile: wfp_duckdb
+
+model-paths:
+  - models
+analysis-paths:
+  - analyses
+test-paths:
+  - tests
+seed-paths:
+  - seeds
+macro-paths:
+  - macros
+snapshot-paths:
+  - snapshots
+docs-paths:
+  - docs
+
+clean-targets:
+  - target
+  - dbt_packages
+
+models:
+  indonesia_food_price_intelligence:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts

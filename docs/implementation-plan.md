@@ -1,0 +1,310 @@
+# Implementation Plan — Indonesia Food Price Intelligence
+
+## Project Meta
+
+| Attribute | Value |
+|-----------|-------|
+| **Start Date** | 2026-05-22 |
+| **Data First Accessed** | 2026-05-22 |
+| **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
+| **Target Completion** | ~16–20 working days |
+| **Status** | Phase 0 Complete |
+| **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Next.js (Shadboard) → Cloudflare Pages |
+
+---
+
+## Phase 0 — Project Setup & Data Validation Checkpoint
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 0.1 | Create folder structure | ✅ | `data/raw/`, `ingest/`, `transform/`, `forecast/`, `export/`, `analysis/`, `logs/`, `dashboard/public/data/` |
+| 0.2 | Create `pyproject.toml` + `uv sync` | ✅ | uv-native: duckdb, dbt-duckdb, statsforecast, marimo, pandas, plotly |
+| 0.3 | Init dbt project in `/transform` | ✅ | `dbt init`, configure profiles.yml for DuckDB |
+| 0.4 | Init Next.js from Shadboard starter-kit in `/dashboard` | ⬜ | **DEFERRED** to Phase 6.6 |
+| 0.5 | Create **`analysis/data_validation.py`** (marimo notebook) | ✅ | Interactive validation: commodity coverage, provincial coverage, priceflag distribution, unit consistency, sugar split, oil split, FX enrichment decision |
+| 0.6 | Write `docs/data_validation.md` from notebook findings | ✅ | Document all 7 validation checks, scoping decisions confirmed |
+| 0.7 | Load raw CSVs into `data/raw/` | ✅ | `wfp_food_prices_idn.csv` (325,240 rows), `wfp_markets_idn.csv` (224 markets) |
+
+**Validation**: `analysis/data_validation.py` produces quantified summaries for all 7 checks.
+**Marimo**: `uv run marimo edit analysis/data_validation.py`
+
+---
+
+## Phase 1 — Ingest & Staging (1 day)
+
+### 1.1 Ingest
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1.1.1 | `ingest/load_raw.py` — load food_prices CSV to DuckDB raw.food_prices | ⬜ | Exact copy — no transforms |
+| 1.1.2 | `ingest/load_raw.py` — load markets CSV to DuckDB raw.markets | ⬜ | Exact copy — no transforms |
+| 1.1.3 | Create `ingest/config.py` with `generate_run_id()` — timestamp-based run ID | ✅ | Done in Phase 0 |
+| 1.1.4 | Create `pipeline.lineage` table — central run registry | ✅ | Done in Phase 0 (embedded in config.py) |
+| 1.1.5 | Add `init_lineage()` / `update_lineage()` helper functions | ✅ | Done in Phase 0 (embedded in config.py) |
+| 1.1.6 | Split logging into per-script files: `logs/ingest.log`, `logs/transform.log`, `logs/forecast.log`, `logs/export.log` | ⬜ | `pipeline_run.log` reserved for orchestration summary |
+
+### 1.2 dbt Staging Models
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1.2.1 | `stg_food_prices.sql` — cast date, uppercase admin, trim, cast price to DECIMAL, rename priceflag, filter price<=0 | ⬜ | Light cleaning only — no business logic |
+| 1.2.2 | `stg_markets.sql` — snake_case columns, flag national average (market_id=974), cast coordinates to FLOAT | ⬜ | |
+
+### 1.3 dbt Tests
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1.3.1 | not_null: [date, commodity, market_id, price, price_flag] | ⬜ | stg_food_prices |
+| 1.3.2 | accepted_values: price_flag → [actual, aggregate] | ⬜ | |
+| 1.3.3 | accepted_values: pricetype → [Retail] | ⬜ | |
+| 1.3.4 | positive_values: price | ⬜ | |
+| 1.3.5 | unique: market_id | ⬜ | stg_markets |
+| 1.3.6 | not_null: [market_id, market, admin1] | ⬜ | |
+
+### 1.4 Row Count Reconciliation
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1.4.1 | Validate raw.food_prices COUNT = CSV line count - 1 | ⬜ | After ingest, before dbt |
+| 1.4.2 | Validate stg_food_prices COUNT ≤ raw COUNT (price<=0 filtered) | ⬜ | Log filtered count to `pipeline.lineage.issues_log` |
+| 1.4.3 | Update `pipeline.lineage` with source_rows, staging_rows, status | ⬜ | Completed after dbt run |
+
+**Validation**: Row counts reconcile at every stage. All dbt tests pass. Run history queryable via `SELECT * FROM pipeline.lineage ORDER BY run_start DESC`.
+
+---
+
+## Phase 2 — dbt Transform (Intermediate + Mart) (4–5 days)
+
+### 2.1 Intermediate Models
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 2.1.1 | `int_commodity_consolidated.sql` — map Oil variants → Cooking Oil, Sugar variants → Sugar | ⬜ | Document consolidation rationale; keep split if Sugar divergence meaningful |
+| 2.1.2 | `int_prices_normalised.sql` — unit normalisation (IDR/KG, IDR/L), priceflag separation (actual vs aggregate), island group mapping, monthly grain | ⬜ | Never mix actual + aggregate in same analysis |
+| 2.1.3 | Add row-level quality flags to `int_prices_normalised`: flag_price_le_zero, flag_null_unit, flag_non_target, flag_aggregate | ⬜ | Carried to mart models for data quality transparency |
+| 2.1.4 | `int_islamic_calendar.sql` — Ramadan/Eid lookup 2007–2024, source documented | ⬜ | Islamic calendar regresses ~11 days/year |
+
+### 2.2 Mart Models
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 2.2.1 | `mart_price_trends.sql` — monthly avg price per commodity per island group + national, IDR + USD | ⬜ | Feeds Page 1 wireframe |
+| 2.2.2 | `mart_seasonal_patterns.sql` — price at T-3 to T+1 relative to Eid, harvest flags, year-end flags, price index vs annual avg | ⬜ | Feeds Page 2 wireframe |
+| 2.2.3 | `mart_geographic_disparity.sql` — price index vs Java baseline per island group per year, province-level where coverage sufficient | ⬜ | Feeds Page 3 wireframe |
+| 2.2.4 | `mart_commodity_correlation.sql` — cross-correlation at lags 0–3, rolling 3-year correlation | ⬜ | Feeds Page 4 wireframe |
+
+### 2.3 dbt Tests at Mart Layer
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 2.3.1 | not_null: [date, commodity_consolidated, price_idr] | ⬜ | All mart models |
+| 2.3.2 | accepted_values: commodity_consolidated → [Rice, Cooking Oil, Sugar, Flour] | ⬜ | |
+| 2.3.3 | positive_values: price_idr | ⬜ | |
+| 2.3.4 | not_null: island_group | ⬜ | mart_geographic_disparity |
+| 2.3.5 | accepted_values: island_group → [Java, Sumatera, Kalimantan, Sulawesi, Eastern Indonesia] | ⬜ | |
+| 2.3.6 | `dbt docs generate` + lineage graph screenshot | ⬜ | Include in README |
+
+### 2.4 Row Count Reconciliation
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 2.4.1 | Validate int_prices_normalised COUNT = stg_food_prices COUNT | ⬜ | No filtering happens at intermediate layer |
+| 2.4.2 | Validate each mart model COUNT ≤ int_prices_normalised COUNT | ⬜ | Marts aggregate, so counts will be lower |
+| 2.4.3 | Log all counts to `logs/transform.log` + update `pipeline.lineage.mart_rows` | ⬜ | |
+
+**Validation**: All dbt tests pass. Row count chain: raw → staging → int → mart verified. dbt lineage docs generated.
+
+---
+
+## Phase 3 — Forecasting (2 days)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 3.1 | `forecast/run_forecast.py` — AutoARIMA + AutoETS per commodity on national avg prices | ⬜ | Compare AIC/BIC, cross-validation MAE on 12-month holdout |
+| 3.2 | Islamic calendar exogenous variables (Ramadan/Eid binary flags) | ⬜ | Add to training data before model fit |
+| 3.3 | Generate 6-month forecast (Jun–Nov 2024) with 95% CI | ⬜ | Output: `{date, commodity, forecast_price, lower_95, upper_95, model_used}` |
+| 3.4 | Validate forecast output: check for NaN, negative prices, CI bounds reversal (lower > upper) | ⬜ | `validate_forecast()` logs issues to `logs/forecast.log` + updates `pipeline.lineage.forecast_status` |
+| 3.5 | Create **`analysis/forecast_experimentation.py`** (marimo notebook, optional) | ⬜ | Interactive model selection: compare models per commodity live |
+| 3.6 | Write `docs/model_methodology.md` | ⬜ | 7 required sections per plan |
+
+**Key Deliverable**: `forecast.json` (validated) + `docs/model_methodology.md`
+
+---
+
+## Phase 4 — EDA (SCAN Framework) (1–2 days)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 4.1 | Create **`analysis/eda.py`** (marimo notebook) with 6 aggregate analyses: annual avg per commodity, YoY%, volatility (std/mean), island group price index vs Java, month-of-year avg, cross-commodity correlation matrix | ⬜ | MARIMO-DRIVEN — interactive filtering, chart iteration, inline findings |
+| 4.2 | Document coverage gaps in `docs/insights_log.md` | ⬜ | Sparse outer islands pre-2015, no volume data, retail-only pricing, forecast horizon limit |
+| 4.3 | Identify notable segments: cooking oil 2022 shock, rice harvest seasonality, sugar Ramadan effect, Eastern Indonesia premium | ⬜ | |
+| 4.4 | Populate insights log with minimum 6 findings (contextual/directional/actionable) | ⬜ | Each with: metric, dimension, quantified finding, type, stakeholder |
+
+**Marimo**: `marimo edit analysis/eda.py`
+**Key Deliverable**: `docs/insights_log.md` with ≥6 findings
+
+---
+
+## Phase 5 — Deep Dive Analysis (North Star Method) (2–3 days)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 5.1 | Create **`analysis/deep_dive.py`** (marimo notebook) with 4 deep dive sections | ⬜ | MARIMO-DRIVEN — interactive widgets for date range, commodity, island group |
+| 5.2 | **Q1 — Price Trends + Forecast**: annual trend plot, structural breaks (2008, 2022), decompose trend/seasonal/residual, layer 6-month forecast with CI, procurement action zone identification | ⬜ | Expected: Cooking oil CAGR, forecast stability assessment |
+| 5.3 | **Q2 — Seasonal Patterns**: align years to Islamic calendar, price index at T-3 to T+1 relative to Eid, avg premium per commodity, harvest season discount, year-end spike | ⬜ | Expected: Sugar Ramadan premium, rice harvest discount window |
+| 5.4 | **Q3 — Geographic Disparity**: island group price index vs Java, narrowing/widening trend, province-level drill-down, lowest-cost provinces per commodity | ⬜ | Expected: Eastern Indonesia premium magnitude + trend direction |
+| 5.5 | **Q4 — Commodity Correlations**: cross-correlation at lags 0–3, strongest leading pair, rolling 3-year stability, pre/post 2022 comparison | ⬜ | Expected: Rice → Flour lead relationship, post-2022 break analysis |
+| 5.6 | Populate insights log with quantified findings from all 4 deep dives | ⬜ | Each finding uses template: metric, dimension, quantified finding, type, stakeholder, recommendation, confidence |
+
+**Marimo**: `marimo edit analysis/deep_dive.py`
+
+---
+
+## Phase 6 — Dashboard (Shadboard + Next.js) (3–4 days)
+
+### Page 1 — Price Trends & Forecast
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.1.1 | KPI cards: current price + YoY% + sparkline per commodity (4 cards) | ⬜ | Wireframe [4] — always visible regardless of filter |
+| 6.1.2 | Main trend + forecast chart (Recharts ComposedChart, line + area for CI) | ⬜ | Wireframe [5] — dashed separator, shaded CI, commodity toggle |
+| 6.1.3 | Procurement action zone (BUY/HOLD/WATCH signals) | ⬜ | Wireframe [6] — forecast lower bound vs current price |
+| 6.1.4 | YoY inflation table (sortable, red/green cells) | ⬜ | Wireframe [7] |
+| 6.1.5 | Model limitations footnote (always visible) | ⬜ | Wireframe [8] |
+
+### Page 2 — Seasonal Patterns
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.2.1 | Procurement timing callout cards (commodity × driver) | ⬜ | Wireframe [4] — spike magnitude + consistency score |
+| 6.2.2 | Seasonal heatmap: month × commodity, Gregorian calendar | ⬜ | Wireframe [5] — single-hue scale, 48 cells |
+| 6.2.3 | Ramadan overlay chart: price index T-3 to T+1, all years overlaid | ⬜ | Wireframe [6] — thin year lines + bold avg line, 2022 outlier labelled |
+| 6.2.4 | Harvest season chart (rice discount) + year-end chart | ⬜ | Wireframe [7][8] — shown conditionally by driver toggle |
+| 6.2.5 | Seasonal summary table (TanStack, sortable) | ⬜ | Wireframe [9] — lead time column is most actionable |
+
+### Page 3 — Geographic Disparity
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.3.1 | KPI cards: price index per island group (5 cards) | ⬜ | Wireframe [4] — Java=100, clickable to filter |
+| 6.3.2 | Indonesia choropleth map (GeoJSON + Recharts/D3) with year slider + animate | ⬜ | Wireframe [5] — island group granularity, year animation |
+| 6.3.3 | Island group comparison line chart (5 series, Java baseline) | ⬜ | Wireframe [6] — gap narrowing/widening readability |
+| 6.3.4 | Province drill-down table (TanStack, coverage column) | ⬜ | Wireframe [7] — honesty column for data gaps |
+
+### Page 4 — Commodity Signals
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.4.1 | Leading indicator callout cards (top 2 relationships, plain language) | ⬜ | Wireframe [4] — Category Manager audience, no r values |
+| 6.4.2 | Correlation matrix heatmap (4×4, asymmetric, lag selector) | ⬜ | Wireframe [5] — row leads column label |
+| 6.4.3 | Commodity pair scatter chart (pre/post 2022 dot split) | ⬜ | Wireframe [6] |
+| 6.4.4 | Rolling correlation stability chart (3-year window, 2022 marker) | ⬜ | Wireframe [7] — most analytically honest visual |
+| 6.4.5 | Procurement implication card (plain language, post-2022 caveat) | ⬜ | Wireframe [8] — analytical centrepiece of page |
+| 6.4.6 | Full correlation detail table (TanStack, pre/post 2022 columns) | ⬜ | Wireframe [9] — differentiation column |
+
+### 6.6 Dashboard Init (moved from Phase 0)
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.6.1 | Init Next.js from Shadboard starter-kit in `/dashboard` | ⬜ | `npx shadcn@latest init`, 4-page nav route group |
+| 6.6.2 | Strip Shadboard boilerplate (avatar, command palette, fullscreen, theme switch, etc.) | ⬜ | Per LEARNINGS.md §34 — surgical removal of dead code |
+| 6.6.3 | Configure `next.config.mjs` for static export | ⬜ | `output: 'export'` |
+
+### Global Filters + Export + Deploy
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.7.1 | Global filters: Commodity, Island Group, Year Range slider | ⬜ | Persist across all 4 pages |
+| 6.7.2 | `export/export_json.py` — query all 4 mart models + forecast → static JSON | ⬜ | Writes to `dashboard/public/data/` |
+| 6.7.3 | Add `verify_export()` to export_json.py — validates mart row count matches JSON record count per file | ⬜ | Checks: missing columns, row count, nulls in critical fields |
+| 6.7.4 | Log export results to `logs/export.log` + update `pipeline.lineage.export_status` | ⬜ | |
+| 6.7.5 | Build: `npm run build` | ⬜ | |
+| 6.7.6 | Deploy to Cloudflare Pages (connect GitHub repo) | ⬜ | |
+| 6.7.7 | Verify live URL on mobile | ⬜ | |
+
+---
+
+## Phase 7 — Forecasting Methodology Documentation (1 day)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 7.1 | Problem statement: grain, horizon, what/why | ⬜ | `docs/model_methodology.md` |
+| 7.2 | Data preparation: national avg, actual prices only, monthly grain, Islamic calendar regressors | ⬜ | |
+| 7.3 | Model candidates: AutoARIMA, AutoETS, AutoTheta — what each does | ⬜ | |
+| 7.4 | Model selection: CV approach, holdout, MAE/RMSE, final model per commodity | ⬜ | |
+| 7.5 | Confidence intervals: plain language explanation of 95% CI, procurement action zone | ⬜ | |
+| 7.6 | Known limitations: 5 items per plan | ⬜ | Gov price controls, tariff shocks, El Niño, calendar approximation, policy unpredictability |
+| 7.7 | How to re-run: step-by-step retraining instructions | ⬜ | |
+
+---
+
+## Phase 8 — Insights, Recommendations & Write-up (1 day)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 8.1 | README: business scenario (3–4 sentences) | ⬜ | |
+| 8.2 | README: exec-driven questions (4 bullets) | ⬜ | |
+| 8.3 | README: pipeline architecture (Mermaid diagram) | ⬜ | Raw CSV → DuckDB → dbt → statsforecast → export_json.py → Shadboard → CF Pages |
+| 8.4 | README: dbt lineage graph screenshot | ⬜ | |
+| 8.5 | README: key findings (4–6 quantified bullets) | ⬜ | |
+| 8.6 | README: dashboard preview (4 screenshots) | ⬜ | |
+| 8.7 | README: recommendations mapped to stakeholders | ⬜ | Procurement Analyst + Category Manager |
+| 8.8 | README: data limitations + validation findings | ⬜ | Pre-empt interview questions |
+| 8.9 | README: forecasting methodology summary + link | ⬜ | |
+| 8.10 | README: reproduction instructions | ⬜ | |
+| 8.11 | README: lessons learned | ⬜ | Honest reflection |
+| 8.12 | Finalize `docs/insights_log.md` with all 3 insight types: contextual, directional, actionable | ⬜ | |
+| 8.13 | Live URL pinned in README and GitHub repo description | ⬜ | |
+
+---
+
+## Validation Checklist
+
+- [x] Phase 0: Data validation checks completed, scoping decisions documented
+- [x] `pipeline.lineage` table created with run_id tracking
+- [ ] Row count reconciliation at every pipeline stage
+- [ ] Row-level quality flags carried through to mart models
+- [ ] dbt staging tests pass (not_null, accepted_values, positive_values, unique)
+- [ ] dbt mart tests pass (not_null, accepted_values, positive_values)
+- [ ] dbt docs generate produces lineage graph
+- [ ] Forecast output validated (no NaN, negative, or reversed CI)
+- [ ] Export verified: JSON record count == mart row count
+- [ ] EDA: ≥6 findings in insights log
+- [ ] Deep dive: all 4 exec questions answered with quantified findings
+- [ ] All 4 dashboard pages functional with global filters
+- [ ] Page 1: forecast with CI, buy signals, YoY table, limitations footnote
+- [ ] Page 2: action cards, heatmap, Ramadan overlay, driver toggle
+- [ ] Page 3: choropleth map with year slider, province table with coverage column
+- [ ] Page 4: correlation matrix, scatter, stability chart, implication card
+- [ ] Mobile responsive on all pages
+- [ ] Static export build passes
+- [ ] Cloudflare Pages deployment successful
+- [ ] README complete with live URL
+
+---
+
+## Key EDA Findings (To Be Confirmed)
+
+(Placeholder — populated after Phase 4)
+
+1. **Cooking oil structural break**: 2022 global supply shock + export ban created permanent level shift
+2. **Sugar Ramadan premium**: Most consistent seasonal effect across 17 years
+3. **Eastern Indonesia premium**: Persistent geographic disparity, narrowing/widening per commodity
+
+---
+
+## Commit Strategy
+
+Solo portfolio project — commit per phase on `main`. No branches needed unless experimenting.
+
+| Phase | Commit Message | Scope |
+|-------|---------------|-------|
+| Phase 0 | `feat: project setup + data validation checkpoint` | Folder structure, dbt init, config, validation |
+| Phase 1 | `feat: ingest & dbt staging models` | Pipeline layer 1 |
+| Phase 2 | `feat: dbt intermediate + mart models` | Analytical core |
+| Phase 3 | `feat: forecast models + methodology doc` | Modelling |
+| Phase 4 | `feat: EDA notebook + insights log` | Analysis |
+| Phase 5 | `feat: deep dive analysis notebook` | Analysis |
+| Phase 6 | `feat: dashboard (Next.js + Shadboard + export)` | Frontend |
+| Phase 7 | `docs: methodology documentation` | Docs |
+| Phase 8 | `docs: README, insights, recommendations` | Final packaging |
+
+**Rules**:
+- Conventional Commits (`feat:`, `docs:`, `fix:`)
+- No `--no-verify` unless hooks are slow
+- Phase 6 can be split per page if diff is large
+- Push after each phase for backup + GitHub activity graph
+
+---
+
+## Blockers & Notes
+
+| Date | Blocker | Resolution |
+|------|---------|------------|
+| | | |

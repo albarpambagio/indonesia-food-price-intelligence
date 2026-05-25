@@ -1,0 +1,14 @@
+Field,Label,Value
+created,Created,2025-05-06T23:53:43.623510
+description,Description,Markets data
+format,File Format,CSV
+download_url,Download URL,https://data.humdata.org/dataset/72cc0659-142b-41af-821a-cb981a852617/resource/9d52640e-1fa7-4546-912b-819cb3ace91b/download/wfp_markets_idn.csv
+id,Resource ID,9d52640e-1fa7-4546-912b-819cb3ace91b
+last_modified,Updated,2026-02-18T22:27:39.262839
+metadata_modified,Metadata Updated,2026-02-18T22:27:42.031331
+microdata,Microdata,False
+dataset_id,Dataset ID,72cc0659-142b-41af-821a-cb981a852617
+resource_type,Resource Type,file.upload
+name,Resource Name,Indonesia - Markets
+mimetype,MIME Type,text/csv
+size,Size,14.4K

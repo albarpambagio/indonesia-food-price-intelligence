@@ -1,0 +1,8 @@
+wfp_duckdb:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ..\data\wfp.duckdb
+      schema: wfp
+      threads: 4
