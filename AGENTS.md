@@ -61,12 +61,12 @@ dbt ls               # List models in project
 
 ### Forecasting
 ```bash
-uv run python forecast/run_forecast.py   # PENDING — Phase 3
+uv run python forecast/run_forecast.py   # DONE — 7 bugfixes applied Phase 3e
 ```
 
 ### Export + Dashboard
 ```bash
-uv run python export/export_json.py   # PENDING — Mart models → static JSON
+uv run python export/export_json.py   # DONE — 5 mart JSONs via verify_export()
 cd dashboard
 npm install
 npm run dev          # Development server
@@ -83,7 +83,8 @@ Phase 0: Setup + Data Validation  → Folder structure, marimo validation notebo
 Phase 1: Ingest & Staging         → DuckDB raw load, dbt staging models + tests        ✅ DONE
 Phase 2: Transform                → dbt intermediate + mart models + tests              ✅ DONE
 Phase 2.5: Corrections            → Ramadan flags, YoY delta, correlation summary, lineage fix ✅ DONE
-Phase 3: Forecasting              → statsforecast AutoARIMA/AutoETS + methodology doc
+Phase 3: Forecasting              → statsforecast AutoARIMA/AutoETS + methodology doc   ✅ DONE
+Phase 3e: Bugfix                  → 7 gap fixes from pipeline audit                     ✅ DONE
 Phase 4: EDA                      → Marimo notebook (SCAN framework)                    ✅ DONE
 Phase 5: Deep Dive                → Marimo notebook (North Star method)
 Phase 6: Dashboard                → 4 pages in Next.js + Shadboard + Cloudflare Pages

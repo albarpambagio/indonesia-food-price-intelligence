@@ -1,10 +1,17 @@
 {
   "metadata": {
-    "generated_at": "2026-05-25T06:13:09.273680+00:00",
-    "data_end": "2024-05-01",
+    "generated_at": "2026-05-25T07:15:31.537416+00:00",
+    "data_start": "2007-01-01",
+    "data_end": "2024-12-01",
     "forecast_horizon": "6_months",
-    "forecast_start": "2024-06-01",
-    "forecast_end": "2024-11-01",
+    "forecast_start": "2025-01-01",
+    "forecast_end": "2025-06-01",
+    "commodity_data_end": {
+      "Cooking Oil": "2024-12-01",
+      "Flour": "2020-03-01",
+      "Rice": "2024-05-01",
+      "Sugar": "2024-05-01"
+    },
     "models": {
       "Rice": {
         "selected": "AutoETS",

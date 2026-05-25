@@ -111,13 +111,14 @@ def __(
     cal["eid_month"] = cal["eid_date"].dt.to_period("M").astype(str)
     cal["t_minus_1"] = (cal["eid_date"] - pd.DateOffset(months=1)).dt.to_period("M").astype(str)
     cal["t_minus_2"] = (cal["eid_date"] - pd.DateOffset(months=2)).dt.to_period("M").astype(str)
+    cal["t_minus_3"] = (cal["eid_date"] - pd.DateOffset(months=3)).dt.to_period("M").astype(str)
 
     train_df = hist[["commodity", "ds", "national_avg_price"]].copy()
     train_df.columns = ["unique_id", "ds", "y"]
 
     if use_islamic:
         train_df["ym"] = train_df["ds"].dt.to_period("M").astype(str)
-        for col, flag in [("eid_month", "eid"), ("t_minus_1", "t1"), ("t_minus_2", "t2")]:
+        for col, flag in [("eid_month", "eid"), ("t_minus_1", "t1"), ("t_minus_2", "t2"), ("t_minus_3", "t3")]:
             train_df[flag] = 0
             for _, row in cal.iterrows():
                 train_df.loc[train_df["ym"] == row[col], flag] = 1
@@ -152,7 +153,7 @@ def __(
     fh = int(forecast_horizon.value)
     sf_final = StatsForecast(models=[m for m in models if best_model in str(type(m))], freq="MS", n_jobs=1)
 
-    exog_cols = [c for c in ["eid", "t1", "t2"] if c in train_df.columns]
+    exog_cols = [c for c in ["eid", "t1", "t2", "t3"] if c in train_df.columns]
     if exog_cols:
         sf_final.fit(df=train_df[["unique_id", "ds", "y", *exog_cols]])
         future_dates = pd.date_range(
@@ -161,10 +162,10 @@ def __(
         )
         fdf = pd.DataFrame({"unique_id": selected, "ds": future_dates})
         fdf["ym"] = fdf["ds"].dt.to_period("M").astype(str)
-        for flag in ["eid", "t1", "t2"]:
+        for flag in ["eid", "t1", "t2", "t3"]:
             fdf[flag] = 0
             for _, row in cal.iterrows():
-                fdf.loc[fdf["ym"] == row[flag.replace("eid", "eid_month").replace("t1", "t_minus_1").replace("t2", "t_minus_2")], flag] = 1
+                fdf.loc[fdf["ym"] == row[flag.replace("eid", "eid_month").replace("t1", "t_minus_1").replace("t2", "t_minus_2").replace("t3", "t_minus_3")], flag] = 1
         fcast = sf_final.forecast(h=fh, df=train_df[["unique_id", "ds", "y", *exog_cols]],
                                    X_df=fdf[["unique_id", "ds", *exog_cols]], level=[95])
     else:

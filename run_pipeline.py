@@ -83,6 +83,8 @@ def reconcile_layer(
     return target_count
 
 
+current_step_map: dict[str, str] = {}
+
 def main() -> None:
     start = time.time()
     run_id = generate_run_id()
@@ -92,8 +94,14 @@ def main() -> None:
     init_lineage(conn, run_id)
     conn.close()
 
+    current_step = "pipeline_status"
+    current_step_name = "pipeline"
+    current_step_map.clear()
+
     try:
         # --- Step 1: Ingest ---
+        current_step = "ingest_status"
+        current_step_name = "ingest"
         step("Ingest")
         result = subprocess.run(
             ["uv", "run", "python", "load_raw.py"],
@@ -115,10 +123,14 @@ def main() -> None:
         conn.close()
 
         # --- Step 2: dbt seed (islamic calendar) ---
+        current_step = "transform_status"
+        current_step_name = "dbt seed"
         step("dbt seed")
         run_dbt(["seed"])
 
         # --- Step 3: dbt run (staging + intermediate + marts) ---
+        current_step = "transform_status"
+        current_step_name = "dbt run"
         step("dbt run")
         conn = get_connection()
         update_lineage(conn, run_id, transform_status="running")
@@ -126,6 +138,8 @@ def main() -> None:
         run_dbt(["run"])
 
         # --- Step 4: dbt test ---
+        current_step = "transform_status"
+        current_step_name = "dbt test"
         step("dbt test")
         run_dbt(["test"])
 
@@ -166,6 +180,8 @@ def main() -> None:
         conn.close()
 
         # --- Step 6: Forecast ---
+        current_step = "forecast_status"
+        current_step_name = "forecast"
         step("Forecast")
         conn = get_connection()
         update_lineage(conn, run_id, forecast_status="running")
@@ -173,6 +189,8 @@ def main() -> None:
         run_python("forecast/run_forecast.py", ".", "Forecast")
 
         # --- Step 7: Export to JSON ---
+        current_step = "export_status"
+        current_step_name = "export"
         step("Export to JSON")
         conn = get_connection()
         update_lineage(conn, run_id, export_status="running")
@@ -188,10 +206,10 @@ def main() -> None:
         logger.info("Pipeline completed | run_id=%s | elapsed=%.1fs", run_id, elapsed)
 
     except Exception as e:
-        logger.exception("Pipeline failed: %s", e)
+        logger.exception("Pipeline failed at step '%s': %s", current_step_name, e)
         try:
             conn = get_connection()
-            update_lineage(conn, run_id, ingest_status="failed", issues_log={"error": str(e)})
+            update_lineage(conn, run_id, **{current_step: "failed"}, issues_log={"error": str(e), "step": current_step_name})
             conn.close()
         except Exception:
             pass

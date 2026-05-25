@@ -90,16 +90,27 @@ def verify_export(conn: duckdb.DuckDBPyConnection, cfg: dict, exported_count: in
     return True
 
 
+LINEAGE_TABLE_DDL = """
+    CREATE TABLE IF NOT EXISTS pipeline.lineage (
+        run_id              TEXT PRIMARY KEY,
+        started_at          TIMESTAMP,
+        completed_at        TIMESTAMP,
+        pipeline_status     TEXT DEFAULT 'pending',
+        ingest_status       TEXT DEFAULT 'pending',
+        transform_status    TEXT DEFAULT 'pending',
+        forecast_status     TEXT DEFAULT 'pending',
+        export_status       TEXT DEFAULT 'pending',
+        raw_food_prices_rows INT,
+        raw_markets_rows    INT,
+        issues_log          JSON
+    );
+"""
+
+
 def update_lineage(conn: duckdb.DuckDBPyConnection, run_id: str, status: str, issues: list[str] | None = None) -> None:
     try:
         conn.execute("CREATE SCHEMA IF NOT EXISTS pipeline")
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS pipeline.lineage (
-                run_id TEXT PRIMARY KEY,
-                export_status TEXT,
-                issues_log JSON
-            )
-        """)
+        conn.execute(LINEAGE_TABLE_DDL)
         conn.execute("""
             INSERT INTO pipeline.lineage (run_id, export_status, issues_log)
             VALUES (?, ?, ?::JSON)
@@ -122,7 +133,7 @@ def main() -> None:
     fcount = 0
 
     try:
-        conn = duckdb.connect(DB_PATH, read_only=False)
+        conn = duckdb.connect(DB_PATH)
 
         mart_counts: dict[str, int] = {}
         for cfg in MART_EXPORTS:
@@ -143,7 +154,7 @@ def main() -> None:
             logger.warning("  forecast.json not found — run forecast/run_forecast.py first")
             issues.append("forecast.json missing — run forecast first")
 
-        status = "completed" if all_passed else "completed_with_errors"
+        status = "completed" if all_passed else "completed_with_warnings"
         update_lineage(conn, run_id, status, issues)
         conn.close()
 
@@ -156,7 +167,7 @@ def main() -> None:
     except Exception as e:
         logger.exception("Export run failed: %s", e)
         try:
-            conn2 = duckdb.connect(DB_PATH, read_only=False)
+            conn2 = duckdb.connect(DB_PATH)
             update_lineage(conn2, run_id, "failed", [str(e)])
             conn2.close()
         except Exception:

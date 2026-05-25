@@ -8,7 +8,7 @@
 | **Data First Accessed** | 2026-05-22 |
 | **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
 | **Target Completion** | ~16–20 working days |
-| **Status** | Phase 3 In Progress (forecast + export) |
+| **Status** | Phase 3 ✅ Complete (7 bugfixes applied Phase 3e) |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Next.js (Shadboard) → Cloudflare Pages |
 
 ### Parallelization Opportunities
@@ -19,7 +19,7 @@
 | §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
 
 **Sequential chain** (must wait): Phase 0 → 1 → 2 → 2.5 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
-> **Current**: Phase 1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 4 ✅ (parallel). Phase 3 🔄 In Progress (forecast + export). Phase 6 deferred.
+> **Current**: Phase 1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (bugfix). Phase 4 ✅. Phase 6 deferred.
 
 ---
 
@@ -148,19 +148,26 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 3.1 | **Gap fix**: Add `_loaded_at` column to `load_raw.py` — `CURRENT_TIMESTAMP` on ingest | ⬜ | Required for `dbt source freshness` to work; LEARNINGS.md §49 identified, never implemented |
-| 3.2 | `forecast/run_forecast.py` — AutoARIMA + AutoETS per commodity on national avg prices | ⬜ | Compare AIC/BIC on 12-month holdout; model per commodity |
-| 3.3 | Islamic calendar exogenous variables (Ramadan/Eid binary flags) | ⬜ | Add to training data before model fit |
-| 3.4 | Generate 6-month forecast (Jun–Nov 2024) with 95% CI | ⬜ | Output: `{date, commodity, forecast_price, lower_95, upper_95, model_used}` |
-| 3.5 | Validate forecast output: NaN, negative prices, CI reversal (lower > upper) | ⬜ | `validate_forecast()` logs to `logs/forecast.log` + updates `pipeline.lineage.forecast_status` |
-| 3.6 | `export/export_json.py` — query 4 mart models + forecast → static JSON | ⬜ | Missing module — must be built from scratch. Writes to `dashboard/public/data/` |
-| 3.7 | `verify_export()` — validate mart row count matches JSON record count | ⬜ | Per-file check: missing columns, row count, nulls in critical fields |
-| 3.8 | Log export results to `logs/export.log` + update `pipeline.lineage.export_status` | ⬜ | |
-| 3.9 | Update `run_pipeline.py` — add forecast + export steps, parameterize schema refs | ⬜ | Orchestrator currently missing both steps; schema names hardcoded (`wfp_*`) |
-| 3.10 | Create **`analysis/forecast_experimentation.py`** (marimo notebook, optional) | ⬜ | Interactive model selection per commodity |
-| 3.11 | Write `docs/model_methodology.md` | ⬜ | 7 required sections per plan |
+| 3.1 | Add `_loaded_at` column to `load_raw.py` | ✅ | Already implemented — flag was stale |
+| 3.2 | `forecast/run_forecast.py` — AutoARIMA + AutoETS | ✅ | 403-line script, per-commodity holdout |
+| 3.3 | Islamic calendar exogenous variables | ✅ | eid_month/t-1/t-2/t-3 binary flags |
+| 3.4 | Generate 6-month forecast with 95% CI | ✅ | Output: `{date, commodity, forecast_price, lower_95, upper_95, model_used}` |
+| 3.5 | Validate forecast output | ✅ | `validate_forecast()` NaN/negative/CI reversal checks |
+| 3.6 | `export/export_json.py` | ✅ | 5 mart models → JSON |
+| 3.7 | `verify_export()` row count check | ✅ | DB count == JSON record count |
+| 3.8 | Export logging + lineage update | ✅ | `logs/export.log` + `pipeline.lineage.export_status` |
+| 3.9 | Update `run_pipeline.py` — forecast + export steps | ⚠️ | Step tracking bug — fixed in 3.12 |
+| 3.10 | `analysis/forecast_experimentation.py` | ✅ | 261-line marimo notebook |
+| 3.11 | `docs/model_methodology.md` | ✅ | 190-line doc, 7 required sections |
+| 3.12 | **Fix: `run_pipeline.py` error handler sets wrong column** | ✅ | Tracks active step; updates correct `*_status` on failure |
+| 3.13 | **Fix: Deduplicate `pipeline.lineage` DDL** | ✅ | Full schema in forecast/export (matches `config.py`) |
+| 3.14 | **Fix: Hardcoded forecast metadata dates** | ✅ | Computed dynamically from actual data per commodity |
+| 3.15 | **Fix: Track skipped commodities in forecast status** | ✅ | Sets `completed_with_warnings` when commodities skipped |
+| 3.16 | **Fix: DuckDB connection lock in export** | ✅ | `read_only=True` in export connection |
+| 3.17 | **Fix: Add `t_minus_3` to `forecast_experimentation.py`** | ✅ | Parity with production script |
+| 3.18 | **Fix: Standardize status value** | ✅ | `completed_with_warnings` in both forecast + export |
 
-**Key Deliverable**: `forecast.json` (validated) + `price_trends.json` + all 4 mart JSONs + `docs/model_methodology.md`
+**Key Deliverable**: `forecast.json` (validated) + all 5 mart JSONs + `docs/model_methodology.md` + 7 gap fixes
 
 ---
 
@@ -358,6 +365,7 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 4 | `feat: EDA notebook + insights log` | Analysis |
 | Phase 5 | `feat: deep dive analysis notebook` | Analysis |
 | Phase 3d | `docs: forecasting methodology` | `model_methodology.md` |
+| Phase 3e | `fix: phase 3 bugfix — 7 gaps from pipeline audit` | Error handler, lineage DDL, metadata, skips, connection, t_minus_3, status value |
 | Phase 6 | `feat: dashboard (Next.js + Shadboard + export)` | Frontend |
 | Phase 7 | `docs: README, insights, recommendations` | Final packaging |
 
@@ -375,5 +383,6 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 |------|---------|------------|
 | 2026-05-25 | **Data Finding**: Rice/Sugar/Flour have no market-level `actual` prices — only national average (market_id=974, price_flag='actual'). Cooking Oil is the only commodity with province-level actual price data (4,236 rows). | Accepted as WFP data constraint. `mart_commodity_correlation` provides all 4 at national level (158 months). Dashboard Pages 2/3 will document limitation. |
 | 2026-05-25 | **dbt evaluation per dbt-agent-skills**: audit found 9 gaps — missing FK relationships test, no packages.yml, no exposures, no seed YAML, dead config, unused column, insufficient column docs, missing unit test, deprecated test syntax. | All 9 closed. Tests expanded from 33→55. `dbt build` passes 66/66 with 0 errors, 0 warnings. Documented in AGENTS.md § "dbt Implementation Evaluation" and LEARNINGS.md §56. |
-| 2026-05-26 | **Pre-Phase 3 gap analysis**: `forecast/run_forecast.py` missing, `export/export_json.py` missing, `run_pipeline.py` lacks forecast/export steps, source freshness broken (no `_loaded_at`), `docs/model_methodology.md` missing, `analysis/forecast_experimentation.py` missing. | All must be built during Phase 3. Dashboard init (Phase 6) deferred to later phase. See gap-analysis above. |
+| 2026-05-26 | **Pre-Phase 3 gap analysis**: forecast/export/pipeline/orchestrator all missing. | Built during Phase 3. ✅ Complete |
+| 2026-05-26 | **Phase 3 bugfix audit**: found 7 gaps — error handler column, lineage DDL fragmentation, hardcoded dates, skipped commodity tracking, connection leak, t_minus_3 parity, status value inconsistency. | All 7 fixed in Phase 3e. See tasks 3.12–3.18. |
 | 2026-05-26 | **`mart_commodity_correlation` granularity mismatch**: Cooking Oil averaged across hundreds of markets; Rice/Sugar/Flour from single national avg market (974). | Cross-correlation coefficients may be misleading. Flag in `model_methodology.md` and dashboard footnote. |

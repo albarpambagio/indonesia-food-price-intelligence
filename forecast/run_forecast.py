@@ -275,18 +275,28 @@ def validate_forecast(combined_data: list[dict]) -> list[str]:
     return errors
 
 
+LINEAGE_TABLE_DDL = """
+    CREATE TABLE IF NOT EXISTS pipeline.lineage (
+        run_id              TEXT PRIMARY KEY,
+        started_at          TIMESTAMP,
+        completed_at        TIMESTAMP,
+        pipeline_status     TEXT DEFAULT 'pending',
+        ingest_status       TEXT DEFAULT 'pending',
+        transform_status    TEXT DEFAULT 'pending',
+        forecast_status     TEXT DEFAULT 'pending',
+        export_status       TEXT DEFAULT 'pending',
+        raw_food_prices_rows INT,
+        raw_markets_rows    INT,
+        issues_log          JSON
+    );
+"""
+
+
 def update_lineage(run_id: str, status: str, issues: list[str] | None = None) -> None:
     try:
         conn = duckdb.connect(DB_PATH)
         conn.execute("CREATE SCHEMA IF NOT EXISTS pipeline")
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS pipeline.lineage (
-                run_id TEXT PRIMARY KEY,
-                forecast_status TEXT,
-                export_status TEXT,
-                issues_log JSON
-            )
-        """)
+        conn.execute(LINEAGE_TABLE_DDL)
         conn.execute("""
             INSERT INTO pipeline.lineage (run_id, forecast_status, issues_log)
             VALUES (?, ?, ?::JSON)
@@ -317,6 +327,7 @@ def main() -> None:
         combined_data = []
         all_forecasts_valid = True
         validation_errors = []
+        skipped_commodities: list[str] = []
 
         for commodity in COMMODITIES:
             logger.info("Processing %s...", commodity)
@@ -324,6 +335,7 @@ def main() -> None:
 
             if "error" in result:
                 logger.warning("  Skipping %s: %s", commodity, result["error"])
+                skipped_commodities.append(commodity)
                 continue
 
             models_meta[commodity] = {
@@ -359,19 +371,30 @@ def main() -> None:
                                               "scenario": "post2022_robustness"})
 
         validation_errors = validate_forecast(combined_data)
+        if skipped_commodities:
+            validation_errors.append(f"Skipped commodities (insufficient data): {', '.join(skipped_commodities)}")
         if validation_errors:
             all_forecasts_valid = False
             logger.warning("Forecast validation found %d issue(s)", len(validation_errors))
             for e in validation_errors:
                 logger.warning("  %s", e)
 
+        min_ds = prices["ds"].min()
+        max_ds = prices["ds"].max()
+        commodity_data_end = {
+            k: v["max"].strftime("%Y-%m-%d")
+            for k, v in prices.groupby("unique_id")["ds"].agg(["min", "max"]).iterrows()
+        }
+
         output = {
             "metadata": {
                 "generated_at": datetime.now(timezone.utc).isoformat(),
-                "data_end": "2024-05-01",
+                "data_start": min_ds.strftime("%Y-%m-%d"),
+                "data_end": max_ds.strftime("%Y-%m-%d"),
                 "forecast_horizon": f"{FORECAST_H}_months",
-                "forecast_start": "2024-06-01",
-                "forecast_end": "2024-11-01",
+                "forecast_start": (max_ds + pd.DateOffset(months=1)).strftime("%Y-%m-%d"),
+                "forecast_end": (max_ds + pd.DateOffset(months=FORECAST_H)).strftime("%Y-%m-%d"),
+                "commodity_data_end": commodity_data_end,
                 "models": models_meta,
                 "limitations": (
                     "Forecast assumes no structural breaks (policy interventions, "
