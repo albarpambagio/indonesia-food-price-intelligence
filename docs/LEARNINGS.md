@@ -4,6 +4,51 @@ This document captures key technical learnings, bugs encountered, and solutions 
 
 ---
 
+## Table of Contents
+
+| # | Section |
+|---|---------|
+| 1 | [Dashboard Architecture & Routing](#1-dashboard-architecture--routing) |
+| 2 | [Data Fetching & Caching](#2-data-fetching--caching) |
+| 3 | [Component Loading States](#3-component-loading-states) |
+| 4 | [Build & Development Issues](#4-build--development-issues) |
+| 5 | [Sidebar Disappearance Bug](#5-sidebar-disappearance-bug) |
+| 6 | [React Hooks Rules Violation](#6-react-hooks-rules-violation) |
+| 7 | [Array.filter() Does Not Mutate In Place](#7-arrayfilter-does-not-mutate-in-place) |
+| 8 | [Global Filter Pattern Across Pages](#8-global-filter-pattern-across-pages) |
+| 9 | [KPI Cards Should Reflect Filtered Data](#9-kpi-cards-should-reflect-filtered-data) |
+| 10 | [Quick Reference](#10-quick-reference) |
+| 11 | [React Context for Centralized Data Loading](#11-react-context-for-centralized-data-loading) |
+| 12 | [Debounced Slider Pattern](#12-debounced-slider-pattern) |
+| 13 | [Scatter Chart Data Sampling](#13-scatter-chart-data-sampling-for-large-sku-sets) |
+| 14 | [Threshold-Driven Visual Styling](#14-threshold-driven-visual-styling-not-data-filtering) |
+| 15 | [Pagination with Smart Ellipsis](#15-pagination-with-smart-ellipsis) |
+| 16 | [QA Audit: setState Inside useMemo](#16-qa-audit-setstate-inside-usememo-causes-re-render-loops) |
+| 17 | [ETL Pipeline: Row-by-Row INSERT vs Batch Insert](#17-etl-pipeline-row-by-row-insert-vs-batch-insert) |
+| 18 | [ETL Pipeline: DROP TABLE vs TRUNCATE](#18-etl-pipeline-drop-table-vs-truncate-for-idempotent-loads) |
+| 19 | [Filter Composition: Avoid Mutating Source Data](#19-filter-composition-avoid-mutating-source-data) |
+| 20 | [Lazy Data Fetching: Hybrid Approach](#20-lazy-data-fetching-hybrid-approach-with-react-context) |
+| 21 | [Dynamic Imports with next/dynamic](#21-dynamic-imports-with-nextdynamic) |
+| 22 | [sessionStorage Cache Persistence](#22-sessionstorage-cache-persistence) |
+| 23 | [CSV Export: Proper Field Quoting](#23-csv-export-proper-field-quoting) |
+| 24 | [Exception Handling: Uninitialized Variable](#24-exception-handling-uninitialized-variable-in-error-handler) |
+| 25 | [`connectNulls=true` Creates False Continuity](#25-connectnullstrue-creates-false-continuity-in-line-charts) |
+| 26 | [Charts Must Respect Active Filter Scope](#26-charts-must-respect-active-filter-scope) |
+| 27 | [Median Lines Must Match Displayed Data](#27-median-lines-must-match-displayed-data) |
+| 28 | [KPI Delta Must Compare Same Cohort Over Time](#28-kpi-delta-must-compare-same-cohort-over-time) |
+| 29 | [Silent Error Swallowing in DataProvider](#29-silent-error-swallowing-in-dataprovider) |
+| 30 | [Missing Year Validation in NO_RESEP Parser](#30-missing-year-validation-in-no_resep-parser) |
+| 31 | [Division by Zero in KPI Delta Calculation](#31-division-by-zero-in-kpi-delta-calculation) |
+| 32 | [Cache-Busting Query Param for Development](#32-cache-busting-query-param-for-development) |
+| 33 | [Visible Disclaimer for Charts That Can't Be Filtered](#33-visible-disclaimer-for-charts-that-cant-be-filtered) |
+| 34 | [Strip Template Boilerplate Before Deploy](#34-strip-template-boilerplate-before-deploy) |
+| 35 | [Cross-Tabulated Data for Multi-Dimension Filters](#35-filter-composition-cross-tabulated-data-required-for-multi-dimension-filters) |
+| 36 | [Quote-Wrapping SQL Column Names in Dynamic UPDATE](#36-quote-wrapping-sql-column-names-in-dynamic-update-statements) |
+| 37 | [Idempotent Data Loads: DROP TABLE Before CREATE TABLE AS](#37-idempotent-data-loads-drop-table-before-create-table-as) |
+| 38 | [Pipeline Orchestration with Per-Layer Row-Count Reconciliation](#38-pipeline-orchestration-with-per-layer-row-count-reconciliation) |
+
+---
+
 ## 1. Dashboard Architecture & Routing
 
 ### How Next.js Route Groups Work

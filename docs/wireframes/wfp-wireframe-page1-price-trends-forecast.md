@@ -33,9 +33,11 @@
 │ │ Sugar / Flour / All  │  │ Sumatera / ...   │  │ ◄─────────►  │ │
 │ └──────────────────────┘  └──────────────────┘  └───────────────┘ │
 │                                                                     │
-│  [3a] Year Range: dual-handle slider, 2007–2024                     │
-│  [3b] All filters persist across page navigation                    │
-│  [3c] Commodity = All shows all four series on trend chart          │
+ │  [3a] Year Range: dual-handle slider, 2007–2024                     │
+ │  [3b] All filters persist across page navigation                    │
+ │  [3c] Commodity = All shows all four series on trend chart          │
+ │  [3d] Island Group filter applies to Cooking Oil only. Rice,       │
+ │       Sugar, Flour always shown at national level                   │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -194,6 +196,7 @@
 
 | # | Element | Note |
 |---|---------|------|
+| 3d | Island Group filter | Only Cooking Oil has province-level actual prices. Rice/Sugar/Flour are national-level only per WFP data limitations. Filter shows "all island groups" by default when those commodities selected |
 | 4 | KPI cards | Four cards always shown even when single commodity filtered — gives instant cross-commodity comparison without needing to change filter |
 | 5 | Trend chart | The vertical dashed separator between actuals and forecast is the most important visual element on this page — make it prominent |
 | 5 | Structural break | 2022 annotation must be present — without it a hiring manager will ask "what caused that spike?" and think you missed it |

@@ -27,7 +27,8 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │ GLOBAL FILTERS                                                [3]   │
 │ ┌──────────────────────┐  ┌──────────────────┐  ┌───────────────┐ │
-│ │ Commodity [All ▼]    │  │ Island Group[▼]  │  │ Year Range    │ │
+│ │ Commodity [All ▼]    │  │ Island Group     │  │ Year Range    │ │
+│ │                      │  │ [National ▼] ⚠   │  │               │ │
 │ └──────────────────────┘  └──────────────────┘  └───────────────┘ │
 │                                                                     │
 │ PAGE-SPECIFIC: Lag Selector                                         │
@@ -35,9 +36,11 @@
 │ │  Lag:  [0 months]  [1 month]  [2 months]  [3 months]           │ │
 │ └─────────────────────────────────────────────────────────────────┘ │
 │                                                                     │
-│  [3a] Lag selector = tab-style, updates correlation matrix [5]     │
-│  [3b] Default: 1 month — most operationally relevant for monthly   │
-│       procurement cycles                                            │
+ │  [3a] Lag selector = tab-style, updates correlation matrix [5]     │
+ │  [3b] Default: 1 month — most operationally relevant for monthly   │
+ │       procurement cycles                                            │
+ │  [3c] Island Group filter has no effect — all correlation           │
+ │       analysis conducted at national level per WFP data coverage    │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -232,6 +235,7 @@
 | **Matrix cell clicked** | That cell highlighted with ring; scatter chart updates to show that pair; stability chart updates; implication card updates |
 | **No strong relationship (r < 0.3) at selected lag** | Callout cards show empty state: "No strong leading relationship at this lag — try a different lag" |
 | **Post-2022 relationship broken** | ⚠ badge visible on callout card; implication card shows warning text |
+| **Island Group filter changed** | No effect — all correlation analysis conducted at national level. Dropdown shows "[National ▼]" as locked value. Tooltip: "National-level analysis — Island Group disabled" |
 | **Commodity filter = single** | Matrix reduces to show only rows/columns relevant to that commodity |
 
 ---
@@ -240,6 +244,7 @@
 
 | # | Element | Note |
 |---|---------|------|
+| 3c | Island Group filter | Disabled — all 4 commodities correlated at national level. Cooking Oil is the only commodity with province-level data, but cross-commodity correlation requires all series at the same granularity |
 | 4 | Leading indicator cards | Written for Category Manager — no r values visible here. Plain language only. This is the answer to the business question |
 | 5 | Correlation matrix | The "Row leads Column" labelling must be crystal clear — correlation matrices are frequently misread. Add a one-line explanation above the matrix |
 | 5 | Matrix asymmetry | Upper and lower triangles are different (A leads B ≠ B leads A at lag N). This is unusual for correlation matrices and needs clear labelling |
@@ -251,6 +256,8 @@
 ---
 
 ## Content Specifications
+
+> **Scope:** All correlation analysis at national level. Island Group filter disabled.
 
 | Element | Source | Format |
 |---------|--------|--------|

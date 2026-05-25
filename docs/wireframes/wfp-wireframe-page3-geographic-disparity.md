@@ -20,19 +20,35 @@
 
 ┌─────────────────────────────────────────────────────────────────────┐
 │ PAGE HEADER                                                   [2]   │
-│  H1: "Geographic Price Disparity"                                   │
-│  Subtitle: "Price Index vs Java Baseline · Island Group & Province" │
+ │  H1: "Geographic Price Disparity"                                   │
+ │  Subtitle: "Cooking Oil Only — Province-Level Price Index vs Java   │
+ │             Baseline"                                                │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
 │ GLOBAL FILTERS                                                [3]   │
 │ ┌──────────────────────┐  ┌──────────────────┐  ┌───────────────┐ │
-│ │ Commodity [Rice ▼]   │  │ Island Group[▼]  │  │ Year Range    │ │
+ │ │ Commodity [Oil ▼]    │  │ Island Group[▼]  │  │ Year Range    │ │
 │ └──────────────────────┘  └──────────────────┘  └───────────────┘ │
 │                                                                     │
-│  [3a] Commodity defaults to Rice — most complete geographic coverage│
-│  [3b] Island Group filter here controls province drill-down [7]     │
-│       only — map [5] always shows all island groups                 │
+ │  [3a] Commodity defaults to Cooking Oil — only commodity with      │
+ │       province-level actual prices in WFP dataset                   │
+ │  [3b] Island Group filter here controls province drill-down [7]     │
+ │       only — map [5] always shows all island groups                 │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ DATA AVAILABILITY BANNER                                      [3c]  │
+│ ┌─────────────────────────────────────────────────────────────────┐ │
+│ │ ⚠ Only Cooking Oil has province-level actual prices in this     │ │
+│ │ dataset. Rice, Sugar, Flour are available at national level     │ │
+│ │ only — see Page 1 (Price Trends) for national trend analysis.  │ │
+│ │ Geographic maps and province data on this page reflect Cooking │ │
+│ │ Oil prices only.                                                 │ │
+│ └─────────────────────────────────────────────────────────────────┘ │
+│                                                                     │
+│  [3c] Always visible — not collapsible. Light yellow background.    │
+│       Prevents confusion when commodity filter seems limited.       │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -56,7 +72,7 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │ INDONESIA CHOROPLETH MAP                                      [5]   │
 │ ┌─────────────────────────────────────────────────────────────────┐ │
-│ │ H2: "Price Index vs Java — [Selected Commodity]"                │ │
+│ │ H2: "Cooking Oil Price Index vs Java Baseline"               │ │
 │ │                                                                 │ │
 │ │  ┌─────────────────────────────────────────────────────────┐   │ │
 │ │  │                     [MAP OF INDONESIA]                  │   │ │
@@ -93,7 +109,7 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │ ISLAND GROUP COMPARISON CHART                                 [6]   │
 │ ┌─────────────────────────────────────────────────────────────────┐ │
-│ │ H2: "Price Index Over Time — Island Groups vs Java"             │ │
+│ │ H2: "Cooking Oil Price Index Over Time — Island Groups vs Java" │ │
 │ │                                                                 │ │
 │ │  Index ▲   ─── Java (100)                                       │ │
 │ │        │   ─── Eastern ID      ╭──────────────────             │ │
@@ -110,15 +126,15 @@
 │  [6a] Chart type: Recharts LineChart, 5 series                     │
 │  [6b] Java = flat horizontal line at 100 (baseline reference)       │
 │  [6c] Shows whether gaps are narrowing or widening over time        │
-│  [6d] Tooltip: Year | All island group indices                      │
-│  [6e] Responds to Commodity filter — redraws for each commodity     │
-│  [6f] Height: 260px                                                 │
+ │  [6d] Tooltip: Year | All island group indices                      │
+ │  [6e] Cooking Oil only (see data availability banner [3c])          │
+ │  [6f] Height: 260px                                                 │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
 │ PROVINCE DRILL-DOWN TABLE                                     [7]   │
 │ ┌─────────────────────────────────────────────────────────────────┐ │
-│ │ H2: "Province Detail — [Selected Island Group]"                 │ │
+│ │ H2: "Cooking Oil Province Detail — [Selected Island Group]"     │ │
 │ │ Subtitle: "2015–2024 only · Coverage validated"  [Search...]   │ │
 │ │                                                                 │ │
 │ │ Province       │ Island Group  │ Avg Price │ vs Java │ Coverage │ │
@@ -186,7 +202,8 @@
 | **Year slider moved** | Map recolors to show price index for selected year; KPI cards update |
 | **Animate playing** | Map colors animate year by year; slider thumb moves; Animate button becomes Pause |
 | **Island Group filter = specific group** | Province table filtered; map highlights that group; other charts unchanged |
-| **Commodity changed** | All components redraw — map, line chart, KPI cards, province table |
+| **Commodity = Cooking Oil (default)** | All components active — map, line chart, KPI cards, province table |
+| **Commodity = Rice / Sugar / Flour** | Banner [3c] highlights data limitation; map shows grayed-out state with "National-level only — see Page 1" message; province table shows empty state; KPI cards show "N/A" |
 | **Province with limited coverage** | Coverage column shows "2015–24" in lighter text; tooltip explains coverage gap |
 
 ---
@@ -195,6 +212,8 @@
 
 | # | Element | Note |
 |---|---------|------|
+| 3a | Commodity filter | Defaults to Cooking Oil — only commodity with province-level actual prices in WFP data. Rice/Sugar/Flour show grayed-out state with redirect note |
+| 3c | Data availability banner | Always visible. Light yellow background. Non-collapsible. This pre-empts the "why can't I select Rice?" question — make it clear this is a data constraint, not a missing feature |
 | 4 | KPI cards | Five cards is one more than the pharmacy project's three — horizontal scroll on mobile is acceptable here because island groups are the primary analytical unit |
 | 5 | Map | Most visually impressive element in the project. The year animation is the feature that will make a hiring manager say "oh that's clever." Test it thoroughly |
 | 5 | Coverage note | "Province-level detail available below for groups with sufficient coverage" must be visible without scrolling — it sets expectations before the user reaches the table |
@@ -204,6 +223,8 @@
 ---
 
 ## Content Specifications
+
+> **Scope:** All data on this page is Cooking Oil only — the only commodity with province-level actual prices in the WFP dataset.
 
 | Element | Source | Format |
 |---------|--------|--------|

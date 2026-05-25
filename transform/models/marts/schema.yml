@@ -1,0 +1,110 @@
+version: 2
+
+models:
+  - name: mart_price_trends
+    description: Monthly average price per commodity per island group per province — feeds Page 1 (Price Trends & Forecast)
+    columns:
+      - name: month
+        description: Month of observation
+        tests:
+          - not_null
+      - name: commodity_consolidated
+        description: Consolidated commodity name
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Rice
+                  - Cooking Oil
+                  - Sugar
+                  - Flour
+      - name: avg_price_idr
+        description: Average price in IDR
+        tests:
+          - not_null
+          - positive_values
+      - name: island_group
+        description: Island group
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Java
+                  - Sumatera
+                  - Kalimantan
+                  - Sulawesi
+                  - Eastern Indonesia
+
+  - name: mart_seasonal_patterns
+    description: Seasonal price patterns with price index, harvest flags, year-end flags — feeds Page 2 (Seasonal Patterns)
+    columns:
+      - name: month
+        description: Month of observation
+        tests:
+          - not_null
+      - name: commodity_consolidated
+        description: Consolidated commodity name
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Rice
+                  - Cooking Oil
+                  - Sugar
+                  - Flour
+      - name: avg_price
+        description: Average price in IDR
+        tests:
+          - not_null
+          - positive_values
+
+  - name: mart_geo_disparity
+    description: Geographic price disparity with Java baseline index — feeds Page 3 (Geographic Disparity)
+    columns:
+      - name: year
+        description: Year
+        tests:
+          - not_null
+      - name: commodity_consolidated
+        description: Consolidated commodity name
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Rice
+                  - Cooking Oil
+                  - Sugar
+                  - Flour
+      - name: island_group
+        description: Island group
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Java
+                  - Sumatera
+                  - Kalimantan
+                  - Sulawesi
+                  - Eastern Indonesia
+      - name: avg_price_idr
+        description: Average price in IDR
+        tests:
+          - not_null
+          - positive_values
+      - name: price_index_vs_java
+        description: Price index relative to Java baseline (Java = 100)
+        tests:
+          - not_null
+
+  - name: mart_commodity_correlation
+    description: Monthly national average prices in wide format with lagged values — feeds Page 4 (Commodity Signals)
+    columns:
+      - name: month
+        description: Month of observation
+        tests:
+          - not_null

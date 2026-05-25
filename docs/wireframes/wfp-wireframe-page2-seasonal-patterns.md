@@ -35,9 +35,11 @@
 │ │  [Ramadan/Lebaran]  [Harvest Season]  [Year-End]  [All Drivers] │ │
 │ └─────────────────────────────────────────────────────────────────┘ │
 │                                                                     │
-│  [3a] Seasonal driver toggle = tab-style selector, not dropdown     │
-│  [3b] Active driver updates all charts on page                      │
-│  [3c] "All Drivers" shows combined view on heatmap only             │
+ │  [3a] Seasonal driver toggle = tab-style selector, not dropdown     │
+ │  [3b] Active driver updates all charts on page                      │
+ │  [3c] "All Drivers" shows combined view on heatmap only             │
+ │  [3d] Island Group filter applies to Cooking Oil only. Rice,       │
+ │       Sugar, Flour always shown at national level                   │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -63,6 +65,18 @@
 │  [4c] Cards update when seasonal driver toggle changes              │
 │  [4d] Rice card appears here for Harvest Season driver only         │
 │  [4e] Cards sorted by spike magnitude descending                    │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ DATA AVAILABILITY NOTICE                                     [4f]  │
+│ ┌─────────────────────────────────────────────────────────────────┐ │
+│ │ ⓘ Seasonal analysis uses national-level data for Rice, Sugar,   │ │
+│ │ Flour. Island-level breakdown available for Cooking Oil only.   │ │
+│ │ Rice/Sugar/Flour support commodity-level seasonal analysis.     │ │
+│ └─────────────────────────────────────────────────────────────────┘ │
+│                                                                     │
+│  [4f] Always visible above the heatmap — small callout, not a       │
+│       warning style. Just factual.                                  │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -250,7 +264,9 @@
 
 | # | Element | Note |
 |---|---------|------|
+| 3d | Island Group filter | Only Cooking Oil has province-level actual prices. All other commodities shown at national level per WFP data constraint |
 | 4 | Action cards | The most important element on the page for a procurement analyst — they want the answer, not the chart. Quantified lead time + consistency score is what makes this actionable vs decorative |
+| 4f | Data availability callout | Small, factual note — not a warning style. Prevents confusion when Island Group filter seems unresponsive for non-Cooking-Oil commodities |
 | 5 | Heatmap | Uses Gregorian calendar — explicitly noted in the footnote. Without this note, a hiring manager may ask "why doesn't March show a Ramadan spike?" |
 | 6 | Ramadan overlay | The Islamic calendar alignment is the analytical centrepiece of this page. 17 overlaid lines showing consistent pre-Eid spike pattern is the most memorable visual in the project |
 | 6 | 2022 outlier | Must be labelled. The cooking oil export ban creates a massive outlier — hiding it would be analytically dishonest |
@@ -262,7 +278,7 @@
 
 | Element | Source | Format |
 |---------|--------|--------|
-| Action card data | `seasonal_patterns.json → action_windows[]` | `{commodity, driver, spike_pct, consistency, lead_weeks}` |
+| Action card data | `seasonal_patterns.json → action_windows[]` | `{commodity, driver, spike_pct, consistency, lead_weeks, data_scope: "national" \| "island"}` |
 | Heatmap data | `seasonal_patterns.json → gregorian_heatmap[]` | `{commodity, month, premium_pct}` — 48 cells (4×12) |
 | Ramadan overlay | `seasonal_patterns.json → ramadan_overlay[]` | `{year, week_relative, price_index}` |
 | Harvest chart | `seasonal_patterns.json → harvest_index[]` | `{month, rice_index}` |

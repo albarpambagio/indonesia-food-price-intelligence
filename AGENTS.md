@@ -48,8 +48,9 @@ uv run marimo edit analysis/forecast_experimentation.py # Phase 3 — model sele
 ### dbt
 ```bash
 cd transform
-dbt run              # Run all models
-dbt test             # Run data tests
+dbt seed             # Load seed data (islamic_calendar.csv)
+dbt run              # Run all models (staging → intermediate → marts)
+dbt test             # Run data tests (33 tests across all layers)
 dbt docs generate    # Generate lineage docs
 ```
 
@@ -74,10 +75,10 @@ npm run build        # Static export for Cloudflare Pages
 ### Phase Pipeline
 ```
 Phase 0: Setup + Data Validation  → Folder structure, marimo validation notebook, dbt/Next.js init
-Phase 1: Ingest & Staging         → DuckDB raw load, dbt staging models + tests
-Phase 2: Transform                → dbt intermediate + mart models + tests
+Phase 1: Ingest & Staging         → DuckDB raw load, dbt staging models + tests        ✅ DONE
+Phase 2: Transform                → dbt intermediate + mart models + tests              ✅ DONE
 Phase 3: Forecasting              → statsforecast AutoARIMA/AutoETS + methodology doc
-Phase 4: EDA                      → Marimo notebook (SCAN framework)
+Phase 4: EDA                      → Marimo notebook (SCAN framework)                    ✅ DONE
 Phase 5: Deep Dive                → Marimo notebook (North Star method)
 Phase 6: Dashboard                → 4 pages in Next.js + Shadboard + Cloudflare Pages
 Phase 7: Methodology Doc          → model_methodology.md
@@ -99,17 +100,28 @@ indonesia-food-price-intelligence/
 │   ├── profiles.yml
 │   └── models/
 │       ├── staging/            # 1:1 with raw tables, light cleaning
+│       │   ├── stg_food_prices.sql
+│       │   └── stg_markets.sql
 │       ├── intermediate/       # Business logic, joins, normalisation
+│       │   ├── int_commodity_consolidated.sql
+│       │   ├── int_prices_normalised.sql
+│       │   └── int_islamic_calendar.sql
 │       └── marts/              # Final analytical models (one per page)
+│           ├── mart_price_trends.sql
+│           ├── mart_seasonal_patterns.sql
+│           ├── mart_geo_disparity.sql
+│           └── mart_commodity_correlation.sql
 ├── forecast/
 │   └── run_forecast.py         # statsforecast models → forecast JSON
 ├── export/
 │   └── export_json.py          # Mart models → static JSON files
 ├── analysis/                   # Marimo notebooks (.py files)
 │   ├── data_validation.py      # Phase 0 validation checkpoint
-│   ├── eda.py                  # Phase 4 SCAN EDA
+│   ├── eda.py                  # Phase 4 SCAN EDA (15 cells, 7 findings)
 │   ├── deep_dive.py            # Phase 5 North Star deep dives
 │   └── forecast_experimentation.py  # Phase 3 optional model comparison
+├── seeds/                      # dbt seed data
+│   └── islamic_calendar.csv    # Ramadan/Eid dates 2007–2024
 ├── dashboard/                  # Next.js + Shadboard app
 │   ├── public/
 │   │   └── data/               # Static JSON files
@@ -164,21 +176,21 @@ indonesia-food-price-intelligence/
 
 ### dbt Model Architecture
 ```
-raw.food_prices          raw.markets
-       │                      │
-       ▼                      ▼
-stg_food_prices          stg_markets
-       │                      │
-       └──────────┬───────────┘
-                  ▼
-     int_commodity_consolidated
-     int_prices_normalised
-     int_islamic_calendar
+raw.food_prices          raw.markets          islamic_calendar.csv
+       │                      │                       │
+       ▼                      ▼                       ▼
+stg_food_prices          stg_markets           (dbt seed)
+       │                      │                       │
+       └──────────┬───────────┘                       │
+                  ▼                                    │
+     int_commodity_consolidated                        │
+     int_prices_normalised                             │
+     int_islamic_calendar ◄────────────────────────────┘
                   │
        ┌──────────┼──────────┬──────────┐
        ▼          ▼          ▼          ▼
-mart_price   mart_seasonal  mart_geo   mart_corr
-_trends      _patterns      _disparity _elation
+mart_price   mart_seasonal  mart_geo   mart_commodity
+_trends      _patterns      _disparity _correlation
        │          │          │          │
        └──────────┴──────────┴──────────┘
                   │
@@ -192,8 +204,8 @@ _trends      _patterns      _disparity _elation
 ### Island Group Mapping
 | Island Group | Provinces |
 |-------------|-----------|
-| Java | DKI JAKARTA, JAWA BARAT, JAWA TENGAH, DI YOGYAKARTA, JAWA TIMUR, BANTEN |
-| Sumatera | ACEH, SUMATERA UTARA, SUMATERA BARAT, RIAU, JAMBI, SUMATERA SELATAN, BENGKULU, LAMPUNG, KEPULAUAN RIAU, BANGKA BELITUNG |
+| Java | DKI JAKARTA, JAWA BARAT, JAWA TENGAH, DAERAH ISTIMEWA YOGYAKARTA, JAWA TIMUR, BANTEN |
+| Sumatera | ACEH, SUMATERA UTARA, SUMATERA BARAT, RIAU, JAMBI, SUMATERA SELATAN, BENGKULU, LAMPUNG, KEPULAUAN RIAU, KEPULAUAN BANGKA BELITUNG |
 | Kalimantan | KALIMANTAN BARAT, KALIMANTAN TENGAH, KALIMANTAN SELATAN, KALIMANTAN TIMUR, KALIMANTAN UTARA |
 | Sulawesi | SULAWESI UTARA, SULAWESI TENGAH, SULAWESI SELATAN, SULAWESI TENGGARA, GORONTALO, SULAWESI BARAT |
 | Eastern Indonesia | BALI, NUSA TENGGARA BARAT, NUSA TENGGARA TIMUR, MALUKU, MALUKU UTARA, PAPUA, PAPUA BARAT |
@@ -248,8 +260,9 @@ All counts logged to per-phase log files and recorded in `pipeline.lineage`.
 | `flag_null_unit` | unit is NULL |
 | `flag_non_target` | commodity_consolidated is NULL (excluded commodity) |
 | `flag_aggregate` | priceflag = 'aggregate' |
+| `flag_invalid_year` | year outside 2007–2024 (added per LEARNINGS.md §30) |
 
-Flags are set during intermediate transformation and propagated to mart models. Downstream analysis always applies `WHERE filter_out = FALSE`.
+Flags are set during intermediate transformation and propagated to mart models. Downstream analysis always applies `WHERE filter_out = FALSE`. Composite `filter_out` = OR of all 5 flags — 2,116 rows pass for analytics (actual market price × target commodity × valid year).
 
 ### Forecast Validation (`forecast/run_forecast.py`)
 Post-generation checks per commodity:
@@ -364,6 +377,7 @@ This project shares the same dashboard stack (Next.js + Shadboard + Recharts + T
 | Forecast accuracy degrades at 5–6 months | CI widens explicitly on dashboard; 1–2 month forecasts operationally reliable |
 | No volume weighting | All markets equal weight; would weight by sourcing volume in production |
 | 2022 structural break (cooking oil) | Model retrained on post-2022 data as robustness check |
+| Rice/Sugar/Flour: no market-level `actual` prices in WFP data — only national avg (market_id=974) | `mart_commodity_correlation` provides all 4 at national level; Pages 2/3 limited to Cooking Oil for geographic/seasonal analysis; documented on dashboard |
 
 ---
 
