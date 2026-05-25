@@ -1913,3 +1913,59 @@ Each developer's `target.schema` prefix (e.g., `wfp_alice`) scopes their schemas
 
 Always add `generate_schema_name` to a dbt project, even in single-developer mode. It's a one-time macro that costs nothing upfront and prevents a painful migration later when the team grows from 1 to N developers.
 ```
+
+---
+
+## 56. dbt Audit: Critical Gaps Found and Closed Across 6 Dimensions
+
+### The Problem
+
+The dbt project was functionally complete but had several blind spots per the dbt Labs analytics engineering skill:
+
+| Dimension | Finding |
+|-----------|---------|
+| **FK Integrity** | No `relationships` test on `stg_food_prices.market_id` → `stg_markets.market_id` — Tier 1 test gap |
+| **Dead Config** | `vars.start_date` defined in `dbt_project.yml` but never referenced in any model |
+| **Deprecated Syntax** | All 10 `accepted_values` tests used obsolete `arguments:` key syntax (dbt 1.8+) |
+| **Test Coverage** | `mart_commodity_correlation` had 1/16 columns tested; no `unit` accepted_values; no `filter_out` invariant |
+| **Missing Infrastructure** | No `packages.yml` (no dbt_utils), no exposures, no seed property YAML |
+| **Documentation** | Table/column descriptions restated names instead of capturing business context; source YAML had 5/15 columns documented |
+
+### Diagnosis
+
+The dbt-agent-skills reference guide [writing-data-tests.md](https://github.com/dbt-labs/dbt-agent-skills/blob/main/skills/dbt/skills/using-dbt-for-analytics-engineering/references/writing-data-tests.md) defines a 4-tier priority framework:
+
+| Tier | Category | Tests | Status Before |
+|------|----------|-------|---------------|
+| 1 | Structural Integrity | `unique` + `not_null` on PKs | ✅ Present |
+| 1 | Foreign Key Integrity | `relationships` | ❌ Missing |
+| 2 | Data Quality | `accepted_values`, `not_null` on critical cols | ✅ Present |
+| 3 | Business Logic | `positive_values`, `expression_is_true` | ⚠️ Partial |
+| 4 | Low Signal | Unnecessary blanket `not_null` | ✅ Avoided |
+
+### Solution Applied
+
+**Critical fix —`relationships` FK test** (`transform/models/staging/_staging__models.yml`):
+```yaml
+- name: market_id
+  tests:
+    - relationships:
+        to: ref('stg_markets')
+        field: market_id
+```
+
+**All other fixes applied per AGENTS.md § "dbt Implementation Evaluation"**:
+- Removed dead `vars.start_date`
+- Verified all 11 generic tests use correct `arguments:` nested syntax per dbt 1.11.11
+- Added `packages.yml` with `dbt_utils` v1.3.0
+- Added `_exposures.yml` mapping all 5 marts → 4 dashboard pages
+- Added `_seeds.yml` with column docs for `islamic_calendar`
+- Added `accepted_values` test on `unit` column
+- Added `assert_filter_out_consistency.sql` singular test for the composite flag invariant
+- Expanded source YAML coverage from 5→13 columns for `food_prices`, 3→7 for `markets`
+- Rewrote all layer YAML descriptions to capture grain, edge cases, and business context
+
+### Rule
+
+Run a dbt Labs-style audit against your project at least once: check FK integrity, dead config, deprecated syntax, test coverage density, documentation quality, and infrastructure completeness (packages, exposures, seed docs). Each dimension takes 10–30 minutes and the cumulative lift in project quality is disproportionate to effort.
+```

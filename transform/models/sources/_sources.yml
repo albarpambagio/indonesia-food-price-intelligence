@@ -19,21 +19,49 @@ sources:
         columns:
           - name: date
             description: Observation date (always 15th of month)
-          - name: commodity
-            description: Commodity name (original with variants)
-          - name: price
-            description: Price in IDR
-          - name: priceflag
-            description: actual or aggregate
-          - name: market_id
-            description: Foreign key to raw.markets
-
-      - name: markets
-        description: WFP market reference data — 224 markets
-        columns:
-          - name: market_id
-            description: Primary key
+          - name: admin1
+            description: Province name (e.g., 'DKI JAKARTA') — raw, non-normalised
+          - name: admin2
+            description: District name — raw, may contain nulls or empty strings
           - name: market
             description: Market name
+          - name: market_id
+            description: Foreign key to raw.markets
+          - name: latitude
+            description: Market latitude (WGS84) — may contain nulls for national avg
+          - name: longitude
+            description: Market longitude (WGS84) — may contain nulls for national avg
+          - name: category
+            description: Commodity category grouping — used for filtering
+          - name: commodity
+            description: Commodity name (original with variants, e.g., 'Oil (vegetable, bulk)')
+          - name: commodity_id
+            description: Internal WFP commodity code
+          - name: unit
+            description: Unit of measurement (e.g., KG, L, 385G)
+          - name: priceflag
+            description: Price type flag — actual (observed) or aggregate (estimated)
+          - name: pricetype
+            description: Always 'Retail' for this dataset
+          - name: currency
+            description: Currency code (IDR for all local prices)
+          - name: price
+            description: Price in IDR — raw value, may include zero or negative (filtered in staging)
+
+      - name: markets
+        description: WFP market reference data — 224 markets across 30 Indonesian provinces
+        columns:
+          - name: market_id
+            description: Primary key — 974 indicates national average (no geographic location)
+          - name: market
+            description: Market name
+          - name: countryiso3
+            description: ISO 3166-1 alpha-3 country code (always IDN)
           - name: admin1
-            description: Province name
+            description: Province name — NATIONAL for market_id = 974
+          - name: admin2
+            description: District name — NATIONAL for market_id = 974
+          - name: latitude
+            description: Market latitude (WGS84) — null for market_id = 974
+          - name: longitude
+            description: Market longitude (WGS84) — null for market_id = 974

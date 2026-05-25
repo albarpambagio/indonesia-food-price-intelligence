@@ -2,14 +2,18 @@ version: 2
 
 models:
   - name: mart_price_trends
-    description: Monthly average price per commodity per island group per province — feeds Page 1 (Price Trends & Forecast)
+    description: >
+      Monthly average price per commodity per island group per province.
+      Grain: month × commodity × island_group × admin1. Aggregates actual prices
+      across markets within each province. Feeds Page 1 (Price Trends & Forecast)
+      for the question "Is now a good time to lock in bulk purchase contracts?"
     columns:
       - name: month
-        description: Month of observation
+        description: Month of observation — truncated to month grain for trend aggregation
         tests:
           - not_null
       - name: commodity_consolidated
-        description: Consolidated commodity name
+        description: Normalised commodity name — all 4 staples present
         tests:
           - not_null
           - accepted_values:
@@ -20,12 +24,12 @@ models:
                   - Sugar
                   - Flour
       - name: avg_price_idr
-        description: Average price in IDR
+        description: Average price in IDR across markets in the province-month-commodity group
         tests:
           - not_null
           - positive_values
       - name: island_group
-        description: Island group
+        description: Geographic grouping — non-null enforced for geo-aware aggregation
         tests:
           - not_null
           - accepted_values:
@@ -38,14 +42,18 @@ models:
                   - Eastern Indonesia
 
   - name: mart_seasonal_patterns
-    description: Seasonal price patterns with price index, harvest flags, year-end flags, Ramadan proximity flags — feeds Page 2 (Seasonal Patterns)
+    description: >
+      Seasonal price patterns with price index vs annual average, harvest season flags,
+      year-end demand flags, and Ramadan proximity flags (t-3 to t+1 months around Eid).
+      Grain: month × commodity × island_group. Feeds Page 2 (Seasonal Patterns)
+      for the question "Which seasonal events cause the most predictable price spikes?"
     columns:
       - name: month
-        description: Month of observation
+        description: Month of observation — base grain for seasonal analysis
         tests:
           - not_null
       - name: commodity_consolidated
-        description: Consolidated commodity name
+        description: Normalised commodity name
         tests:
           - not_null
           - accepted_values:
@@ -56,28 +64,32 @@ models:
                   - Sugar
                   - Flour
       - name: avg_price
-        description: Average price in IDR
+        description: Average price in IDR for the month-commodity-island group
         tests:
           - not_null
           - positive_values
       - name: flag_ramadan_eid_month
-        description: Month is the Eid al-Fitr month
+        description: TRUE when month matches the Eid al-Fitr month — highest demand period
         tests:
           - not_null
       - name: flag_ramadan_t_minus_3
-        description: Month is 3 months before Eid
+        description: TRUE when month is 3 months before Eid (roughly Ramadan start) — pre-Eid stockpiling
         tests:
           - not_null
 
   - name: mart_geo_disparity
-    description: Geographic price disparity with Java baseline index — feeds Page 3 (Geographic Disparity)
+    description: >
+      Geographic price disparity with Java baseline index (Java = 100).
+      Grain: year × commodity × island_group × admin1. Includes YoY change in
+      index and data completeness (months_with_data). Feeds Page 3 (Geographic Disparity)
+      for the question "Which island group offers the best sourcing price?"
     columns:
       - name: year
-        description: Year
+        description: Year of observation — annual grain for stable geographic comparison
         tests:
           - not_null
       - name: commodity_consolidated
-        description: Consolidated commodity name
+        description: Normalised commodity name
         tests:
           - not_null
           - accepted_values:
@@ -88,7 +100,7 @@ models:
                   - Sugar
                   - Flour
       - name: island_group
-        description: Island group
+        description: Geographic grouping — compared against Java baseline
         tests:
           - not_null
           - accepted_values:
@@ -100,37 +112,56 @@ models:
                   - Sulawesi
                   - Eastern Indonesia
       - name: avg_price_idr
-        description: Average price in IDR
+        description: Average price in IDR for the year-commodity-province
         tests:
           - not_null
           - positive_values
       - name: price_index_vs_java
-        description: Price index relative to Java baseline (Java = 100)
+        description: Price index relative to Java baseline (Java = 100) — >100 means premium, <100 means discount
         tests:
           - not_null
       - name: yoy_change_index
-        description: Year-over-year change in price_index_vs_java
+        description: Year-over-year change in price_index_vs_java — null for first year in each partition
 
   - name: mart_commodity_correlation
-    description: Monthly national average prices in wide format with lagged values — feeds Page 4 (Commodity Signals)
+    description: >
+      Monthly national average prices in wide format with 0-3 month lagged values
+      for all 4 commodities. Grain: month. Pivoted from long-format national prices.
+      Used for cross-correlation analysis and leading indicator detection.
+      Feeds Page 4 (Commodity Signals) for the question "Which commodities
+      lead others in price movement?"
     columns:
       - name: month
-        description: Month of observation
+        description: Month of observation — one row per month with all commodities side by side
         tests:
           - not_null
+      - name: rice_price
+        description: Monthly national average price of Rice (IDR) — NULL in months with no actual-level price data (limited to national avg market_id=974)
+      - name: oil_price
+        description: Monthly national average price of Cooking Oil (IDR) — has market-level actual prices, so full coverage
+        tests:
+          - not_null
+      - name: sugar_price
+        description: Monthly national average price of Sugar (IDR) — NULL in months with no actual-level price data (limited to national avg market_id=974)
+      - name: flour_price
+        description: Monthly national average price of Flour (IDR) — NULL in months with no actual-level price data (limited to national avg market_id=974)
 
   - name: mart_correlation_summary
-    description: Cross-correlation coefficients for all commodity pairs at lags 0-3 — feeds Page 4 leading indicator analysis
+    description: >
+      Cross-correlation coefficients (Pearson's r) for all 6 commodity pairs
+      at lags 0-3 months. 24 rows total. Includes rank per commodity for
+      identifying which lag has the strongest signal. Feeds Page 4 leading
+      indicator analysis.
     columns:
       - name: commodity_pair
-        description: Commodity pair in format 'commodity_a-commodity_b'
+        description: Commodity pair in format 'commodity_a-commodity_b' — e.g., 'rice-oil'
         tests:
           - not_null
       - name: lag_months
-        description: Lag in months
+        description: Lag in months applied to commodity_a before correlation with commodity_b
         tests:
           - not_null
       - name: pearson_r
-        description: Pearson correlation coefficient
+        description: Pearson correlation coefficient between the lagged and unlagged series
         tests:
           - not_null

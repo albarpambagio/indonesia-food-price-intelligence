@@ -1,7 +1,6 @@
 WITH islamic AS (
   SELECT
     year,
-    CAST(ramadan_start AS DATE) AS ramadan_start,
     CAST(eid_date AS DATE) AS eid_date,
     source
   FROM {{ ref('islamic_calendar') }}
@@ -9,7 +8,6 @@ WITH islamic AS (
 
 SELECT
   year,
-  ramadan_start,
   eid_date,
   STRFTIME(eid_date, '%Y-%m') AS eid_month,
   STRFTIME(eid_date - INTERVAL 1 MONTH, '%Y-%m') AS t_minus_1,

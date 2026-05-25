@@ -2,10 +2,16 @@ version: 2
 
 models:
   - name: int_commodity_consolidated
-    description: Commodity name consolidation — maps Oil variants → Cooking Oil, Sugar variants → Sugar
+    description: >
+      Maps 7+ raw WFP commodity variants into 4 consolidated categories.
+      Rice → Rice, Oil variants → Cooking Oil, Sugar variants → Sugar,
+      Wheat flour → Flour. Everything else → NULL (filtered downstream).
+      16 columns: 15 pass-through from staging + 1 computed commodity_consolidated.
     columns:
       - name: commodity_consolidated
-        description: Consolidated commodity name
+        description: >
+          Normalised commodity name (Rice/Cooking Oil/Sugar/Flour).
+          NULL means non-target commodity excluded from analysis.
         tests:
           - accepted_values:
               arguments:
@@ -14,21 +20,29 @@ models:
                   - Cooking Oil
                   - Sugar
                   - Flour
-              # NULL is valid — excludes non-target commodities
 
   - name: int_prices_normalised
-    description: Normalised prices with island group mapping and row-level quality flags
+    description: >
+      Central transformation model — enriches staging prices with island group mapping,
+      row-level quality flags, and a composite filter_out column. 5 flags track
+      data quality dimensions (zero price, null unit, non-target commodity,
+      aggregate flag, invalid year). Downstream marts filter with WHERE filter_out = FALSE.
+      ~2,116 rows pass for analytics.
     columns:
       - name: date
+        description: Observation date (always 15th of month) — used for monthly grain
         tests:
           - not_null
       - name: price_idr
+        description: Price in IDR — renamed from price for clarity; source of all IDR metrics
         tests:
           - not_null
       - name: price_flag
+        description: actual or aggregate — 'aggregate' rows filtered out of analytics
         tests:
           - not_null
       - name: commodity_consolidated
+        description: Normalised commodity name — non-null means target commodity
         tests:
           - accepted_values:
               arguments:
@@ -38,6 +52,7 @@ models:
                   - Sugar
                   - Flour
       - name: island_group
+        description: Geographic grouping (Java/Sumatera/Kalimantan/Sulawesi/Eastern Indonesia) — NULL for national avg
         tests:
           - accepted_values:
               arguments:
@@ -47,14 +62,20 @@ models:
                   - Kalimantan
                   - Sulawesi
                   - Eastern Indonesia
+      - name: filter_out
+        description: Composite quality gate — TRUE if ANY of 5 flags is set; downstream uses FALSE-only
 
   - name: int_islamic_calendar
-    description: Ramadan/Eid lookup 2007–2024 with proximity month strings
+    description: >
+      Ramadan/Eid lookup table 2007–2024. Computes 5 proximity month strings
+      relative to Eid date for seasonal pattern analysis. Source: IslamicFinder.org.
     columns:
       - name: year
+        description: Gregorian year — one row per year, 2007–2024
         tests:
           - not_null
           - unique
       - name: eid_date
+        description: Date of Eid al-Fitr for the given year — source of all proximity calculations
         tests:
           - not_null

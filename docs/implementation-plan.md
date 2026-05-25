@@ -115,7 +115,13 @@
 | 2.4.2 | Validate each mart COUNT ≤ int_prices_normalised (filtered) COUNT | ✅ | 2,116 filtered rows → mart_price_trends=238, mart_seasonal=35, mart_geo=34, mart_corr=165 |
 | 2.4.3 | Log all counts to `logs/transform.log` + update `pipeline.lineage.mart_rows` | ✅ | Written to issues_log JSON in lineage |
 
-**Validation**: All dbt tests pass (33/33). Row count chain: 325,239 raw → 325,239 staging → 325,239 int → 2,116 filtered → mart models. Data limitation documented: Rice/Sugar/Flour have no market-level `actual` prices — only national avg (market_id=974). Only Cooking Oil has province-level actual prices (4,236 rows across 5 island groups). `mart_commodity_correlation` provides all 4 commodities at national level (158 months).
+**Validation**: All dbt tests pass (55/55 + 4 exposures). Row count chain: 325,239 raw → 325,239 staging → 325,239 int → 2,116 filtered → mart models. Data limitation documented: Rice/Sugar/Flour have no market-level `actual` prices — only national avg (market_id=974). Only Cooking Oil has province-level actual prices (4,236 rows across 5 island groups). `mart_commodity_correlation` provides all 4 commodities at national level (158 months).
+
+**dbt audit per dbt-agent-skills** — post-Phase 2.5 evaluation closed 9 gaps:
+- FK `relationships` test (Tier 1 critical), `packages.yml`, `_exposures.yml`, `_seeds.yml`
+- `filter_out` invariant singular test, `accepted_values` on `unit`
+- Dead config removal, unused column cleanup, expanded source column docs
+- All 11 generic tests verified with correct `arguments:` syntax for dbt 1.11.11
 
 ## Phase 2.5 — Post-Implementation Corrections
 > **Sequential** — identified during gap analysis after Phase 2 completion. Runs before Phase 3 to ensure downstream pages have correct data.
@@ -130,9 +136,10 @@
 | 2.5.6 | Add intermediate schema.yml — dbt tests for all 3 intermediate models | ✅ | accepted_values, not_null, unique tests |
 | 2.5.7 | Add dbt schema tests for new columns (flag_ramadan_*, pearson_r, yoy_change_index) | ✅ | not_null on all new columns |
 | 2.5.8 | Update docs: LEARNINGS.md (§39-42), AGENTS.md, data_validation.md, issues_log.md, implementation-plan.md | ✅ | All 5 docs updated with gap-corrected information |
-| 2.5.9 | Re-run `dbt run` + `dbt test` — verify all tests pass after changes | ⬜ | Must re-verify after all SQL edits |
+| 2.5.9 | Re-run `dbt run` + `dbt test` — verify all tests pass after changes | ✅ | 66/66 pass, 0 errors, 0 warnings |
+| 2.5.10 | **dbt Labs audit** — 6-dimension evaluation per dbt-agent-skills; close 9 gaps | ✅ | See AGENTS.md § "dbt Implementation Evaluation" for full delta |
 
-**Key Deliverable**: 3 mart model corrections + 1 new model + 1 intermediate refactor + lineage table fix + all docs current.
+**Key Deliverable**: 3 mart model corrections + 1 new model + 1 intermediate refactor + lineage table fix + all docs current + 9 audit gaps closed (33→55 tests).
 
 ---
 
@@ -297,6 +304,8 @@
 - [x] dbt mart tests pass (not_null, accepted_values, positive_values)
 - [x] dbt docs generate produces lineage graph
 - [x] Phase 2.5 corrections: Ramadan flags joined, YoY delta added, correlation summary created, DATE_TRUNC centralized, lineage table fixed
+- [x] dbt audit (6 dimensions): FK relationships test, packages.yml, exposures, seed YAML, filter_out invariant, unit accepted_values, dead config cleanup, expanded source column docs (5→13 food_prices, 3→7 markets)
+- [x] All generic tests verified with correct `arguments:` nested syntax (dbt 1.11.11)
 - [ ] Forecast output validated (no NaN, negative, or reversed CI)
 - [ ] Export verified: JSON record count == mart row count
 - [ ] EDA: ≥6 findings in insights log
@@ -333,6 +342,7 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 1 | `feat: ingest & dbt staging models` | Pipeline layer 1 |
 | Phase 2 | `feat: dbt intermediate + mart models` | Analytical core |
 | Phase 2.5 | `fix: post-implementation corrections (ramadan, correlation, lineage, docs)` | Gap fixes |
+| Phase 2.5a | `fix: dbt audit — FK test, packages, exposures, seed YAML, invariants, docs` | 9 audit gaps closed, 33→55 tests |
 | Phase 3 | `feat: forecast models + methodology doc` | Modelling |
 | Phase 4 | `feat: EDA notebook + insights log` | Analysis |
 | Phase 5 | `feat: deep dive analysis notebook` | Analysis |
@@ -353,3 +363,4 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Date | Blocker | Resolution |
 |------|---------|------------|
 | 2026-05-25 | **Data Finding**: Rice/Sugar/Flour have no market-level `actual` prices — only national average (market_id=974, price_flag='actual'). Cooking Oil is the only commodity with province-level actual price data (4,236 rows). | Accepted as WFP data constraint. `mart_commodity_correlation` provides all 4 at national level (158 months). Dashboard Pages 2/3 will document limitation. |
+| 2026-05-25 | **dbt evaluation per dbt-agent-skills**: audit found 9 gaps — missing FK relationships test, no packages.yml, no exposures, no seed YAML, dead config, unused column, insufficient column docs, missing unit test, deprecated test syntax. | All 9 closed. Tests expanded from 33→55. `dbt build` passes 66/66 with 0 errors, 0 warnings. Documented in AGENTS.md § "dbt Implementation Evaluation" and LEARNINGS.md §56. |

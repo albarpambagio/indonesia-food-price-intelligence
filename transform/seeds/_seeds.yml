@@ -1,0 +1,23 @@
+version: 2
+
+seeds:
+  - name: islamic_calendar
+    description: >
+      Manually compiled Ramadan and Eid al-Fitr dates for 2007–2024.
+      Used by int_islamic_calendar to compute proximity month flags
+      for seasonal pattern analysis. Source: IslamicFinder.org (calculated).
+      One row per Gregorian year.
+    columns:
+      - name: year
+        description: Gregorian year — 2007–2024, one row per year (PK)
+        tests:
+          - unique
+          - not_null
+      - name: ramadan_start
+        description: Start date of Ramadan (first day of fasting) — Gregorian calendar
+      - name: eid_date
+        description: Date of Eid al-Fitr — used as anchor for monthly proximity calculations
+        tests:
+          - not_null
+      - name: source
+        description: Source attribution for the date calculation

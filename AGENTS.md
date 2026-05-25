@@ -403,6 +403,56 @@ This project shares the same dashboard stack (Next.js + Shadboard + Recharts + T
 
 ---
 
+## dbt Implementation Evaluation
+
+Per dbt Labs' analytics engineering best practices, this project was audited across six dimensions. Summary below.
+
+### DAG Architecture
+```
+raw schema → staging (view) → intermediate (view) → marts (table, JSON export)
+```
+- **Medallion layers**: Clean separation with clear responsibilities per layer
+- **DRY**: Minor redundancy — `stg_food_prices` `WHERE price > 0` duplicates `int_prices_normalised` `flag_price_le_zero`
+- **Dead config**: `vars.start_date` in `dbt_project.yml` defined but never referenced
+
+### Test Coverage (33 total)
+| Tier | Category | Tests | Status |
+|------|----------|-------|--------|
+| 1 | Structural Integrity | `unique` + `not_null` on PKs | ✅ |
+| 1 | Foreign Key Integrity | `relationships` test | ⚠️ Added per audit |
+| 2 | Data Quality | `accepted_values` on enums, `not_null` on critical cols | ✅ |
+| 3 | Business Logic | `positive_values` on prices, `expression_is_true` invariants | ⚠️ Added per audit |
+| 4 | Low Signal | Avoided unnecessary blanket `not_null` | ✅ |
+
+**Critical fix applied**: Added `relationships` test on `stg_food_prices.market_id → stg_markets.market_id` (Tier 1 gap).
+
+**Syntax verified**: dbt 1.11.11 requires `arguments:` key for generic tests. All 10 `accepted_values` + 1 `relationships` test confirmed using correct nested syntax.
+
+### Documentation Quality
+- Table descriptions that stated the obvious (`"Cleaned markets"`) rewritten to capture grain, edge cases, and business context
+- Column descriptions that restated the name (`"Primary key"`) enriched with business rationale
+- Source YAML column docs expanded from 5/15 to 13/15 columns for `food_prices`, 3/9 to 7/9 for `markets`
+
+### Gaps Closed
+| Gap | Fix |
+|-----|-----|
+| No `relationships` FK test on market_id | Added to `_staging__models.yml` |
+| `vars.start_date` unused | Removed from `dbt_project.yml` |
+| `ramadan_start` selected but unused | Removed from `int_islamic_calendar.sql` |
+| `mart_commodity_correlation` 1/16 cols tested | Added `not_null` on all 4 price columns |
+| No `packages.yml` | Added with `dbt_utils` v1.3.0 |
+| No exposures defined | Added `_exposures.yml` mapping marts → dashboard pages |
+| No seed YAML for `islamic_calendar` | Added `_seeds.yml` with column docs |
+| Missing `unit` column test | Added `accepted_values` for known units |
+| `filter_out` invariant not tested | Added singular test `assert_filter_out_consistency.sql` |
+
+### Key Convention
+- `mart_` prefix used consistently (not `dim_`/`fct_`) — aligns with project's analytical focus per LEARNINGS.md §53
+- `_layer__models.yml` naming convention per LEARNINGS.md §51
+- `generate_schema_name` macro provides multi-env isolation per LEARNINGS.md §55
+
+---
+
 ## Testing Instructions
 
 ### Verify dbt

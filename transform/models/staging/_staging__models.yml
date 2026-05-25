@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: stg_food_prices
-    description: Cleaned food prices — light transformations on raw WFP data
+    description: "Cleaned WFP food prices — type casting, trimming, basic filtering. One row per market-month-commodity. Price <= 0 filtered at staging; downstream quality flags catch edge cases. 17 columns propagated to intermediate."
     columns:
       - name: date
         description: Observation date (always 15th of month)
@@ -13,9 +13,13 @@ models:
         tests:
           - not_null
       - name: market_id
-        description: Foreign key to stg_markets
+        description: Foreign key to stg_markets — all actual market prices reference this
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_markets')
+                field: market_id
       - name: price
         description: Price in IDR
         tests:
@@ -37,20 +41,29 @@ models:
               arguments:
                 values:
                   - Retail
+      - name: unit
+        description: Unit of measurement — KG for most commodities, L for cooking oil, 385 G for some sugar/flour (with space in raw data)
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - KG
+                  - L
+                  - 385 G
 
   - name: stg_markets
-    description: Cleaned markets — light transformations on raw WFP market data
+    description: "Cleaned WFP market reference data — null-to-NATIONAL for admin1/admin2. One row per market. Market 974 = national avg (no geo granularity). FK target for stg_food_prices."
     columns:
       - name: market_id
-        description: Primary key
+        description: Primary key — 974 is the national average placeholder, all others are physical markets
         tests:
           - unique
           - not_null
       - name: market
-        description: Market name
+        description: Market name — used for display and geo-grouping; 974 = 'Indonesia - National Average'
         tests:
           - not_null
       - name: admin1
-        description: Province name
+        description: Province name — defaults to 'NATIONAL' when NULL (market_id = 974)
         tests:
           - not_null

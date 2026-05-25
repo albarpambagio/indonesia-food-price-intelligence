@@ -1,0 +1,51 @@
+version: 2
+
+exposures:
+  - name: price_trends_forecast
+    type: dashboard
+    description: >
+      Page 1 — Price Trends & Forecast. Answers: "Is now a good time to lock in
+      bulk purchase contracts?" Shows 17-year trends + 6-month forecast.
+    url: https://dashboard.example.com/page-1
+    depends_on:
+      - ref('mart_price_trends')
+    owner:
+      name: Procurement Analyst
+      email: procurement@example.com
+
+  - name: seasonal_patterns
+    type: dashboard
+    description: >
+      Page 2 — Seasonal Patterns. Answers: "When should we increase stock for
+      each commodity?" Shows price index with Ramadan/harvest/year-end flags.
+    url: https://dashboard.example.com/page-2
+    depends_on:
+      - ref('mart_seasonal_patterns')
+    owner:
+      name: Procurement Analyst
+      email: procurement@example.com
+
+  - name: geographic_disparity
+    type: dashboard
+    description: >
+      Page 3 — Geographic Disparity. Answers: "Which island group offers the
+      best sourcing price?" Shows price index vs Java baseline.
+    url: https://dashboard.example.com/page-3
+    depends_on:
+      - ref('mart_geo_disparity')
+    owner:
+      name: Procurement Analyst
+      email: procurement@example.com
+
+  - name: commodity_signals
+    type: dashboard
+    description: >
+      Page 4 — Commodity Signals. Answers: "Which commodities lead others in
+      price movement?" Shows cross-correlation and lag analysis.
+    url: https://dashboard.example.com/page-4
+    depends_on:
+      - ref('mart_commodity_correlation')
+      - ref('mart_correlation_summary')
+    owner:
+      name: Category Manager
+      email: category@example.com
