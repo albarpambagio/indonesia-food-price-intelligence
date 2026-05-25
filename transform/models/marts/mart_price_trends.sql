@@ -1,5 +1,5 @@
 SELECT
-  DATE_TRUNC('month', date) AS month,
+  month,
   commodity_consolidated,
   island_group,
   admin1,
@@ -14,7 +14,7 @@ WHERE filter_out = FALSE
   AND commodity_consolidated IS NOT NULL
   AND island_group IS NOT NULL
 GROUP BY
-  DATE_TRUNC('month', date),
+  month,
   commodity_consolidated,
   island_group,
   admin1

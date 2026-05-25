@@ -78,11 +78,11 @@
 - Wheat flour: KG (100%)
 - Sugar: KG (100%)
 - Sugar (premium): KG (100%)
-- Oil (vegetable): L (100%)
-- Oil (vegetable, bulk): L (100%)
-- Oil (vegetable, packaged): L (100%)
+- Oil (vegetable): KG (99%) + L (1%) — the 158 L rows are national avg records (market_id=974)
+- Oil (vegetable, bulk): KG (100%)
+- Oil (vegetable, packaged): KG (100%)
 
-**Decision**: No unit variation within commodity groups. Normalisation is straightforward: all solids → IDR/KG, all oils → IDR/L. No unit conversion needed.
+**Decision**: No unit variation within target commodity groups. All 4 consolidated commodities are effectively 100% KG. The 158 L rows for Cooking Oil are national average records already separated by `price_flag = 'actual'` filter. No unit conversion needed.
 
 ---
 

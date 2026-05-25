@@ -8,7 +8,7 @@
 | **Data First Accessed** | 2026-05-22 |
 | **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
 | **Target Completion** | ~16–20 working days |
-| **Status** | Phase 2 Complete |
+| **Status** | Phase 2 Complete (+ Phase 2.5 corrections applied) |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Next.js (Shadboard) → Cloudflare Pages |
 
 ### Parallelization Opportunities
@@ -18,8 +18,8 @@
 | Phase 7 (Methodology Doc) | Phase 3 started (model decisions known) | Phase 4–6 | ~2–3 days |
 | §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
 
-**Sequential chain** (must wait): Phase 0 → 1 → 2 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
-> **Current**: Phase 1 ✅ → Phase 2 ✅ → Phase 4 ✅ (parallel). Next: Phase 3 (Forecasting).
+**Sequential chain** (must wait): Phase 0 → 1 → 2 → 2.5 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
+> **Current**: Phase 1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 4 ✅ (parallel). Next: Phase 3 (Forecasting).
 
 ---
 
@@ -86,7 +86,7 @@
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 2.1.1 | `int_commodity_consolidated.sql` — map Oil variants → Cooking Oil, Sugar variants → Sugar | ✅ | Consolidation per data validation; Sugar gap <5%, Oil r>0.9 |
-| 2.1.2 | `int_prices_normalised.sql` — unit normalisation, priceflag separation, island group mapping, 5 quality flags, monthly grain | ✅ | Added `flag_invalid_year` per LEARNINGS §30; island group mapped from admin1 directly |
+| 2.1.2 | `int_prices_normalised.sql` — unit normalisation, priceflag separation, island group mapping, 5 quality flags, monthly grain | ✅ | Unit normalisation skipped: all target commodities already use KG/L per data audit. Added `month` (DATE_TRUNC) column per Phase 2.5 centralization. |
 | 2.1.3 | Add row-level quality flags: flag_price_le_zero, flag_null_unit, flag_non_target, flag_aggregate, flag_invalid_year | ✅ | Composite `filter_out` column; 2,116 rows pass (actual + target + valid year) |
 | 2.1.4 | `int_islamic_calendar.sql` — Ramadan/Eid lookup 2007–2024, source documented | ✅ | CSV seed (transform/seeds/islamic_calendar.csv), source: IslamicFinder.org |
 
@@ -94,9 +94,9 @@
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 2.2.1 | `mart_price_trends.sql` — monthly avg price × commodity × island_group × province, IDR + USD | ✅ | Cross-tabulated per §35; 238 rows (Cooking Oil only — see Data Finding) |
-| 2.2.2 | `mart_seasonal_patterns.sql` — price index vs annual avg, harvest flags (Mar–Apr, Aug–Sep), year-end flag (Nov–Dec) | ✅ | 35 rows; seasonal driver fields pre-computed |
-| 2.2.3 | `mart_geographic_disparity.sql` — price index vs Java baseline per island group per year, province-level | ✅ | 34 rows; Eastern Indonesia restricted to 2015+ |
-| 2.2.4 | `mart_commodity_correlation.sql` — wide-format prices with lags 1–3, all 4 commodities at national level | ✅ | 165 months; 158 months have all 4 commodities |
+| 2.2.2 | `mart_seasonal_patterns.sql` — price index vs annual avg, harvest flags (Mar–Apr, Aug–Sep), year-end flag (Nov–Dec), Ramadan proximity flags | ✅ | 35 rows; Ramadan flags added per Phase 2.5 (flag_ramadan_eid_month, t_minus_1/2/3, t_plus_1) |
+| 2.2.3 | `mart_geographic_disparity.sql` — price index vs Java baseline per island group per year, province-level, YoY change | ✅ | 34 rows; Eastern Indonesia restricted to 2015+. `yoy_change_index` added per Phase 2.5. |
+| 2.2.4 | `mart_commodity_correlation.sql` — wide-format prices with lags 1–3, all 4 commodities at national level | ✅ | 165 months; 158 months have all 4 commodities. `mart_correlation_summary` created per Phase 2.5 with Pearson r per pair per lag. |
 
 ### 2.3 dbt Tests at Mart Layer
 | # | Task | Status | Notes |
@@ -116,6 +116,23 @@
 | 2.4.3 | Log all counts to `logs/transform.log` + update `pipeline.lineage.mart_rows` | ✅ | Written to issues_log JSON in lineage |
 
 **Validation**: All dbt tests pass (33/33). Row count chain: 325,239 raw → 325,239 staging → 325,239 int → 2,116 filtered → mart models. Data limitation documented: Rice/Sugar/Flour have no market-level `actual` prices — only national avg (market_id=974). Only Cooking Oil has province-level actual prices (4,236 rows across 5 island groups). `mart_commodity_correlation` provides all 4 commodities at national level (158 months).
+
+## Phase 2.5 — Post-Implementation Corrections
+> **Sequential** — identified during gap analysis after Phase 2 completion. Runs before Phase 3 to ensure downstream pages have correct data.
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 2.5.1 | Join `int_islamic_calendar` to `mart_seasonal_patterns` — add 5 Ramadan proximity flags (T-3 to T+1) | ✅ | LEFT JOIN via STRFTIME month string matching on eid_month, t_minus_1/2/3, t_plus_1 |
+| 2.5.2 | Add `yoy_change_index` to `mart_geo_disparity` — LAG-based year-over-year delta of price_index_vs_java | ✅ | PARTITION BY commodity, island_group, admin1 ORDER BY year |
+| 2.5.3 | Create `mart_correlation_summary` — Pearson r for all 6 commodity pairs at lags 0-3 | ✅ | 30 rows (6 pairs × 5 lags including lag 0). Corr() from lagged values in mart_commodity_correlation |
+| 2.5.4 | Centralize `DATE_TRUNC('month', date) AS month` in `int_prices_normalised` — refactor 4 mart models to use it | ✅ | Eliminates duplication risk; all marts now reference pre-truncated column |
+| 2.5.5 | Fix `complete_lineage()` — add `pipeline_status` column, stop overwriting `ingest_status` | ✅ | New column tracks overall run outcome; per-phase fields untouched |
+| 2.5.6 | Add intermediate schema.yml — dbt tests for all 3 intermediate models | ✅ | accepted_values, not_null, unique tests |
+| 2.5.7 | Add dbt schema tests for new columns (flag_ramadan_*, pearson_r, yoy_change_index) | ✅ | not_null on all new columns |
+| 2.5.8 | Update docs: LEARNINGS.md (§39-42), AGENTS.md, data_validation.md, issues_log.md, implementation-plan.md | ✅ | All 5 docs updated with gap-corrected information |
+| 2.5.9 | Re-run `dbt run` + `dbt test` — verify all tests pass after changes | ⬜ | Must re-verify after all SQL edits |
+
+**Key Deliverable**: 3 mart model corrections + 1 new model + 1 intermediate refactor + lineage table fix + all docs current.
 
 ---
 
@@ -279,6 +296,7 @@
 - [x] dbt staging tests pass (not_null, accepted_values, positive_values, unique)
 - [x] dbt mart tests pass (not_null, accepted_values, positive_values)
 - [x] dbt docs generate produces lineage graph
+- [x] Phase 2.5 corrections: Ramadan flags joined, YoY delta added, correlation summary created, DATE_TRUNC centralized, lineage table fixed
 - [ ] Forecast output validated (no NaN, negative, or reversed CI)
 - [ ] Export verified: JSON record count == mart row count
 - [ ] EDA: ≥6 findings in insights log
@@ -314,6 +332,7 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 0 | `feat: project setup + data validation checkpoint` | Folder structure, dbt init, config, validation |
 | Phase 1 | `feat: ingest & dbt staging models` | Pipeline layer 1 |
 | Phase 2 | `feat: dbt intermediate + mart models` | Analytical core |
+| Phase 2.5 | `fix: post-implementation corrections (ramadan, correlation, lineage, docs)` | Gap fixes |
 | Phase 3 | `feat: forecast models + methodology doc` | Modelling |
 | Phase 4 | `feat: EDA notebook + insights log` | Analysis |
 | Phase 5 | `feat: deep dive analysis notebook` | Analysis |

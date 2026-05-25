@@ -4,6 +4,7 @@ WITH commodity_map AS (
 
 SELECT
   c.date,
+  DATE_TRUNC('month', c.date) AS month,
   c.admin1,
   c.admin2,
   c.market,

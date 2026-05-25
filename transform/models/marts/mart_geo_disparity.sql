@@ -43,7 +43,16 @@ SELECT
   a.avg_price_idr,
   a.months_with_data,
   j.java_avg_price,
-  ROUND((a.avg_price_idr / NULLIF(j.java_avg_price, 0)) * 100, 2) AS price_index_vs_java
+  ROUND((a.avg_price_idr / NULLIF(j.java_avg_price, 0)) * 100, 2) AS price_index_vs_java,
+  ROUND(
+    (a.avg_price_idr / NULLIF(j.java_avg_price, 0)) * 100
+    - LAG((a.avg_price_idr / NULLIF(j.java_avg_price, 0)) * 100)
+      OVER (
+        PARTITION BY a.commodity_consolidated, a.island_group, a.admin1
+        ORDER BY a.year
+      ),
+    2
+  ) AS yoy_change_index
 FROM annual_prices a
 LEFT JOIN java_baseline j
   ON a.year = j.year

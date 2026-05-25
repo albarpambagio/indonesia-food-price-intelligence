@@ -1,6 +1,6 @@
 WITH prices AS (
   SELECT
-    DATE_TRUNC('month', date) AS month,
+    month,
     commodity_consolidated,
     island_group,
     price_idr
@@ -48,7 +48,33 @@ with_index AS (
     ON EXTRACT(YEAR FROM m.month) = a.year
     AND m.commodity_consolidated = a.commodity_consolidated
     AND m.island_group = a.island_group
+),
+
+ramadan AS (
+  SELECT
+    STRFTIME(m.month, '%Y-%m') AS ym,
+    m.commodity_consolidated,
+    m.island_group,
+    CASE WHEN STRFTIME(m.month, '%Y-%m') = c.eid_month THEN TRUE ELSE FALSE END AS flag_ramadan_eid_month,
+    CASE WHEN STRFTIME(m.month, '%Y-%m') = c.t_minus_1 THEN TRUE ELSE FALSE END AS flag_ramadan_t_minus_1,
+    CASE WHEN STRFTIME(m.month, '%Y-%m') = c.t_minus_2 THEN TRUE ELSE FALSE END AS flag_ramadan_t_minus_2,
+    CASE WHEN STRFTIME(m.month, '%Y-%m') = c.t_minus_3 THEN TRUE ELSE FALSE END AS flag_ramadan_t_minus_3,
+    CASE WHEN STRFTIME(m.month, '%Y-%m') = c.t_plus_1 THEN TRUE ELSE FALSE END AS flag_ramadan_t_plus_1
+  FROM monthly_avg m
+  LEFT JOIN {{ ref('int_islamic_calendar') }} c
+    ON EXTRACT(YEAR FROM m.month) = c.year
 )
 
-SELECT * FROM with_index
-ORDER BY month, commodity_consolidated, island_group
+SELECT
+  wi.*,
+  COALESCE(r.flag_ramadan_eid_month, FALSE) AS flag_ramadan_eid_month,
+  COALESCE(r.flag_ramadan_t_minus_1, FALSE) AS flag_ramadan_t_minus_1,
+  COALESCE(r.flag_ramadan_t_minus_2, FALSE) AS flag_ramadan_t_minus_2,
+  COALESCE(r.flag_ramadan_t_minus_3, FALSE) AS flag_ramadan_t_minus_3,
+  COALESCE(r.flag_ramadan_t_plus_1, FALSE) AS flag_ramadan_t_plus_1
+FROM with_index wi
+LEFT JOIN ramadan r
+  ON STRFTIME(wi.month, '%Y-%m') = r.ym
+  AND wi.commodity_consolidated = r.commodity_consolidated
+  AND wi.island_group = r.island_group
+ORDER BY wi.month, wi.commodity_consolidated, wi.island_group

@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS pipeline.lineage (
     run_id              TEXT PRIMARY KEY,
     started_at          TIMESTAMP,
     completed_at        TIMESTAMP,
+    pipeline_status     TEXT DEFAULT 'pending',
     ingest_status       TEXT DEFAULT 'pending',
     transform_status    TEXT DEFAULT 'pending',
     forecast_status     TEXT DEFAULT 'pending',
@@ -43,7 +44,7 @@ def get_connection(read_only: bool = False) -> duckdb.DuckDBPyConnection:
 def init_lineage(conn: duckdb.DuckDBPyConnection, run_id: str) -> None:
     conn.execute(
         """
-        INSERT INTO pipeline.lineage (run_id, started_at, ingest_status)
+        INSERT INTO pipeline.lineage (run_id, started_at, pipeline_status)
         VALUES (?, CURRENT_TIMESTAMP, 'running')
         """,
         [run_id],
@@ -71,7 +72,7 @@ def complete_lineage(
         """
         UPDATE pipeline.lineage
         SET completed_at = CURRENT_TIMESTAMP,
-            ingest_status = ?
+            pipeline_status = ?
         WHERE run_id = ?
         """,
         [status, run_id],

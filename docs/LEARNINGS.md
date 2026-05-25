@@ -1416,6 +1416,93 @@ Every pipeline needs a single orchestrator that chains all steps, not individual
 
 ---
 
+## 39. Mart Model Scope Creep — Plan Says ✅, Code Lacks 3 Features
+### The Problem
+Phase 2 implementation-plan.md marked `mart_seasonal_patterns`, `mart_geo_disparity`, and `mart_commodity_correlation` as complete (✅) — but all three were missing scoped features:
+
+| Model | Planned | Actual |
+|-------|---------|--------|
+| `mart_seasonal_patterns` | Ramadan proximity flags (T-3 to T+1 relative to Eid) | Only harvest + year-end flags |
+| `mart_geo_disparity` | Year-over-year change in disparity gap | Only static `price_index_vs_java` |
+| `mart_commodity_correlation` | Cross-correlation coefficients, leading indicator ranking, rolling 3-year stability | Only raw lagged prices |
+
+**Root Cause:** The intermediate model (`int_islamic_calendar`) was built correctly, but the mart model never joined to it. The YoY delta and correlation coefficients were conceptually "left for the dashboard to compute." The plan checkbox mindset conflated "table exists" with "features delivered."
+
+### Solution
+Added the 3 missing features:
+1. **Ramadan join** — LEFT JOIN `int_islamic_calendar` in `mart_seasonal_patterns` with `flag_ramadan_eid_month`, `flag_ramadan_t_minus_{1,2,3}`, `flag_ramadan_t_plus_1`
+2. **YoY delta** — `LAG(price_index_vs_java) OVER (...)` in `mart_geo_disparity`
+3. **Correlation summary** — New `mart_correlation_summary` model computing Pearson r for all 6 commodity pairs at lags 0-3
+
+### Rule
+A model's feature checklist must be verified against the actual SQL, not the plan table. "Table exists" ≠ "columns deliver what the dashboard needs."
+
+---
+
+## 40. Built-in Unit Consistency Avoids Unnecessary Normalisation
+### The Problem
+The plan specified unit normalisation in `int_prices_normalised` ("all solids → IDR/KG, all oils → IDR/L"). The code review revealed that no normalisation logic existed — `unit` was passed through unchanged.
+
+### Investigation
+Querying the raw data showed all target commodities were already in consistent units:
+- Rice: 100% KG
+- Flour: 100% KG
+- Sugar: 100% KG
+- Cooking Oil: ~99.8% KG, ~0.2% L
+
+The 158 L rows for Cooking Oil were national average records (market_id=974), separated from market-level data by the `price_flag = 'actual'` filter. No conversion needed.
+
+### Solution
+Removed the unit normalisation requirement from scope. Added `flag_null_unit` guard instead — if any target commodity row had a NULL or unexpected unit, it would be caught.
+
+### Rule
+Don't build normalisation logic before verifying the actual data distribution. A 5-minute DuckDB query (`SELECT unit, COUNT(*) FROM raw.food_prices GROUP BY unit, commodity`) can save hours of unnecessary engineering.
+
+---
+
+## 41. Pipeline Status Column — Don't Repurpose Per-Phase Fields
+### The Problem
+`ingest/config.py:complete_lineage()` was updating `ingest_status` with the overall pipeline status:
+
+```python
+UPDATE pipeline.lineage
+SET completed_at = CURRENT_TIMESTAMP,
+    ingest_status = ?    # Overwrites meaningful ingest history!
+WHERE run_id = ?
+```
+
+This meant after a full pipeline run, `ingest_status` would show "completed" even if called from the main orchestrator after all phases — destroying the ability to audit ingest independently.
+
+### Solution
+Added a dedicated `pipeline_status` column to the lineage table DDL. `init_lineage()` writes to `pipeline_status`, `complete_lineage()` updates `pipeline_status`. Per-phase fields (`ingest_status`, `transform_status`, etc.) are only touched by their respective phase functions via `update_lineage()`.
+
+### Rule
+Each column in a lineage/audit table should track exactly one thing. An "overall run status" is a different concept from "ingest phase status" — they need separate columns.
+
+---
+
+## 42. Data Validation Doc Must Reflect Actual Data, Not Memory
+### The Problem
+`docs/data_validation.md` Check 4 stated:
+> Oil (vegetable): L (100%)
+> Oil (vegetable, bulk): L (100%)
+> Oil (vegetable, packaged): L (100%)
+
+But querying the actual loaded data showed:
+> Oil (vegetable): KG (99%) + L (1%)
+> Oil (vegetable, bulk): KG (100%)
+> Oil (vegetable, packaged): KG (100%)
+
+The validation notebook was apparently run on a different data load or the table output was never visually verified against the summary text.
+
+### Solution
+Corrected the unit table in `data_validation.md` to match the actual loaded data. The decision ("no unit conversion needed") remains correct — the data distribution supports it, just for different reasons than documented.
+
+### Rule
+Data validation docs must be re-verified against the current data whenever the pipeline is re-run. A stale validation doc is worse than no doc — it actively misleads.
+
+---
+
 ## Updated Decision Log
 
 | Decision | Rationale |
@@ -1444,6 +1531,9 @@ Every pipeline needs a single orchestrator that chains all steps, not individual
 | Quote-wrap SQL column identifiers in dynamic SET clauses | Unquoted identifiers with spaces cause syntax errors. `f'"{k}" = ?'` prevents column naming bugs regardless of naming convention. |
 | DROP TABLE before CREATE TABLE AS for CSV loads | `CREATE TABLE IF NOT EXISTS` is a no-op on re-run — data never refreshes. `DROP TABLE IF EXISTS` + `CREATE TABLE` guarantees idempotent loads. |
 | Single pipeline orchestrator with per-layer reconciliation | Individual scripts called manually miss data quality issues. A single `run_pipeline.py` chains steps and verifies row counts between each layer with simple `COUNT(*)` comparisons. |
+| Dedicated `pipeline_status` column over reusing `ingest_status` | Reusing phase columns for overall status destroys per-phase auditability. A separate `pipeline_status` column tracks run outcome independently. |
+| Verify SQL outputs against plan, not plan against table names | "Model exists" ≠ "features delivered". Each mart model's SELECT must be reviewed for the columns the dashboard actually needs. |
+| Check actual data distributions before building normalisation | A 5-minute distribution query can confirm whether unit/currency normalisation is needed. If data is already consistent, skip the code. |
 
 ---
 

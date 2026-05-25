@@ -1,0 +1,60 @@
+version: 2
+
+models:
+  - name: int_commodity_consolidated
+    description: Commodity name consolidation — maps Oil variants → Cooking Oil, Sugar variants → Sugar
+    columns:
+      - name: commodity_consolidated
+        description: Consolidated commodity name
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - Rice
+                  - Cooking Oil
+                  - Sugar
+                  - Flour
+              # NULL is valid — excludes non-target commodities
+
+  - name: int_prices_normalised
+    description: Normalised prices with island group mapping and row-level quality flags
+    columns:
+      - name: date
+        tests:
+          - not_null
+      - name: price_idr
+        tests:
+          - not_null
+      - name: price_flag
+        tests:
+          - not_null
+      - name: commodity_consolidated
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - Rice
+                  - Cooking Oil
+                  - Sugar
+                  - Flour
+      - name: island_group
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - Java
+                  - Sumatera
+                  - Kalimantan
+                  - Sulawesi
+                  - Eastern Indonesia
+
+  - name: int_islamic_calendar
+    description: Ramadan/Eid lookup 2007–2024 with proximity month strings
+    columns:
+      - name: year
+        tests:
+          - not_null
+          - unique
+      - name: eid_date
+        tests:
+          - not_null

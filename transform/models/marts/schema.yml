@@ -38,7 +38,7 @@ models:
                   - Eastern Indonesia
 
   - name: mart_seasonal_patterns
-    description: Seasonal price patterns with price index, harvest flags, year-end flags — feeds Page 2 (Seasonal Patterns)
+    description: Seasonal price patterns with price index, harvest flags, year-end flags, Ramadan proximity flags — feeds Page 2 (Seasonal Patterns)
     columns:
       - name: month
         description: Month of observation
@@ -60,6 +60,14 @@ models:
         tests:
           - not_null
           - positive_values
+      - name: flag_ramadan_eid_month
+        description: Month is the Eid al-Fitr month
+        tests:
+          - not_null
+      - name: flag_ramadan_t_minus_3
+        description: Month is 3 months before Eid
+        tests:
+          - not_null
 
   - name: mart_geo_disparity
     description: Geographic price disparity with Java baseline index — feeds Page 3 (Geographic Disparity)
@@ -100,11 +108,29 @@ models:
         description: Price index relative to Java baseline (Java = 100)
         tests:
           - not_null
+      - name: yoy_change_index
+        description: Year-over-year change in price_index_vs_java
 
   - name: mart_commodity_correlation
     description: Monthly national average prices in wide format with lagged values — feeds Page 4 (Commodity Signals)
     columns:
       - name: month
         description: Month of observation
+        tests:
+          - not_null
+
+  - name: mart_correlation_summary
+    description: Cross-correlation coefficients for all commodity pairs at lags 0-3 — feeds Page 4 leading indicator analysis
+    columns:
+      - name: commodity_pair
+        description: Commodity pair in format 'commodity_a-commodity_b'
+        tests:
+          - not_null
+      - name: lag_months
+        description: Lag in months
+        tests:
+          - not_null
+      - name: pearson_r
+        description: Pearson correlation coefficient
         tests:
           - not_null

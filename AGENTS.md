@@ -11,6 +11,7 @@ Indonesia Staple Food Price Intelligence — End-to-end data pipeline + forecast
 | **Volume** | 325,240 price records + 224 markets |
 | **Date Range** | January 2007 – May 2024 |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Next.js (Shadboard) → Cloudflare Pages |
+| **Phase 2 Status** | ✅ Complete (+ Phase 2.5 corrections: Ramadan flags, YoY delta, correlation summary) |
 | **Portfolio Goal** | Demonstrate upgraded ETL pipeline (DuckDB + dbt), time-series forecasting, and multi-dimensional procurement analytics |
 
 ### Business Scenario
@@ -56,12 +57,12 @@ dbt docs generate    # Generate lineage docs
 
 ### Forecasting
 ```bash
-uv run python forecast/run_forecast.py
+uv run python forecast/run_forecast.py   # PENDING — Phase 3
 ```
 
 ### Export + Dashboard
 ```bash
-uv run python export/export_json.py   # Mart models → static JSON
+uv run python export/export_json.py   # PENDING — Mart models → static JSON
 cd dashboard
 npm install
 npm run dev          # Development server
@@ -77,6 +78,7 @@ npm run build        # Static export for Cloudflare Pages
 Phase 0: Setup + Data Validation  → Folder structure, marimo validation notebook, dbt/Next.js init
 Phase 1: Ingest & Staging         → DuckDB raw load, dbt staging models + tests        ✅ DONE
 Phase 2: Transform                → dbt intermediate + mart models + tests              ✅ DONE
+Phase 2.5: Corrections            → Ramadan flags, YoY delta, correlation summary, lineage fix ✅ DONE
 Phase 3: Forecasting              → statsforecast AutoARIMA/AutoETS + methodology doc
 Phase 4: EDA                      → Marimo notebook (SCAN framework)                    ✅ DONE
 Phase 5: Deep Dive                → Marimo notebook (North Star method)
