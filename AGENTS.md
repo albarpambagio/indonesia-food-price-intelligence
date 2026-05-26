@@ -90,8 +90,8 @@ Phase 4.5: Notebook Improvement   → Formatters, insight callouts, sectioning, 
 Phase 5: Deep Dive                → Marimo notebook (North Star method, merged into `analysis/eda.py`) ✅ DONE
 Phase 5f: Post-Phase-5 Fixes      → Hardcoded DuckDB paths → PROJECT_DB_PATH, add numpy/scipy to pyproject, create missing snapshots/ dir, update stale checklist ✅ DONE
 Phase 6: Dashboard                → 4 pages in Next.js + Shadboard + Cloudflare Pages
-Phase 7: Methodology Doc          → model_methodology.md + forecast_runbook.md
-Phase 8: Write-up                 → README, insights log, recommendations
+Phase 7: Methodology Doc          → model_methodology.md + forecast_runbook.md      ✅ DONE
+Phase 8: Write-up                 → README, insights log, recommendations            ✅ DONE
 ```
 
 ### Project Structure

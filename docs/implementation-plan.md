@@ -342,19 +342,19 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 8.1 | README: business scenario (3–4 sentences) | ⬜ | |
-| 8.2 | README: exec-driven questions (4 bullets) | ⬜ | |
-| 8.3 | README: pipeline architecture (Mermaid diagram) | ⬜ | Raw CSV → DuckDB → dbt → statsforecast → export_json.py → Shadboard → CF Pages |
-| 8.4 | README: dbt lineage graph screenshot | ⬜ | |
-| 8.5 | README: key findings (4–6 quantified bullets) | ⬜ | |
-| 8.6 | README: dashboard preview (4 screenshots) | ⬜ | |
-| 8.7 | README: recommendations mapped to stakeholders | ⬜ | Procurement Analyst + Category Manager |
-| 8.8 | README: data limitations + validation findings | ⬜ | Pre-empt interview questions |
-| 8.9 | README: forecasting methodology summary + link | ⬜ | |
-| 8.10 | README: reproduction instructions | ⬜ | |
-| 8.11 | README: lessons learned | ⬜ | Honest reflection |
-| 8.12 | Finalize `docs/insights_log.md` with all 3 insight types: contextual, directional, actionable | ⬜ | |
-| 8.13 | Live URL pinned in README and GitHub repo description | ⬜ | |
+| 8.1 | README: business scenario (3–4 sentences) | ✅ | |
+| 8.2 | README: exec-driven questions (4 bullets) | ✅ | |
+| 8.3 | README: pipeline architecture (Mermaid diagram) | ✅ | Raw CSV → DuckDB → dbt → statsforecast → export_json.py → Shadboard → CF Pages |
+| 8.4 | README: dbt lineage graph screenshot | ⬜ | Deferred to Phase 6 — needs `dbt docs generate` + manual screenshot |
+| 8.5 | README: key findings (4–6 quantified bullets) | ✅ | 6 findings from EDA confirmed |
+| 8.6 | README: dashboard preview (4 screenshots) | ⬜ | Deferred to Phase 6 — dashboard not yet built |
+| 8.7 | README: recommendations mapped to stakeholders | ✅ | Procurement Analyst + Category Manager tables |
+| 8.8 | README: data limitations + validation findings | ✅ | Known Limitations + Data Quality Issues sections |
+| 8.9 | README: forecasting methodology summary + link | ✅ | Links to `docs/model_methodology.md` |
+| 8.10 | README: reproduction instructions | ✅ | 7-step setup + verify commands |
+| 8.11 | README: lessons learned | ✅ | 8 lessons cross-ref'd to LEARNINGS.md |
+| 8.12 | Finalize `docs/insights_log.md` with all 3 insight types: contextual, directional, actionable | ✅ | 13 findings across all 3 types — no edits needed |
+| 8.13 | Live URL pinned in README and GitHub repo description | ⬜ | Deferred to Phase 6 — Cloudflare Pages deploy not done |
 
 ---
 
@@ -398,10 +398,22 @@
 - [x] Hardcoded DuckDB path replaced with `PROJECT_DB_PATH` (computed from `Path(__file__)` inside `setup()` cell) in all 3 notebooks — avoids marimo `__` name filtering
 - [x] `numpy>=1.26.0` + `scipy>=1.11.0` added to `pyproject.toml` — resolves missing notebook dependency imports
 - [x] `transform/snapshots/` directory created — referenced by `dbt_project.yml` but did not exist on disk
+- [x] Phase 8: README.md created (273 lines, 16 sections)
+- [x] Phase 8: Business scenario, exec questions, key findings documented
+- [x] Phase 8: Mermaid pipeline diagram in README
+- [x] Phase 8: Stakeholder audience table in README
+- [x] Phase 8: Executive summary KPI table in README
+- [x] Phase 8: Data traceability table (every metric → mart model → file)
+- [x] Phase 8: Known limitations + data quality issues sections
+- [x] Phase 8: Recommendations mapped to Procurement Analyst + Category Manager
+- [x] Phase 8: Forecasting methodology summary + link to full doc
+- [x] Phase 8: Reproduction instructions (7-step setup)
+- [x] Phase 8: Lessons learned (8 items from LEARNINGS.md)
+- [x] Phase 8: insights_log.md verified — 13 findings, all 3 insight types
 - [ ] DEFERRED to Phase 6: All 4 dashboard pages
 - [ ] DEFERRED to Phase 6: Mobile responsive
 - [ ] DEFERRED to Phase 6: Cloudflare Pages deploy
-- [ ] DEFERRED to Phase 6: README complete with live URL
+- [ ] DEFERRED to Phase 6: dbt lineage screenshot + dashboard screenshots + live URL
 
 ---
 
@@ -439,7 +451,8 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 3d | `docs: forecasting methodology` | `model_methodology.md` |
 | Phase 3e | `fix: phase 3 bugfix — 7 gaps from pipeline audit` | Error handler, lineage DDL, metadata, skips, connection, t_minus_3, status value |
 | Phase 6 | `feat: dashboard (Next.js + Shadboard + export)` | Frontend |
-| Phase 7 | `docs: README, insights, recommendations` | Final packaging |
+| Phase 7 | `docs: forecasting methodology` | `model_methodology.md` + `forecast_runbook.md` |
+| Phase 8 | `docs: README, insights, recommendations` | Final packaging — README, insights_log verified |
 
 **Rules**:
 - Conventional Commits (`feat:`, `docs:`, `fix:`)
