@@ -59,6 +59,12 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 59 | [Interactive Filters in Marimo Turn Static EDA Into Self-Service](#59-interactive-filters-in-marimo-turn-static-eda-into-self-service) |
 | 60 | [Data Source Migration Must Audit All Downstream Filter Conditions](#60-data-source-migration-must-audit-all-downstream-filter-conditions) |
 | 61 | [Historical Shock Analysis May Need Unfiltered Aggregate Data](#61-historical-shock-analysis-may-need-unfiltered-aggregate-data) |
+| 62 | [PEP 723 Headers Enable Script Portability](#62-pep-723-headers-enable-script-portability-for-marimo-notebooks) |
+| 63 | [Script Mode Detection Enables Headless Marimo Execution](#63-script-mode-detection-enables-headless-marimo-execution) |
+| 64 | [Split Monolithic Cells by Logical Concern](#64-split-monolithic-cells-by-logical-concern) |
+| 65 | [`mo.stop()` Prevents Raw Tracebacks in Error States](#65-mostop-prevents-raw-tracebacks-in-error-states) |
+| 66 | [`mo.lazy()` Defers Expensive Computations Until Needed](#66-molazy-defers-expensive-computations-until-needed) |
+| 67 | [Merge-Delete File Sweep — Notebook Content Merge Requires Full Doc Sweep](#67-merge-delete-file-sweep--notebook-content-merge-requires-full-doc-sweep) |
 
 ---
 
@@ -2394,4 +2400,52 @@ def _():
 ### Rule
 
 `mo.lazy()` only defers content that is the **final return value** of a cell. It cannot defer cells that render via side-effect calls (e.g., `mo.md()` as a statement, not a return expression). For those cells, accept eager execution or restructure the cell to return all content as a single expression.
+
+---
+
+## 67. Merge-Delete File Sweep - Notebook Content Merge Requires Full Doc Sweep
+
+### The Problem
+
+Phase 5 Deep Dive was merged into `analysis/eda.py` (from the planned `analysis/deep_dive.py`). Post-merge, **3 separate docs** still referenced the non-existent file:
+
+| Doc | Stale References |
+|-----|-----------------|
+| `AGENTS.md` | Project structure listing (L144) + Phase pipeline description (L90) |
+| `docs/wfp-food-price-intelligence-project-plan.md` | Project structure (L147), workflow instructions ×3 (L437, L500, L505) |
+| `docs/model_methodology.md` | Inline text reference (L186) |
+
+The notebook's own `summary` cell also still referenced "DD §8/§9/§11/§12" as source sections — but those sections never existed; the deep dive cells use Q1–Q4 naming.
+
+### Root Cause
+
+When the deep dive cells were appended to `eda.py`, the merge was treated as a **code-only** operation. No systematic sweep was done of:
+- Project structure diagrams listing `deep_dive.py`
+- Phase pipeline descriptions naming the file
+- Cross-references in methodology docs
+- Internal summary tables referencing non-existent section labels
+
+### Solution
+
+Run a **doc sweep checklist** whenever a planned file is merged, renamed, or deleted:
+
+1. **Search project structure diagrams** — AGENTS.md, project-plan.md, README.md
+2. **Search inline file references** — `analysis/deep_dive.py` → grep across `docs/` and `*.md`
+3. **Search internal cross-references** — summary tables, cell comments, section anchors
+4. **Update phase pipeline descriptions** — if the deliverable path changed
+
+### Files Affected (this fix)
+
+- `AGENTS.md` — project structure + phase pipeline updated
+- `docs/wfp-food-price-intelligence-project-plan.md` — structure + 3 workflow refs updated
+- `docs/model_methodology.md` — inline path + added North Star method mention
+- `analysis/eda.py` — summary "DD §" references replaced with Q1.1/Q4.3/Q1.3/Q3.2
+
+### Related
+
+- LEARNINGS.md §60 — Data source migration must audit all downstream filter conditions (same pattern: change one thing, update all references)
+
+### Rule
+
+When a **planned file is merged, renamed, or deleted**, do not stop at the code merge. Sweep all documentation for references to the old path — project structure diagrams, phase pipelines, methodology docs, workflow instructions, and internal cross-reference tables. One grep pass across `*.md` catches most stale references.
 ```
