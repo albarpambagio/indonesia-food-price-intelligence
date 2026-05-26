@@ -253,6 +253,8 @@ dbt docs serve  # View lineage at http://localhost:8080
 | 7 | KPI Deltas | Delta must compare same cohort over time, not different product sets | LEARNINGS.md §28 |
 | 8 | dbt Config | `vars.start_date` + `packages.yml` + `_exposures.yml` + seed YAML + FK relationships test — all gaps found and closed | AGENTS.md "Gaps Closed" |
 
+Built on the same engineering journal pattern as [`pharmacy-retail-sales-analytics`](https://github.com/albarpambagio/pharmacy-retail-sales-analytics).
+
 Full engineering journal: [`docs/LEARNINGS.md`](./docs/LEARNINGS.md) (70 sections, 2,600+ lines)
 
 ---
