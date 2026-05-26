@@ -42,7 +42,7 @@ def setup():
     def fmt_cagr(val):
         if val is None or (isinstance(val, float) and np.isnan(val)):
             return "N/A"
-        return f"{val:.1f}%"
+        return f"{val:.1f}%/yr"
 
     def fmt_short_idr(val):
         if val is None or (isinstance(val, float) and np.isnan(val)):
@@ -61,8 +61,14 @@ def setup():
     SYMBOL_MAP = dict(zip(["Rice", "Cooking Oil", "Sugar", "Flour"], ["circle", "square", "diamond", "triangle-up"]))
     TARGET_COMMODITIES = ["Rice", "Cooking Oil", "Sugar", "Flour"]
     MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    EASTERN_CUTOFF = 2015
+    SHOCK_BAN_DATE = "2022-03-01"
+    SHOCK_PEAK_DATE = "2022-04-01"
+    SHOCK_POST_DATE = "2022-12-01"
+    SHOCK_BAN_LIFTED_DATE = "2022-05-01"
     return (
         PALETTE, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, TARGET_COMMODITIES, MONTH_NAMES,
+        EASTERN_CUTOFF, SHOCK_BAN_DATE, SHOCK_PEAK_DATE, SHOCK_POST_DATE, SHOCK_BAN_LIFTED_DATE,
         duckdb, fmt_idr, fmt_pct, fmt_cagr, fmt_short_idr,
         go, json, make_subplots, mo, np, os, pd, px, scipy_stats,
     )
@@ -72,47 +78,48 @@ def setup():
 def data_load(mo, duckdb, pd, np, TARGET_COMMODITIES):
     @mo.persistent_cache
     def _query_prices():
-        _c = duckdb.connect("data/wfp.duckdb")
-        _df = _c.sql("""
-            SELECT
-                date,
-                price_idr AS price,
-                price_usd AS usdprice,
-                commodity_consolidated,
-                admin1,
-                island_group,
-                price_flag
-            FROM wfp_intermediate.int_prices_normalised
-            WHERE NOT filter_out
-              AND price_flag = 'actual'
-              AND commodity_consolidated IS NOT NULL
-        """).df()
+        with duckdb.connect("data/wfp.duckdb") as _c:
+            _df = _c.sql("""
+                SELECT
+                    date,
+                    price_idr AS price,
+                    price_usd AS usdprice,
+                    commodity_consolidated,
+                    admin1,
+                    island_group,
+                    price_flag
+                FROM wfp_intermediate.int_prices_normalised
+                WHERE NOT filter_out
+                  AND price_flag = 'actual'
+                  AND commodity_consolidated IS NOT NULL
+            """).df()
         _df["year"] = pd.to_datetime(_df["date"]).dt.year.astype(int)
         _df["month"] = pd.to_datetime(_df["date"]).dt.month.astype(int)
         _df["ym"] = _df["year"].astype(str) + "-" + _df["month"].astype(str).str.zfill(2)
-        _c.close()
         return _df
 
     df = _query_prices()
     mo.stop(len(df) == 0, mo.md("⚠ **No data returned** — check DuckDB path and pipeline status."))
 
-    conn = duckdb.connect("data/wfp.duckdb")
-    has_pipeline = conn.sql("SELECT COUNT(*) FROM pipeline.lineage").fetchone()[0] > 0
-    run_id = None
-    ingest_info = ""
-    if has_pipeline:
-        row = conn.sql("""
-            SELECT run_id, started_at, raw_food_prices_rows, raw_markets_rows
-            FROM pipeline.lineage
-            ORDER BY started_at DESC LIMIT 1
-        """).fetchone()
-        run_id = row[0]
-        ingest_info = (
-            f"**Pipeline**: `{run_id}` | "
-            f"raw.food_prices = {row[2]:,} | "
-            f"raw.markets = {row[3]:,}"
-        )
+    @mo.persistent_cache
+    def _pipeline_info():
+        with duckdb.connect("data/wfp.duckdb") as _c:
+            _has = _c.sql("SELECT COUNT(*) FROM pipeline.lineage").fetchone()[0] > 0
+            if not _has:
+                return None, ""
+            _row = _c.sql("""
+                SELECT run_id, started_at, raw_food_prices_rows, raw_markets_rows
+                FROM pipeline.lineage
+                ORDER BY started_at DESC LIMIT 1
+            """).fetchone()
+            _info = (
+                f"**Pipeline**: `{_row[0]}` | "
+                f"raw.food_prices = {_row[2]:,} | "
+                f"raw.markets = {_row[3]:,}"
+            )
+            return _row[0], _info
 
+    run_id, ingest_info = _pipeline_info()
     target = TARGET_COMMODITIES
 
     mo.md(f"""
@@ -128,26 +135,32 @@ def data_load(mo, duckdb, pd, np, TARGET_COMMODITIES):
     > **North Star**: Enable FMCG procurement teams to make contract timing, geographic sourcing,
     > and category risk decisions with quantified confidence.
     """)
-    return conn, df, run_id, target
+    return df, run_id, target
 
 
 @app.cell
-def stakeholder_goals(conn, df, mo, run_id):
-    date_range = conn.sql(
-        "SELECT MIN(date), MAX(date) FROM wfp_intermediate.int_prices_normalised WHERE NOT filter_out"
-    ).fetchone()
-    all_commodities = [
-        r[0]
-        for r in conn.sql(
-            "SELECT DISTINCT commodity FROM wfp_intermediate.int_prices_normalised WHERE NOT filter_out ORDER BY commodity"
-        ).fetchall()
-    ]
-    provinces = [
-        r[0]
-        for r in conn.sql(
-            "SELECT DISTINCT admin1 FROM wfp_intermediate.int_prices_normalised WHERE NOT filter_out AND admin1 != 'NATIONAL' ORDER BY admin1"
-        ).fetchall()
-    ]
+def stakeholder_goals(df, mo, run_id, duckdb):
+    @mo.persistent_cache
+    def _query_meta():
+        with duckdb.connect("data/wfp.duckdb") as _c:
+            _dr = _c.sql(
+                "SELECT MIN(date), MAX(date) FROM wfp_intermediate.int_prices_normalised WHERE NOT filter_out"
+            ).fetchone()
+            _all_c = [
+                r[0]
+                for r in _c.sql(
+                    "SELECT DISTINCT commodity FROM wfp_intermediate.int_prices_normalised WHERE NOT filter_out ORDER BY commodity"
+                ).fetchall()
+            ]
+            _prov = [
+                r[0]
+                for r in _c.sql(
+                    "SELECT DISTINCT admin1 FROM wfp_intermediate.int_prices_normalised WHERE NOT filter_out AND admin1 != 'NATIONAL' ORDER BY admin1"
+                ).fetchall()
+            ]
+            return _dr, _all_c, _prov
+
+    date_range, all_commodities, provinces = _query_meta()
 
     _pipeline_note = (
         f"**Pipeline run**: `{run_id}`" if run_id else "*No pipeline lineage found*"
@@ -219,19 +232,24 @@ def coverage_island(df, mo):
 
 
 @app.cell
-def pipeline_quality(conn, fmt_pct, mo, pd):
-    flags = conn.sql("""
-        SELECT
-            COUNT(*) AS total,
-            SUM(CASE WHEN flag_price_le_zero THEN 1 ELSE 0 END) AS flag_price_le_zero,
-            SUM(CASE WHEN flag_null_unit THEN 1 ELSE 0 END) AS flag_null_unit,
-            SUM(CASE WHEN flag_non_target THEN 1 ELSE 0 END) AS flag_non_target,
-            SUM(CASE WHEN flag_aggregate THEN 1 ELSE 0 END) AS flag_aggregate,
-            SUM(CASE WHEN flag_invalid_year THEN 1 ELSE 0 END) AS flag_invalid_year,
-            SUM(CASE WHEN filter_out THEN 1 ELSE 0 END) AS filter_out,
-            SUM(CASE WHEN NOT filter_out THEN 1 ELSE 0 END) AS passed
-        FROM wfp_intermediate.int_prices_normalised
-    """).fetchdf().T.reset_index()
+def pipeline_quality(fmt_pct, mo, pd, duckdb):
+    @mo.persistent_cache
+    def _query_flags():
+        with duckdb.connect("data/wfp.duckdb") as _c:
+            return _c.sql("""
+                SELECT
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN flag_price_le_zero THEN 1 ELSE 0 END) AS flag_price_le_zero,
+                    SUM(CASE WHEN flag_null_unit THEN 1 ELSE 0 END) AS flag_null_unit,
+                    SUM(CASE WHEN flag_non_target THEN 1 ELSE 0 END) AS flag_non_target,
+                    SUM(CASE WHEN flag_aggregate THEN 1 ELSE 0 END) AS flag_aggregate,
+                    SUM(CASE WHEN flag_invalid_year THEN 1 ELSE 0 END) AS flag_invalid_year,
+                    SUM(CASE WHEN filter_out THEN 1 ELSE 0 END) AS filter_out,
+                    SUM(CASE WHEN NOT filter_out THEN 1 ELSE 0 END) AS passed
+                FROM wfp_intermediate.int_prices_normalised
+            """).fetchdf().T.reset_index()
+
+    flags = _query_flags()
     flags.columns = ["flag", "count"]
     flags["pct"] = (flags["count"] / flags["count"].iloc[0] * 100).round(1)
 
@@ -458,9 +476,8 @@ def island_index(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df, fmt_pct, mo, px):
 
 
 @app.cell
-def seasonality(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, fdf, go, make_subplots, mo, np, px):
+def seasonality(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, fdf, go, make_subplots, mo, np, px, MONTH_NAMES):
     _monthly = fdf.groupby(["month", "commodity_consolidated"])["price"].agg(["mean", "std"]).reset_index()
-    _month_names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
     _fig_sm = make_subplots(
         rows=2, cols=2,
@@ -500,7 +517,7 @@ def seasonality(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, fdf, go, make_subplots, mo, n
             row=_r, col=_col,
         )
         _fig_sm.update_xaxes(
-            tickmode="array", tickvals=list(range(1, 13)), ticktext=_month_names,
+            tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_NAMES,
             row=_r, col=_col,
         )
         _fig_sm.update_yaxes(tickformat="~s", row=_r, col=_col)
@@ -517,9 +534,10 @@ def seasonality(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, fdf, go, make_subplots, mo, n
         _p = _peak_monthly[_peak_monthly["commodity_consolidated"] == _c]
         _t = _trough_monthly[_trough_monthly["commodity_consolidated"] == _c]
         if len(_p) > 0 and len(_t) > 0:
-            _season_lines.append(f"- **{_c}**: peak {_month_names[int(_p['month'].values[0])-1]} (IDR {_p['mean'].values[0]:,.0f}), trough {_month_names[int(_t['month'].values[0])-1]} (IDR {_t['mean'].values[0]:,.0f})")
+            _season_lines.append(f"- **{_c}**: peak {MONTH_NAMES[int(_p['month'].values[0])-1]} (IDR {_p['mean'].values[0]:,.0f}), trough {MONTH_NAMES[int(_t['month'].values[0])-1]} (IDR {_t['mean'].values[0]:,.0f})")
 
-    mo.md(f"""
+    return mo.vstack([
+        mo.md(f"""
     ## 09 — A4: Seasonality
 
     {'  '.join(_season_lines)}
@@ -527,12 +545,13 @@ def seasonality(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, fdf, go, make_subplots, mo, n
     > **Insight:** Time procurement to trough months and build inventory ahead of peak months.
     > For Rice, align with the harvest window (Mar–May) for lowest prices. For Sugar, front-run
     > Ramadan demand by securing T-2 month contracts.
-    """)
-    mo.ui.plotly(_fig_sm)
+        """),
+        mo.ui.plotly(_fig_sm),
+    ])
 
 
 @app.cell
-def correlation(PALETTE_MAP, conn, df, mo, px, pd, np):
+def correlation(PALETTE_MAP, df, mo, px, pd, np, duckdb):
     _pivot = df.pivot_table(index=["year", "month"], columns="commodity_consolidated", values="price", aggfunc="mean").reset_index()
     corr = _pivot[["Rice", "Cooking Oil", "Sugar", "Flour"]].corr()
 
@@ -542,32 +561,41 @@ def correlation(PALETTE_MAP, conn, df, mo, px, pd, np):
         template="plotly_white", aspect="auto", zmin=-1, zmax=1,
     )
 
-    _pairs_list = []
+    _pairs = []
+    _pairs_display = []
     for _i in range(len(corr.columns)):
         for _j in range(_i + 1, len(corr.columns)):
-            _pairs_list.append(f"{corr.columns[_i]} ↔ {corr.columns[_j]}: r = {corr.iloc[_i, _j]:.3f}")
-    _weakest = min(_pairs_list, key=lambda x: abs(float(x.split("r = ")[1])))
-    _strongest = max(_pairs_list, key=lambda x: abs(float(x.split("r = ")[1])))
+            _r = corr.iloc[_i, _j]
+            _name = f"{corr.columns[_i]} ↔ {corr.columns[_j]}"
+            _pairs.append((_name, _r))
+            _pairs_display.append(f"{_name}: r = {_r:.3f}")
+    _weakest = min(_pairs, key=lambda x: abs(x[1]))
+    _strongest = max(_pairs, key=lambda x: abs(x[1]))
 
     mo.md(f"""
     ## 10 — A5: Cross-Commodity Correlation
 
     **Pairwise correlations (lag 0):**
-    - {'  - '.join(_pairs_list)}
+    - {'  - '.join(_pairs_display)}
 
-    > **Insight:** {_strongest.split(':')[0]} has the strongest relationship (r = {_strongest.split('r = ')[1]}),
-    > suggesting shared price drivers. {_weakest.split(':')[0]} has the weakest (r = {_weakest.split('r = ')[1]}),
+    > **Insight:** {_strongest[0]} has the strongest relationship (r = {_strongest[1]:.3f}),
+    > suggesting shared price drivers. {_weakest[0]} has the weakest (r = {_weakest[1]:.3f}),
     > indicating independent supply chains. For bundled procurement, prioritize pairs with r > 0.5
     > to capture joint negotiation leverage. For risk diversification, pairs with r < 0.3 offer
     > natural hedges.
     """)
     mo.ui.plotly(_fig_corr)
 
-    corr_summary = conn.sql("""
-        SELECT commodity_pair, lag_months, pearson_r
-        FROM wfp_marts.mart_correlation_summary
-        ORDER BY commodity_pair, lag_months
-    """).fetchdf()
+    @mo.persistent_cache
+    def _query_corr_summary():
+        with duckdb.connect("data/wfp.duckdb") as _c:
+            return _c.sql("""
+                SELECT commodity_pair, lag_months, pearson_r
+                FROM wfp_marts.mart_correlation_summary
+                ORDER BY commodity_pair, lag_months
+            """).fetchdf()
+
+    corr_summary = _query_corr_summary()
 
     _fig_lag = px.imshow(
         corr_summary.pivot(index="commodity_pair", columns="lag_months", values="pearson_r"),
@@ -587,20 +615,25 @@ def correlation(PALETTE_MAP, conn, df, mo, px, pd, np):
 
 
 @app.cell
-def market_coverage(conn, mo, pd):
-    market_cov = conn.sql("""
-        SELECT
-            i.island_group,
-            COUNT(DISTINCT i.market_id) AS markets,
-            COUNT(DISTINCT i.admin1) AS provinces,
-            COUNT(DISTINCT i.market_id) FILTER (WHERE i.commodity_consolidated = 'Cooking Oil') AS markets_oil,
-            MIN(EXTRACT(YEAR FROM i.date))::INT AS first_year,
-            MAX(EXTRACT(YEAR FROM i.date))::INT AS last_year
-        FROM wfp_intermediate.int_prices_normalised i
-        WHERE NOT i.filter_out AND i.price_flag = 'actual'
-        GROUP BY i.island_group
-        ORDER BY markets DESC
-    """).fetchdf()
+def market_coverage(mo, pd, duckdb):
+    @mo.persistent_cache
+    def _query_market_cov():
+        with duckdb.connect("data/wfp.duckdb") as _c:
+            return _c.sql("""
+                SELECT
+                    i.island_group,
+                    COUNT(DISTINCT i.market_id) AS markets,
+                    COUNT(DISTINCT i.admin1) AS provinces,
+                    COUNT(DISTINCT i.market_id) FILTER (WHERE i.commodity_consolidated = 'Cooking Oil') AS markets_oil,
+                    MIN(EXTRACT(YEAR FROM i.date))::INT AS first_year,
+                    MAX(EXTRACT(YEAR FROM i.date))::INT AS last_year
+                FROM wfp_intermediate.int_prices_normalised i
+                WHERE NOT i.filter_out AND i.price_flag = 'actual'
+                GROUP BY i.island_group
+                ORDER BY markets DESC
+            """).fetchdf()
+
+    market_cov = _query_market_cov()
 
     _java_markets = market_cov.loc[market_cov['island_group'] == 'Java', 'markets'].values[0]
     _east_markets = market_cov.loc[market_cov['island_group'] == 'Eastern Indonesia', 'markets'].values[0] if 'Eastern Indonesia' in market_cov['island_group'].values else 0
@@ -618,26 +651,38 @@ def market_coverage(conn, mo, pd):
 
 
 @app.cell
-def cooking_oil_shock(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, conn, fmt_idr, fmt_pct, go, mo, pd):
-    _oil_raw = conn.sql("""
-        SELECT
-            date,
-            price,
-            EXTRACT(YEAR FROM date) AS year,
-            EXTRACT(MONTH FROM date) AS month
-        FROM wfp_intermediate.int_commodity_consolidated
-        WHERE commodity_consolidated = 'Cooking Oil'
-          AND price > 0
-    """).df()
-    _oil_raw["year"] = _oil_raw["year"].astype(int)
-    _oil_raw["month"] = _oil_raw["month"].astype(int)
-    _oil_avg = _oil_raw.groupby(["year", "month"])["price"].mean().reset_index()
-    _oil_avg["ym"] = pd.to_datetime(_oil_avg["year"].astype(str) + "-" + _oil_avg["month"].astype(str).str.zfill(2) + "-01")
+def cooking_oil_shock(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, fmt_idr, fmt_pct, go, mo, pd, duckdb,
+                       SHOCK_BAN_DATE, SHOCK_PEAK_DATE, SHOCK_POST_DATE, SHOCK_BAN_LIFTED_DATE):
+    # Queries int_commodity_consolidated (not int_prices_normalised) because:
+    # 1. WFP Cooking Oil 2021-2023 data is only available as "aggregate" (national avg)
+    # 2. int_prices_normalised filters out aggregate via price_flag='actual'
+    # 3. This table has pre-aggregated monthly avgs across all price flags
+    # Without this, the 2022 export ban shock is invisible (see LEARNINGS.md S61)
+    @mo.persistent_cache
+    def _query_oil():
+        with duckdb.connect("data/wfp.duckdb") as _c:
+            _raw = _c.sql("""
+                SELECT
+                    date,
+                    price,
+                    EXTRACT(YEAR FROM date) AS year,
+                    EXTRACT(MONTH FROM date) AS month
+                FROM wfp_intermediate.int_commodity_consolidated
+                WHERE commodity_consolidated = 'Cooking Oil'
+                  AND price > 0
+            """).df()
+        _raw["year"] = _raw["year"].astype(int)
+        _raw["month"] = _raw["month"].astype(int)
+        _avg = _raw.groupby(["year", "month"])["price"].mean().reset_index()
+        _avg["ym"] = pd.to_datetime(_avg["year"].astype(str) + "-" + _avg["month"].astype(str).str.zfill(2) + "-01")
+        return _avg
+
+    _oil_avg = _query_oil()
     _oil_2020 = _oil_avg[_oil_avg["year"].between(2020, 2024)].sort_values("ym")
 
-    _pre = _oil_avg[_oil_avg["ym"] == "2022-03-01"]["price"].values
-    _peak = _oil_avg[_oil_avg["ym"] == "2022-04-01"]["price"].values
-    _post = _oil_avg[_oil_avg["ym"] == "2022-12-01"]["price"].values
+    _pre = _oil_avg[_oil_avg["ym"] == SHOCK_BAN_DATE]["price"].values
+    _peak = _oil_avg[_oil_avg["ym"] == SHOCK_PEAK_DATE]["price"].values
+    _post = _oil_avg[_oil_avg["ym"] == SHOCK_POST_DATE]["price"].values
 
     _fig_oil = go.Figure()
     _fig_oil.add_trace(go.Scatter(
@@ -646,26 +691,19 @@ def cooking_oil_shock(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, conn, fmt_idr, fmt_pct,
         line=dict(color=PALETTE_MAP["Cooking Oil"], dash=DASH_MAP["Cooking Oil"]),
         marker=dict(symbol=SYMBOL_MAP["Cooking Oil"], color=PALETTE_MAP["Cooking Oil"]),
     ))
-    _fig_oil.add_vline(x="2022-03-01", line_dash="dash", line_color="red", opacity=0.6)
-    _fig_oil.add_vline(x="2022-05-01", line_dash="dash", line_color="orange", opacity=0.6)
-    _fig_oil.add_annotation(x="2022-03-01", y=1, yref="paper", text="Export Ban", showarrow=False, yshift=10, font=dict(color="red", size=10))
-    _fig_oil.add_annotation(x="2022-05-01", y=0.95, yref="paper", text="Ban Lifted", showarrow=False, yshift=10, font=dict(color="orange", size=10))
+    _fig_oil.add_vline(x=SHOCK_BAN_DATE, line_dash="dash", line_color="red", opacity=0.6)
+    _fig_oil.add_vline(x=SHOCK_BAN_LIFTED_DATE, line_dash="dash", line_color="orange", opacity=0.6)
+    _fig_oil.add_annotation(x=SHOCK_BAN_DATE, y=1, yref="paper", text="Export Ban", showarrow=False, yshift=10, font=dict(color="red", size=10))
+    _fig_oil.add_annotation(x=SHOCK_BAN_LIFTED_DATE, y=0.95, yref="paper", text="Ban Lifted", showarrow=False, yshift=10, font=dict(color="orange", size=10))
 
     _has_shock = len(_pre) > 0 and len(_peak) > 0 and len(_post) > 0
     if _has_shock:
-        _pct = int((1 - _pre[0] / _peak[0]) * 100)
+        _pct = int((_peak[0] / _pre[0] - 1) * 100)
         _title = f"N1: Cooking Oil Surged {_pct}% in 1 Month After Export Ban"
     else:
         _pct = 0
         _title = "N1: Cooking Oil 2022 Shock (insufficient actual price data)"
     _fig_oil.update_layout(title=_title, yaxis_title="Avg Price (IDR)", yaxis=dict(tickformat="~s"), template="plotly_white")
-
-    mo.md("""
-    ## 12 — N: Notable Segments
-
-    ## 13 — N1: Cooking Oil 2022 Shock
-    """)
-    mo.ui.plotly(_fig_oil)
 
     if _has_shock:
         _shock_msg = mo.md(f"""
@@ -687,12 +725,21 @@ def cooking_oil_shock(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, conn, fmt_idr, fmt_pct,
     market-level prices. The price series above includes all available records.
     """)
 
+    mo.vstack([
+        mo.md("""
+    ## 12 — N: Notable Segments
+
+    ## 13 — N1: Cooking Oil 2022 Shock
+        """),
+        mo.ui.plotly(_fig_oil),
+        _shock_msg,
+    ])
+
 
 @app.cell
-def rice_harvest(PALETTE_MAP, df, fmt_idr, fmt_pct, go, mo, np):
+def rice_harvest(PALETTE_MAP, df, fmt_idr, fmt_pct, go, mo, np, MONTH_NAMES):
     _rice = df[df["commodity_consolidated"] == "Rice"].copy()
     _rice_monthly = _rice.groupby("month")["price"].agg(["mean", "std"]).reset_index()
-    _mn = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
     _fig_rice = go.Figure()
     _fig_rice.add_trace(go.Bar(
@@ -711,7 +758,7 @@ def rice_harvest(PALETTE_MAP, df, fmt_idr, fmt_pct, go, mo, np):
     _fig_rice.add_vrect(x0=2.5, x1=5.5, fillcolor="green", opacity=0.06, line_width=0, annotation_text="Harvest", annotation_position="top left")
     _fig_rice.update_layout(
         yaxis_title="Avg Price (IDR)", yaxis=dict(tickformat="~s"),
-        xaxis=dict(tickmode="array", tickvals=list(range(1, 13)), ticktext=_mn),
+        xaxis=dict(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_NAMES),
         template="plotly_white",
     )
 
@@ -721,24 +768,31 @@ def rice_harvest(PALETTE_MAP, df, fmt_idr, fmt_pct, go, mo, np):
 
     _fig_rice.update_layout(title=f"N2: Rice Prices {_gap:.1f}% Lower During Harvest Season (Mar–May)")
 
-    mo.md(f"""
+    return mo.vstack([
+        mo.md(f"""
     ## 14 — N2: Rice Harvest Cycle
 
-    - Lowest price month: {_min_m['month']} ({fmt_idr(_min_m['mean'])})
-    - Highest price month: {_max_m['month']} ({fmt_idr(_max_m['mean'])})
+    - Lowest price month: {MONTH_NAMES[int(_min_m['month'])-1]} ({fmt_idr(_min_m['mean'])})
+    - Highest price month: {MONTH_NAMES[int(_max_m['month'])-1]} ({fmt_idr(_max_m['mean'])})
     - Peak-to-trough gap: {fmt_pct(_gap)}
 
     > **Insight:** Accumulate Rice inventory in Mar–May during harvest discounts (up to
     > {fmt_pct(_gap)} savings vs peak). Stockpile for 4-5 months of consumption to cover
     > the Jun–Oct dry season when prices climb. This single procurement timing shift can
     > generate meaningful margin improvement on Rice — the highest-volume staple.
-    """)
-    mo.ui.plotly(_fig_rice)
+        """),
+        mo.ui.plotly(_fig_rice),
+    ])
 
 
 @app.cell
-def sugar_ramadan(PALETTE_MAP, conn, df, fmt_idr, fmt_pct, go, mo, pd):
-    _islamic = conn.sql("SELECT year, eid_month, t_minus_1, t_minus_2, t_minus_3 FROM wfp_intermediate.int_islamic_calendar ORDER BY year").fetchdf()
+def sugar_ramadan(PALETTE_MAP, df, fmt_idr, fmt_pct, go, mo, pd, duckdb, MONTH_NAMES):
+    @mo.persistent_cache
+    def _query_islamic():
+        with duckdb.connect("data/wfp.duckdb") as _c:
+            return _c.sql("SELECT year, eid_month, t_minus_1, t_minus_2, t_minus_3 FROM wfp_intermediate.int_islamic_calendar ORDER BY year").fetchdf()
+
+    _islamic = _query_islamic()
     _islamic["year"] = _islamic["year"].astype(int)
 
     _sugar = df[df["commodity_consolidated"] == "Sugar"].copy()
@@ -753,7 +807,6 @@ def sugar_ramadan(PALETTE_MAP, conn, df, fmt_idr, fmt_pct, go, mo, pd):
     )
 
     _sugar_monthly = _sugar.groupby("month")["price"].mean().reset_index()
-    _mn = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
     _ramadan_prices = _sugar[_sugar["is_ramadan_season"]]["price"]
     _non_ramadan_prices = _sugar[~_sugar["is_ramadan_season"]]["price"]
@@ -766,10 +819,12 @@ def sugar_ramadan(PALETTE_MAP, conn, df, fmt_idr, fmt_pct, go, mo, pd):
         x=_sugar_monthly["month"], y=_sugar_monthly["price"],
         name="Sugar", marker_color=PALETTE_MAP["Sugar"],
     ))
-    _fig_sugar.add_vrect(x0=2.5, x1=5.5, fillcolor="orange", opacity=0.06, line_width=0, annotation_text="Ramadan (approx)", annotation_position="top left")
+    _ramadan_start = int(_islamic["t_minus_3"].str.split("-").str[1].astype(int).mean())
+    _ramadan_end = int(_islamic["eid_month"].str.split("-").str[1].astype(int).mean())
+    _fig_sugar.add_vrect(x0=_ramadan_start - 0.5, x1=_ramadan_end + 0.5, fillcolor="orange", opacity=0.06, line_width=0, annotation_text="Ramadan window (data-driven)", annotation_position="top left")
     _fig_sugar.update_layout(
         yaxis_title="Avg Price (IDR)", yaxis=dict(tickformat="~s"),
-        xaxis=dict(tickmode="array", tickvals=list(range(1, 13)), ticktext=_mn),
+        xaxis=dict(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_NAMES),
         title=f"N3: Sugar {_premium:.1f}% Premium During Ramadan Season (Islamic Calendar Adjusted)",
         template="plotly_white",
     )
@@ -791,14 +846,14 @@ def sugar_ramadan(PALETTE_MAP, conn, df, fmt_idr, fmt_pct, go, mo, pd):
 
 
 @app.cell
-def eastern_premium(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df, fmt_pct, mo, px):
+def eastern_premium(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df, fmt_pct, mo, px, EASTERN_CUTOFF):
     _east = df[df["island_group"] == "Eastern Indonesia"].groupby(["year", "commodity_consolidated"])["price"].mean().reset_index()
     _java = df[df["island_group"] == "Java"].groupby(["year", "commodity_consolidated"])["price"].mean().reset_index()
     _east.columns = ["year", "commodity_consolidated", "east_price"]
     _java.columns = ["year", "commodity_consolidated", "java_price"]
     _gap = _east.merge(_java, on=["year", "commodity_consolidated"])
     _gap["premium_pct"] = (_gap["east_price"] - _gap["java_price"]) / _gap["java_price"] * 100
-    _gap = _gap[_gap["year"] >= 2015]
+    _gap = _gap[_gap["year"] >= EASTERN_CUTOFF]
 
     _fig_east = px.line(
         _gap, x="year", y="premium_pct", color="commodity_consolidated",
@@ -817,7 +872,8 @@ def eastern_premium(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df, fmt_pct, mo, px):
     _widest = _avg_premium.iloc[0]
     _narrowest = _avg_premium.iloc[-1]
 
-    mo.md(f"""
+    return mo.vstack([
+        mo.md(f"""
     ## 16 — N4: Eastern Indonesia Premium
 
     > **Insight:** **{_widest['commodity_consolidated']}** has the widest East–Java gap
@@ -826,9 +882,10 @@ def eastern_premium(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df, fmt_pct, mo, px):
     > ({fmt_pct(_narrowest['premium_pct'])}) — consider local sourcing in Eastern Indonesia.
     > Track whether the premium is narrowing (convergence = eventual local sourcing viability)
     > or widening (signals infrastructure/logistics deterioration).
-    """)
-    mo.ui.plotly(_fig_east)
-    mo.ui.table(_avg_premium.round(1), label="Eastern Premium by Commodity")
+        """),
+        mo.ui.plotly(_fig_east),
+        mo.ui.table(_avg_premium.round(1), label="Eastern Premium by Commodity"),
+    ])
 
 
 @app.cell
@@ -1193,8 +1250,13 @@ def q2_month_of_year(fmt_idr, fmt_pct, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, M
 
 
 @app.cell
-def q2_ramadan_analysis(fmt_idr, fmt_pct, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, MONTH_NAMES, mo, go, pd, conn):
-    _islamic = conn.sql("SELECT year, eid_month, t_minus_1, t_minus_2, t_minus_3, t_plus_1 FROM wfp_intermediate.int_islamic_calendar ORDER BY year").fetchdf()
+def q2_ramadan_analysis(fmt_idr, fmt_pct, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, MONTH_NAMES, mo, go, pd, duckdb):
+    @mo.persistent_cache
+    def _query_islamic():
+        with duckdb.connect("data/wfp.duckdb") as _c:
+            return _c.sql("SELECT year, eid_month, t_minus_1, t_minus_2, t_minus_3, t_plus_1 FROM wfp_intermediate.int_islamic_calendar ORDER BY year").fetchdf()
+
+    _islamic = _query_islamic()
     _islamic["year"] = _islamic["year"].astype(int)
     mo.stop(len(_islamic) == 0, mo.md("⚠ **Islamic calendar data not found** — run `dbt seed` and `dbt run` to populate `int_islamic_calendar`."))
 
@@ -1383,10 +1445,10 @@ def q3_island_group_index(fmt_pct, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, mo, p
 
 
 @app.cell
-def q3_province_drilldown(fmt_idr, fdf, mo, pd, np):
+def q3_province_drilldown(fmt_idr, fdf, mo, pd, np, EASTERN_CUTOFF):
     _eastern = fdf["island_group"] == "Eastern Indonesia"
     _filtered = fdf.copy()
-    _filtered.loc[_eastern & (_filtered["year"] < 2015), "price"] = np.nan
+    _filtered.loc[_eastern & (_filtered["year"] < EASTERN_CUTOFF), "price"] = np.nan
     _filtered = _filtered.dropna(subset=["price"])
     _prov_avg = _filtered.groupby(["commodity_consolidated", "island_group", "admin1"])["price"].agg(["mean", "count", "std"]).reset_index()
     _prov_avg.columns = ["Commodity", "Island Group", "Province", "Avg Price", "Records", "Std Dev"]
@@ -1449,20 +1511,24 @@ def q4_cross_correlation(fdf, mo, px):
         template="plotly_white", aspect="auto", zmin=-1, zmax=1,
     )
 
-    _pairs = []
+    _pairs_tuples = []
+    _pairs_display = []
     for _i in range(len(_corr.columns)):
         for _j in range(_i + 1, len(_corr.columns)):
-            _pairs.append(f"{_corr.columns[_i]} ↔ {_corr.columns[_j]}: r = {_corr.iloc[_i, _j]:.3f}")
-    _weakest = min(_pairs, key=lambda x: abs(float(x.split("r = ")[1])))
-    _strongest = max(_pairs, key=lambda x: abs(float(x.split("r = ")[1])))
+            _r = _corr.iloc[_i, _j]
+            _name = f"{_corr.columns[_i]} ↔ {_corr.columns[_j]}"
+            _pairs_tuples.append((_name, _r))
+            _pairs_display.append(f"{_name}: r = {_r:.3f}")
+    _weakest = min(_pairs_tuples, key=lambda x: abs(x[1]))
+    _strongest = max(_pairs_tuples, key=lambda x: abs(x[1]))
 
-    mo.md("## Q4.1 — Lag-0 Cross-Commodity Correlation\n\n" + "\n".join(_pairs))
+    mo.md("## Q4.1 — Lag-0 Cross-Commodity Correlation\n\n" + "\n".join(_pairs_display))
     mo.ui.plotly(_fig)
 
     mo.md(f"""
     > **Insight:**
-    > - **Strongest**: {_strongest} — shared price drivers (substitutable, similar supply chains)
-    > - **Weakest**: {_weakest} — independent supply chains, natural hedge for portfolio diversification
+    > - **Strongest**: {_strongest[0]} (r = {_strongest[1]:.3f}) — shared price drivers, bundled procurement opportunity
+    > - **Weakest**: {_weakest[0]} (r = {_weakest[1]:.3f}) — independent supply chains, natural hedge for portfolio diversification
     > - Pairs with r > 0.5 offer bundled procurement opportunities (joint negotiation leverage)
     > - Pairs with r < 0.3 provide natural hedges (diversify category risk)
     """)
@@ -1522,16 +1588,15 @@ def q4_rolling_stability(fmt_pct, fdf, PALETTE_MAP, DASH_MAP, mo, go, pd, np):
         _d = _pivot.dropna(subset=[_c1, _c2]).copy()
         if len(_d) < _window:
             continue
-        _rolling_corrs = []
-        _rolling_dates = []
-        for _i in range(len(_d) - _window + 1):
-            _seg = _d.iloc[_i:_i + _window]
-            _r = _seg[_c1].corr(_seg[_c2])
-            _mid_idx = _i + _window // 2
-            _mid_date = f"{int(_d.iloc[_mid_idx]['year'])}-{int(_d.iloc[_mid_idx]['month']):02d}"
-            _rolling_corrs.append(_r)
-            _rolling_dates.append(_mid_date)
-        _rolling_results.append({"pair": f"{_c1} ↔ {_c2}", "dates": _rolling_dates, "corrs": _rolling_corrs, "mean_r": np.mean(_rolling_corrs), "std_r": np.std(_rolling_corrs)})
+        _rolling = _d[_c1].rolling(_window).corr(_d[_c2])
+        _corrs = []
+        _mid_dates = []
+        for _i in _rolling.dropna().index:
+            _mid_idx = _i - _window // 2
+            if _mid_idx in _d.index:
+                _corrs.append(_rolling[_i])
+                _mid_dates.append(f"{int(_d.loc[_mid_idx, 'year'])}-{int(_d.loc[_mid_idx, 'month']):02d}")
+        _rolling_results.append({"pair": f"{_c1} ↔ {_c2}", "dates": _mid_dates, "corrs": _corrs, "mean_r": np.mean(_corrs), "std_r": np.std(_corrs)})
 
     _fig = go.Figure()
     for _r in _rolling_results:
@@ -1561,13 +1626,18 @@ def q4_rolling_stability(fmt_pct, fdf, PALETTE_MAP, DASH_MAP, mo, go, pd, np):
         _stab_lines.append(f"- **{_r['pair']}**: mean r = {_r['mean_r']:.3f} ± {_r['std_r']:.3f} (CV = {fmt_pct(_cv)})")
     mo.md("\n".join(_stab_lines))
 
+    _ym_2022_min = _pivot.loc[_pivot["year"] == 2022, "ym_num"].min() if _pivot["year"].eq(2022).any() else None
     _pre_post = []
     for _c1, _c2 in _pairs_list:
-        _pre = _pivot[_pivot["ym_num"] < (_pivot[_pivot["year"] == 2022]["ym_num"].min() if len(_pivot[_pivot["year"] == 2022]) > 0 else _pivot["ym_num"].max())]
-        _post = _pivot[_pivot["ym_num"] >= (_pivot[_pivot["year"] == 2022]["ym_num"].min() if len(_pivot[_pivot["year"] == 2022]) > 0 else _pivot["ym_num"].max())]
-        _r_pre = _pre[_c1].corr(_pre[_c2]) if len(_pre) > 10 else 0
-        _r_post = _post[_c1].corr(_post[_c2]) if len(_post) > 10 else 0
-        _pre_post.append({"Pair": f"{_c1} ↔ {_c2}", "Pre-2022 r": round(_r_pre, 3), "Post-2022 r": round(_r_post, 3), "Change": round(_r_post - _r_pre, 3)})
+        if _ym_2022_min is None:
+            _pre_post.append({"Pair": f"{_c1} ↔ {_c2}", "Pre-2022 r": "N/A", "Post-2022 r": "N/A", "Change": "N/A"})
+        else:
+            _pre = _pivot[_pivot["ym_num"] < _ym_2022_min]
+            _post = _pivot[_pivot["ym_num"] >= _ym_2022_min]
+            _r_pre = round(_pre[_c1].corr(_pre[_c2]), 3) if len(_pre) > 10 else "N/A"
+            _r_post = round(_post[_c1].corr(_post[_c2]), 3) if len(_post) > 10 else "N/A"
+            _change = round(_r_post - _r_pre, 3) if isinstance(_r_pre, float) and isinstance(_r_post, float) else "N/A"
+            _pre_post.append({"Pair": f"{_c1} ↔ {_c2}", "Pre-2022 r": _r_pre, "Post-2022 r": _r_post, "Change": _change})
 
     _pp_df = pd.DataFrame(_pre_post)
     mo.md("\n**Pre-2022 vs Post-2022 Correlation Comparison**")
@@ -1585,18 +1655,27 @@ def q4_rolling_stability(fmt_pct, fdf, PALETTE_MAP, DASH_MAP, mo, go, pd, np):
 
 
 @app.cell
-def reconciliation(conn, mo, pd, json, os):
+def reconciliation(mo, pd, json, os, duckdb):
     def _build():
-        _mart_rows = {}
-        _schemas = ["wfp_marts", "wfp_intermediate", "wfp_staging"]
-        for _sch in _schemas:
-            _tables = conn.sql(f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{_sch}'").fetchdf()
-            for _t in _tables["table_name"]:
-                _cnt = conn.sql(f"SELECT COUNT(*) FROM {_sch}.{_t}").fetchone()[0]
-                _mart_rows[f"{_sch}.{_t}"] = _cnt
+        @mo.persistent_cache
+        def _query_mart_rows():
+            _rows = {}
+            with duckdb.connect("data/wfp.duckdb") as _c:
+                _schemas = ["wfp_marts", "wfp_intermediate", "wfp_staging"]
+                for _sch in _schemas:
+                    _tables = _c.sql(f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{_sch}'").fetchdf()
+                    for _t in _tables["table_name"]:
+                        _cnt = _c.sql(f"SELECT COUNT(*) FROM {_sch}.{_t}").fetchone()[0]
+                        _rows[f"{_sch}.{_t}"] = _cnt
+            return _rows
+
+        _mart_rows = _query_mart_rows()
 
         _json_dir = os.path.join("dashboard", "public", "data")
-        _json_files = [f for f in os.listdir(_json_dir) if f.endswith(".json") and f != "forecast.json"]
+        try:
+            _json_files = [f for f in os.listdir(_json_dir) if f.endswith(".json") and f != "forecast.json"]
+        except FileNotFoundError:
+            _json_files = []
         _json_records = {}
         for _jf in _json_files:
             with open(os.path.join(_json_dir, _jf)) as _f:
@@ -1659,7 +1738,7 @@ def summary(mo):
     | 3 | **Sugar Ramadan premium**: Front-run Ramadan by T-2 months; lock contracts in Jan/Feb. | Actionable | Procurement Analyst | EDA §15 |
     | 4 | **Eastern Indonesia premium**: Persistent 15–30% gap vs Java. Source Cooking Oil from Java/Sulawesi. | Actionable | Procurement Analyst | EDA §16 |
     | 5 | **Volatility ranking**: Cooking Oil most volatile — 3-month fixed-price contracts. Rice most stable. | Actionable | Category Manager | EDA §07 |
-    | 6 | **Cross-commodity correlation**: All pairs r=0.73–0.88 pre-2022. Post-2022 not measurable — Rice/Sugar/Flour actual data ends 2020. | Contextual | Category Manager | Q4.1/Q4.2 |
+    | 6 | **Cross-commodity correlation**: All pairs r=0.73–0.88 pre-2022. Post-2022 measurable only for pairs involving Cooking Oil (which has 2021–2023 aggregate data). Rice/Sugar/Flour actual data ends 2020 — post-2022 correlations not reliable. | Contextual | Category Manager | Q4.1/Q4.2 |
     | 7 | **Coverage gap**: Eastern Indonesia data sparse before 2015. Restrict to 2015+. | Directional | Both | EDA §02 |
     | 8 | **Forecast accuracy**: All 6-month Δ <1%. Wide CIs (12–29%). Use 1–2 month for ops; 5–6 month directional only. | Directional | Category Manager | Q1.3 |
     | 9 | **Export integrity**: All 5 mart JSONs verified — row counts match DB source. ✅ | Contextual | Both | Recon |

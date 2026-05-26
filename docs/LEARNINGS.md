@@ -2045,23 +2045,24 @@ The EDA notebook's data loading cell re-executed the DuckDB query every time the
 
 ### Solution
 
-**Data caching with `@mo.persistent_cache`:**
+**Data caching with `@mo.persistent_cache` + context-managed connections:**
 ```python
 @app.cell
 def data_load(mo, duckdb, pd):
     @mo.persistent_cache
     def _query_prices():
-        _c = duckdb.connect("data/wfp.duckdb")
-        _df = _c.sql("""...""").df()
-        _c.close()
+        with duckdb.connect("data/wfp.duckdb") as _c:
+            _df = _c.sql("""...""").df()
         return _df
 
     df_target = _query_prices()
-    conn = duckdb.connect("data/wfp.duckdb")
-    return conn, df_target, run_id, target
+    ...
+    return df_target, run_id, target   # conn NOT returned — each cell manages its own
 ```
 
-The cache persists to disk — survives kernel restarts. On the first run it executes the function and caches the result; subsequent runs read from disk. To bust the cache, name the function differently or delete the cache file.
+Every cell that needs DuckDB data wraps its query in `@mo.persistent_cache` with a `with duckdb.connect(...) as _c:` context manager — ensuring connections are always closed. The `conn` object is never passed between cells, avoiding stale or leaked connections.
+
+The cache persists to disk — survives kernel restarts. On the first run it executes the function and caches the result; subsequent runs read from disk. To bust the cache, delete the `__marimo_cache__` directory or rename the function.
 
 **Named cells:**
 ```python
@@ -2373,33 +2374,40 @@ The `reconciliation` cell in `eda.py` queries all tables across 3 dbt schemas, r
 
 ### Solution
 
-Attempted to wrap the expensive body in `mo.lazy()`, but reverted. `mo.lazy()` only works with **return-based** rendering (functions that return the content to display). The reconciliation cell uses **side-effect-based** rendering (calling `mo.md()` and `mo.ui.table()` directly at the top level) — these calls are not deferred by `mo.lazy()` because the lambda executes at cell render time, at which point the side-effect calls fire immediately.
+Restructured the cell to use **return-based rendering** — the entire output is built inside a `_build()` function and returned as `mo.lazy(_build)`:
 
 ```python
-# Does NOT defer — mo.md() fires inside lambda
-mo.lazy(lambda: mo.md("..."))  # mo.md() runs when cell renders, not when scrolled
-```
-
-In contrast, `mo.lazy()` works when the cell's final expression is the lazy content:
-
-```python
-# Deferred content
 @app.cell
-def _():
-    return mo.lazy(mo.ui.table(large_df))
+def reconciliation(mo, pd, json, os, duckdb):
+    def _build():
+        # Queries + file reads happen inside this function
+        ...
+        return mo.vstack([
+            mo.md("..."),
+            mo.ui.table(...),
+            mo.md("..."),
+            mo.ui.table(...),
+        ])
+
+    return mo.lazy(_build)
 ```
+
+Key design choices:
+- **`@mo.persistent_cache`** wraps the DuckDB mart queries inside `_build()` — the cache survives kernel restarts
+- **`FileNotFoundError` guard** on `os.listdir()` — if `dashboard/public/data/` doesn't exist, returns empty list instead of crashing
+- All content is returned as a single `mo.vstack(...)` expression, making the cell deferrable
 
 ### Lesson
 
-`mo.lazy()` defers the *rendering* of its argument, not the *definition* of variables or side effects. It works for return-based cells (the rendered output is the cell's last expression) but not for side-effect-based cells that call `mo.md()`/`mo.ui.table()` inline. For side-effect cells, no deferral mechanism is available — the computation runs eagerly when the cell's dependencies are ready.
+`mo.lazy()` only defers content that is the **final return value** of a cell. It cannot defer cells that render via side-effect calls (e.g., `mo.md()` as a statement, not a return expression). For those cells, restructure to return all content as a single expression.
 
 ### Files Affected
 
-- `analysis/eda.py` — `mo.lazy()` approach attempted and reverted (cell remains eager)
+- `analysis/eda.py` — `reconciliation()` cell restructured to return-based `return mo.lazy(_build)` with cached mart queries + `FileNotFoundError` guard
 
 ### Rule
 
-`mo.lazy()` only defers content that is the **final return value** of a cell. It cannot defer cells that render via side-effect calls (e.g., `mo.md()` as a statement, not a return expression). For those cells, accept eager execution or restructure the cell to return all content as a single expression.
+For cells with expensive computations that are only needed when visible, structure them as a single return expression wrapped in `mo.lazy(...)`. Always guard file I/O with try/except to prevent hard failures on missing data directories.
 
 ---
 
@@ -2448,4 +2456,49 @@ Run a **doc sweep checklist** whenever a planned file is merged, renamed, or del
 ### Rule
 
 When a **planned file is merged, renamed, or deleted**, do not stop at the code merge. Sweep all documentation for references to the old path — project structure diagrams, phase pipelines, methodology docs, workflow instructions, and internal cross-reference tables. One grep pass across `*.md` catches most stale references.
+
+---
+
+## 68. Don't Parse Values Out of Formatted Strings — Keep Structured Data
+
+### The Problem
+
+The `correlation` and `q4_cross_correlation` cells in `eda.py` built display strings like `"Rice ↔ Flour: r = 0.773"` and then parsed the `r` value back out to find the strongest/weakest pair:
+
+```python
+# BAD: build display strings, then parse them
+_pairs_list = [f"{a} ↔ {b}: r = {r:.3f}" for ...]
+_weakest = min(_pairs_list, key=lambda x: abs(float(x.split("r = ")[1])))
 ```
+
+This pattern has three problems:
+1. **Fragile** — changing the display format (e.g., `r = ` to `ρ = `) silently breaks the parsing logic
+2. **Confusing** — the reader has to understand both the format and the parse direction
+3. **Unnecessary computation** — building strings only to split them again wastes cycles
+
+### Solution
+
+Keep display strings and computation data separate:
+
+```python
+# GOOD: tuples for computation, display strings for rendering
+_pairs = []
+_pairs_display = []
+for _i in range(len(corr.columns)):
+    for _j in range(_i + 1, len(corr.columns)):
+        _r = corr.iloc[_i, _j]
+        _name = f"{corr.columns[_i]} ↔ {corr.columns[_j]}"
+        _pairs.append((_name, _r))                       # structured data
+        _pairs_display.append(f"{_name}: r = {_r:.3f}") # display only
+
+_weakest = min(_pairs, key=lambda x: abs(x[1]))  # tuple access, no parsing
+_strongest = max(_pairs, key=lambda x: abs(x[1]))
+```
+
+### Files Affected
+
+- `analysis/eda.py` — `correlation` and `q4_cross_correlation` cells restructured to use tuples
+
+### Rule
+
+Never parse values out of strings you just built. Keep a structured representation (tuple, dict, DataFrame) for computation and build display strings only when needed for rendering. The added indirection of maintaining dual representations is worth the clarity gain.
