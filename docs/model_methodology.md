@@ -181,6 +181,41 @@ Mismatch sets `pipeline.lineage.export_status = 'failed'`.
 
 ---
 
+## Phase 5 Deep Dive Validation
+
+The Phase 5 deep dive analysis (`analysis/deep_dive.py`) independently validates forecast results against trend decomposition and seasonal analysis:
+
+### Forecast vs Trend Decomposition
+
+| Commodity | Model | 6mo Δ | 95% CI Width | Trend Decomposition Verdict |
+|-----------|-------|-------|-------------|----------------------------|
+| Rice | AutoETS | +0.6% | 28.8% | **Directional** — wide CI, use for scenario planning only |
+| Cooking Oil | AutoARIMA | +0.8% | 21.4% | **Directional** — post-2022 structural break reduces reliability |
+| Sugar | AutoETS | +0.3% | 27.3% | **Directional** — CI too wide for operational timing decisions |
+| Flour | AutoETS | +0.0% | 12.2% | **Operational** — narrowest CI, but pre-2020 data only |
+
+### Procurement Action Zone Framework
+
+A **Procurement Action Zone** is identified when the forecast lower 95% CI bound exceeds the current price by >5%. As of the last data point:
+
+- **No commodity** triggers the action zone — all forecasts are essentially flat.
+- The flat forecast suggests no urgency for forward-buying, but the wide CIs (12–29%) mean the model cannot rule out meaningful moves.
+- **Operational recommendation**: Use 1–2 month forecasts for contract timing. Use 5–6 month projections as scenario inputs with appropriate caveats.
+
+### Seasonal Pattern Validation
+
+The deep dive decomposes trend into observed/trend/seasonal/residual components per commodity using a 12-month moving average:
+
+- **Rice and Sugar** show cleanest seasonal decomposition — suitable for procurement calendar planning
+- **Cooking Oil** seasonal component is distorted by the 2022 structural break (appears as 60.7% peak-to-trough "seasonality" that is actually a level shift)
+- **Flour** decomposition is limited by pre-2020 data end — post-2020 dynamics not captured
+
+### Geographic Coverage Limitation
+
+The deep dive confirms that only **Cooking Oil** has sufficient market-level actual price data for geographic analysis. Rice, Sugar, and Flour are available only as national averages (market_id = 974) in the WFP actual-price dataset. Any geographic procurement strategy for non-oil commodities requires supplementary supplier data.
+
+---
+
 ## Interpretation Guidance
 
 1. **Confidence intervals** grow wider at longer horizons. Pay more attention to 1-2 month forecasts for operational decisions.

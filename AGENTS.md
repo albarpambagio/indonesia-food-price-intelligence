@@ -42,7 +42,7 @@ uv sync
 ```bash
 uv run marimo edit analysis/data_validation.py          # Phase 0 — data validation
 uv run marimo edit analysis/eda.py                      # Phase 4 — EDA (SCAN framework)
-uv run marimo edit analysis/deep_dive.py                # Phase 5 — deep dive analysis
+uv run marimo edit analysis/eda.py                      # Phase 4 EDA + Phase 5 Deep Dive (merged)
 uv run marimo edit analysis/forecast_experimentation.py # Phase 3 — model selection (optional)
 ```
 
@@ -86,6 +86,7 @@ Phase 2.5: Corrections            → Ramadan flags, YoY delta, correlation summ
 Phase 3: Forecasting              → statsforecast AutoARIMA/AutoETS + methodology doc   ✅ DONE
 Phase 3e: Bugfix                  → 7 gap fixes from pipeline audit                     ✅ DONE
 Phase 4: EDA                      → Marimo notebook (SCAN framework)                    ✅ DONE
+Phase 4.5: Notebook Improvement   → Formatters, insight callouts, sectioning, mo.lazy    ✅ DONE
 Phase 5: Deep Dive                → Marimo notebook (North Star method)
 Phase 6: Dashboard                → 4 pages in Next.js + Shadboard + Cloudflare Pages
 Phase 7: Methodology Doc          → model_methodology.md

@@ -72,4 +72,58 @@
 
 ---
 
+
+## Deep Dive Findings (North Star Method)
+
+### Finding 8: Rice Leads All Commodities at 6.7% CAGR — But Actual Data Ends 2020
+- **Metric**: Compound Annual Growth Rate (CAGR %)
+- **Dimension**: Commodity: All 4, Time: 2007–2024
+- **Finding**: Rice has the highest CAGR at 6.7% (IDR 6,066 → 14,179 over 13 years), followed by Sugar at 5.6% (IDR 6,568 → 13,332). Cooking Oil and Flour both grew at 4.5% CAGR. However, Rice and Sugar market-level actual prices only extend to 2020-03 in the WFP dataset — post-2020 trends use national aggregate data. Only Cooking Oil has continuous actual price coverage through Dec 2024.
+- **Type**: Contextual
+- **Stakeholder**: Category Manager
+- **Implication**: Rice represents the highest long-term inflation risk for procurement budgets. The 2007–2020 CAGR of 6.7% compounds to near-doubling every 11 years. Lock multi-year Rice contracts where possible. Note that post-2020 Rice trends rely on aggregate data — supplement with direct supplier quotes for current baseline.
+
+### Finding 9: All Forecasts Show Flat Near-Term — Wide CI Limits Operational Use
+- **Metric**: Forecast delta (%) + 95% CI width (%)
+- **Dimension**: Commodity: All 4, Time: 6-month forecast horizon
+- **Finding**: All four commodities show <1% forecast change over the 6-month horizon (Rice: +0.6%, Cooking Oil: +0.8%, Sugar: +0.3%, Flour: 0.0%). However, 95% confidence intervals are wide: Rice CI width 28.8%, Sugar 27.3%, Cooking Oil 21.4%, Flour 12.2%. The wide CIs mean the 6-month forecast is directional at best — the true price could be ±10–15% from the point estimate.
+- **Type**: Directional
+- **Stakeholder**: Procurement Analyst
+- **Implication**: The flat forecast suggests no near-term urgency for forward-buying, but the wide CIs mean the model cannot rule out meaningful moves. Use 1–2 month forecasts for operational decisions; treat 5–6 month projections as scenario planning inputs. Supplement Cooking Oil forecast with CPO futures monitoring.
+
+### Finding 10: Sugar Shows Small But Consistent Ramadan Premium (2.7% at T+1)
+- **Metric**: Ramadan window premium vs annual average (%)
+- **Dimension**: Commodity: All 4, Time: Islamic calendar alignment, 2007–2024
+- **Finding**: Sugar has the highest Ramadan-linked premium at 2.7% above annual average (post-Eid T+1 window). Flour follows at 1.1%, Cooking Oil at 0.8% (pre-Ramadan T-1), and Rice at 0.4% (T+1). The Ramadan premium is smaller than generic month-of-year seasonality suggests — after controlling for the Islamic calendar shift, the pure Ramadan effect is modest relative to other seasonal drivers.
+- **Type**: Directional
+- **Stakeholder**: Procurement Analyst
+- **Implication**: The Ramadan premium exists but is small relative to overall seasonal noise. Procurement teams should focus on the combined calendar: Rice harvest discount (Mar–May) generates larger savings than Ramadan timing. Sugar shows the most consistent Ramadan signal — front-run by T-2 for the best window.
+
+### Finding 11: Only Cooking Oil Has Geographic Market Coverage — Provincial Gap 43%
+- **Metric**: Inter-province price gap (%)
+- **Dimension**: Island Group: All, Commodity: Cooking Oil (only commodity with sufficient market-level actual data)
+- **Finding**: Among target commodities, only Cooking Oil has sufficient market-level actual price data for island-level geographic analysis. Rice, Sugar, and Flour are only available as national aggregates (market_id = 974) in the WFP actual-price dataset. For Cooking Oil, the cheapest province (KEPULAUAN BANGKA BELITUNG, Sumatera) averages IDR 18,759/L vs the most expensive (GORONTALO, Sulawesi) at IDR 26,845/L — a 43.1% inter-province gap.
+- **Type**: Contextual
+- **Stakeholder**: Procurement Analyst
+- **Implication**: Geographic sourcing arbitrage is only data-supported for Cooking Oil. For Rice/Sugar/Flour, rely on supplier quotes and regional logistics cost analysis. The 43% Cooking Oil gap confirms meaningful arbitrage opportunity for FMCG teams with multi-island distribution.
+
+### Finding 12: Pre-2022 Cross-Commodity Correlations Moderate–Strong (r = 0.73–0.88); Post-2022 Not Measurable
+- **Metric**: Pearson correlation coefficient (monthly, lag 0)
+- **Dimension**: Commodity pairs: All 4, Pre-2022 vs Post-2022
+- **Finding**: Pre-2022, all commodity pairs show moderate-to-strong positive correlation (r = 0.73–0.88), with Cooking Oil↔Flour strongest (r = 0.878) and Sugar↔Flour weakest (r = 0.731). Post-2022, correlation cannot be reliably measured because Rice, Sugar, and Flour market-level actual data ends before or shortly after 2022 — only Cooking Oil has continuous actual data through 2024. The pre-2022 correlation matrix is not a reliable guide for post-2022 procurement strategy.
+- **Type**: Contextual
+- **Stakeholder**: Category Manager
+- **Implication**: The strong pre-2022 correlations suggest shared macroeconomic drivers (fuel costs, logistics, broad inflation) affected all staples similarly. For post-2022 strategy, each commodity needs independent category management. The oil↔flour pair shows the strongest lagged relationship (r = 0.888 at 3-month lag) — monitor CPO futures as early warning for flour and oil.
+
+### Finding 13: Peak/Trough Seasonality — Modest Within-Year Gaps for Rice/Sugar/Flour
+- **Metric**: Peak-to-trough price gap (%)
+- **Dimension**: Commodity: All 4, Month-of-year
+- **Finding**: Cooking Oil shows extreme within-year seasonality (60.7% gap between Dec peak and Jan trough), but this is an artifact of the 2022 structural break acting as a level shift that appears seasonal when averaged across all years. Rice shows a modest 6.3% gap (Dec peak, Jul trough), Sugar 3.1% (Sep peak, Apr trough), and Flour 3.3% (Dec peak, Jul trough). Rice's July trough aligns with main harvest release; the Dec peak reflects post-harvest storage drawdown and year-end demand.
+- **Type**: Directional
+- **Stakeholder**: Procurement Analyst
+- **Implication**: Rice and Sugar have predictable within-year patterns suitable for procurement calendar planning. Cooking Oil's apparent 60.7% gap is a statistical artifact — use rolling 3-year averages to distinguish true seasonality from structural breaks. For Rice, the 6.3% annual gap translates to meaningful IDR savings per ton at procurement scale.
+
+---
+
 *Generated from Phase 4 EDA (SCAN Framework) on 2026-05-25.*
+*Updated with Phase 5 Deep Dive Analysis (North Star Method) on 2026-05-26.*

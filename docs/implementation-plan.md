@@ -223,19 +223,19 @@
 | `mo.stop()` for empty data | LEARNINGS.md §65 + AGENTS.md §392 | ✅ In `data_load` cell after query |
 | Named cells (not `__`) | AGENTS.md §389 | ✅ All cells use `def setup():`, `def data_load():`, etc. |
 
-### Gaps vs Retail Sales Notebook
+### Completed
 
-| # | Gap | Current State | Target | Notes |
-|---|-----|---------------|--------|-------|
-| 4.5.1 | **No formatter helpers** — `fmt_idr()`, `fmt_pct()` scattered as raw f-strings across 15 cells | `IDR {val:,.0f}`, `{pct:.1f}%` duplicated inline | Single `fmt_idr()`, `fmt_pct()`, `fmt_short_idr()` in setup cell | Retail pattern: 3 helpers defined once, reused in every cell. Eliminates formatting drift. |
-| 4.5.2 | **Insight callouts missing from 9/15 cells** — only N sections (N1–N4) have `> **Insight:**` | A1/A2/A3/A4/A5/A6/C sections end with chart only | Every analytical cell ends with `> **Insight:**` blockquote | Retail: 12/12 cells have it. Bridges data → decision. |
-| 4.5.3 | **Section numbering blends into hierarchy** — `### A1:` is hard to cross-ref | `### A1: Annual Avg Price` | `## 01 — A1: Annual Avg Price` | Enables `"(see §03)"` cross-refs in findings table. |
-| 4.5.4 | **Stats computed but not embedded in insight prose** — A sections compute `_median_rev`, `_avg_premium` but don't interpolate into narrative | Stats in separate `mo.md()` or `mo.ui.table()` | Pre-compute derived values → f-string into insight text | Retail: `_top_sku = df.iloc[0]` then `"#1: {_top_sku['kd_obat']}"`. |
-| 4.5.5 | **Insights are descriptive, not prescriptive** — tell what happened, not what to do | "Prices normalised by Dec 2022" | "Front-run Ramadan by T-2 months; lock Sugar contracts in Jan" | Retail: "Annual volume contracts recommended for top 3 SKUs." |
-| 4.5.6 | **`mo.lazy()` not applied to reconciliation cell** | `reconciliation` cell queries 3 schemas + 5 JSONs eagerly on load (§66) | Wrap reconciliation in `mo.lazy()` if restructured to return-based rendering | §66 notes `mo.lazy()` only works with return-based cells — may need refactor. |
-| 4.5.7 | **Summary table lacks section cross-refs** | Findings table doesn't reference chart numbers | Append `(see §03)` / `(see §07)` to each finding | Retail notebook cross-refs findings to chart sections. |
+| # | Change | Commit |
+|---|--------|--------|
+| 4.5.1 | ✅ `fmt_idr()`, `fmt_pct()`, `fmt_short_idr()` added to `setup()` cell — all inline f-strings updated | `df28dc5` |
+| 4.5.2 | ✅ `> **Insight:**` blockquote added to all 15 analytical cells that were missing it | `df28dc5` |
+| 4.5.3 | ✅ All 19 sections renumbered from `### A1:` → `## 01 — A1:` format | `df28dc5` |
+| 4.5.4 | ✅ 12 derived values (CAGR, peak/trough, best/worst MAE) pre-computed and interpolated into narrative | `df28dc5` |
+| 4.5.5 | ✅ All insights rewritten from descriptive to prescriptive (e.g., "Front-run Ramadan by T-2 months") | `df28dc5` |
+| 4.5.6 | ✅ `reconciliation()` refactored to return-based cell wrapped in `mo.lazy()` — queries deferred until visible | `df28dc5` |
+| 4.5.7 | ✅ Summary findings table updated with `(see §N)` cross-references to all 19 chart sections | `df28dc5` |
 
-**Key Deliverable**: `analysis/eda.py` updated with formatter helpers, insight callouts in every cell, actionable recommendations with computed stats, section-numbered hierarchy, and `mo.lazy()` on reconciliation. All findings cross-referenced to chart sections.
+**Key Deliverable**: ✅ `analysis/eda.py` (976 lines) — formatters, insight callouts, actionable recommendations with computed stats, section-numbered hierarchy, `mo.lazy()` on reconciliation, cross-referenced findings.
 
 ---
 
@@ -244,14 +244,15 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 5.1 | Create **`analysis/deep_dive.py`** (marimo notebook) with 4 deep dive sections | ⬜ | MARIMO-DRIVEN — interactive widgets for date range, commodity, island group |
-| 5.2 | **Q1 — Price Trends + Forecast**: annual trend plot, structural breaks (2008, 2022), decompose trend/seasonal/residual, layer 6-month forecast with CI, procurement action zone identification | ⬜ | Expected: Cooking oil CAGR, forecast stability assessment |
-| 5.3 | **Q2 — Seasonal Patterns**: align years to Islamic calendar, price index at T-3 to T+1 relative to Eid, avg premium per commodity, harvest season discount, year-end spike | ⬜ | Expected: Sugar Ramadan premium, rice harvest discount window |
-| 5.4 | **Q3 — Geographic Disparity**: island group price index vs Java, narrowing/widening trend, province-level drill-down, lowest-cost provinces per commodity | ⬜ | Expected: Eastern Indonesia premium magnitude + trend direction |
-| 5.5 | **Q4 — Commodity Correlations**: cross-correlation at lags 0–3, strongest leading pair, rolling 3-year stability, pre/post 2022 comparison | ⬜ | Expected: Rice → Flour lead relationship, post-2022 break analysis |
-| 5.6 | Populate insights log with quantified findings from all 4 deep dives | ⬜ | Each finding uses template: metric, dimension, quantified finding, type, stakeholder, recommendation, confidence |
+| 5.1 | Create **deep dive analysis** (merged into `analysis/eda.py` with Phase 4 EDA) | ✅ 2026-05-26 | 40+ cells: Phase 4 SCAN (stakeholder, coverage, pipeline, aggregates, notable) + Phase 5 North Star (Q1–Q4 deep dives with forecast, ramadan, geographic, correlation) + summary |
+| 5.2 | **Q1 — Price Trends + Forecast**: annual trend plot, structural breaks (2008, 2022), decompose trend/seasonal/residual, layer 6-month forecast with CI, procurement action zone identification | ✅ | Quantified: Rice CAGR 6.7% (highest), flat near-term forecasts (all <1% Δ), wide CIs (12–29%), Cooking Oil 60.7% apparent seasonality = 2022 artifact |
+| 5.3 | **Q2 — Seasonal Patterns**: align years to Islamic calendar, price index at T-3 to T+1 relative to Eid, avg premium per commodity, harvest season discount, year-end spike | ✅ | Quantified: Sugar Ramadan premium 2.7% (highest), Rice harvest discount confirmed, Ramadan effect smaller than generic seasonality after Islamic calendar correction |
+| 5.4 | **Q3 — Geographic Disparity**: island group price index vs Java, narrowing/widening trend, province-level drill-down, lowest-cost provinces per commodity | ✅ | Found: Only Cooking Oil has market-level actual data for geographic analysis. Provincial gap 43.1% (Bangka Belitung vs Gorontalo). Rice/Sugar/Flour limited to national aggregate |
+| 5.5 | **Q4 — Commodity Correlations**: cross-correlation at lags 0–3, strongest leading pair, rolling 3-year stability, pre/post 2022 comparison | ✅ | Quantified: Pre-2022 r=0.73–0.88. Post-2022 not measurable (Rice/Sugar/Flour actual data ends 2020). Best lag: oil↔flour at 3mo (r=0.8885) |
+| 5.6 | Populate insights log with quantified findings from all 4 deep dives | ✅ 2026-05-26 | 6 new findings (#8–13) appended to `docs/insights_log.md` — all quantified with actual data |
+| 5.7 | Update `docs/model_methodology.md` — add Deep Dive Validation subsection | ✅ 2026-05-26 | Added cross-reference: forecast vs actual decomposition, wide CI assessment, procurement action zone framework |
 
-**Marimo**: `marimo edit analysis/deep_dive.py`
+**Marimo**: `marimo edit analysis/eda.py` (merged Phase 4 EDA + Phase 5 Deep Dive — 40+ cells)
 
 ---
 
@@ -425,7 +426,7 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 3c | `fix: pipeline orchestrator + _loaded_at` | `run_pipeline.py` forecast/export steps, schema parameterization, source freshness |
 | Phase 4 | `feat: EDA notebook + insights log` | Analysis |
 | Phase 4a | `fix: eda gap-closing (mart reconciliation, islamic ramadan, forecast val, usd, export val)` | 10 gaps closed: G1–G8 all addressed |
-| Phase 5 | `feat: deep dive analysis notebook` | Analysis |
+| Phase 5 | `feat: deep dive analysis + merge with eda notebook` | 4 North Star deep dives (forecast overlay, ramadan calendar, geographic disparity, rolling correlations), insights log update, model_methodology cross-ref |
 | Phase 3d | `docs: forecasting methodology` | `model_methodology.md` |
 | Phase 3e | `fix: phase 3 bugfix — 7 gaps from pipeline audit` | Error handler, lineage DDL, metadata, skips, connection, t_minus_3, status value |
 | Phase 6 | `feat: dashboard (Next.js + Shadboard + export)` | Frontend |
@@ -449,3 +450,4 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | 2026-05-26 | **Phase 3 bugfix audit**: found 7 gaps — error handler column, lineage DDL fragmentation, hardcoded dates, skipped commodity tracking, connection leak, t_minus_3 parity, status value inconsistency. | All 7 fixed in Phase 3e. See tasks 3.12–3.18. |
 | 2026-05-26 | **`mart_commodity_correlation` granularity mismatch**: Cooking Oil averaged across hundreds of markets; Rice/Sugar/Flour from single national avg market (974). | Cross-correlation coefficients may be misleading. Flag in `model_methodology.md` and dashboard footnote. |
 | 2026-05-26 | **Phase 4 gap analysis**: 10 gaps identified — EDA bypassed dbt marts, Ramadan used hardcoded months, no forecast validation, no export verification. | All 10 closed. EDA now reconciled against all 5 marts + JSON exports. See verification cells R1/R2. |
+| 2026-05-26 | **Phase 4/5 merge**: `deep_dive.py` merged into `analysis/eda.py` (40+ cells, 1670+ lines). Plotly 6.7.0 + pandas 3.0.3 incompatibility with `add_vline` annotations on string axes; annotations removed where x-axis uses date strings. | Resolved. Notebook passes headless execution. |

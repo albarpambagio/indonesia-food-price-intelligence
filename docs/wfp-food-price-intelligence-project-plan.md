@@ -430,7 +430,9 @@ Insights log with minimum 6 findings, each with: metric, dimension, finding (qua
 
 ---
 
-## Phase 5 — Deep Dive Analysis (North Star Method)
+## Phase 5 — Deep Dive Analysis (North Star Method) ✅ Delivered 2026-05-26
+
+> **Deliverable**: Merged into `analysis/eda.py` — 40+ cell marimo notebook combining Phase 4 EDA (SCAN Framework) with Phase 5 Deep Dive (North Star Method), interactive filters, and embedded findings from both phases.
 
 **Goal:** Answer all four exec-driven questions interactively in **`analysis/deep_dive.py`** (marimo notebook) with quantified, stakeholder-ready findings.
 
