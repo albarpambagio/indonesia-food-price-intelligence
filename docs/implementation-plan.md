@@ -207,6 +207,38 @@
 
 ---
 
+## Phase 4.5 — EDA Notebook Improvement Plan (1 day)
+> **Sequential** — structural review of `analysis/eda.py` against `retail_sales/analysis/eda_notebook.py` patterns. Leverages existing learnings (§57–66, AGENTS.md §385–403) — does NOT re-document patterns already followed.
+
+### Already Followed (existing patterns in `analysis/eda.py`)
+
+| Pattern | Source | Status |
+|---------|--------|--------|
+| Query marts, not duplicate pipeline logic | LEARNINGS.md §57 | ✅ Already queries `int_prices_normalised` directly |
+| `mo.persistent_cache` + named cells | LEARNINGS.md §58 + AGENTS.md §390/394 | ✅ `def data_load():` with `@mo.persistent_cache` |
+| Interactive filters (dropdown + slider) | LEARNINGS.md §59 + AGENTS.md §400 | ✅ `def filters():` with commodity/island/year controls |
+| PEP 723 script header | LEARNINGS.md §62 + AGENTS.md §387 | ✅ `# /// script` block present |
+| Script mode detection | LEARNINGS.md §63 + AGENTS.md §388 | ✅ `is_script_mode` in setup cell |
+| One transformation per cell | LEARNINGS.md §64 + AGENTS.md §390 | ✅ 18 cells, single concern each |
+| `mo.stop()` for empty data | LEARNINGS.md §65 + AGENTS.md §392 | ✅ In `data_load` cell after query |
+| Named cells (not `__`) | AGENTS.md §389 | ✅ All cells use `def setup():`, `def data_load():`, etc. |
+
+### Gaps vs Retail Sales Notebook
+
+| # | Gap | Current State | Target | Notes |
+|---|-----|---------------|--------|-------|
+| 4.5.1 | **No formatter helpers** — `fmt_idr()`, `fmt_pct()` scattered as raw f-strings across 15 cells | `IDR {val:,.0f}`, `{pct:.1f}%` duplicated inline | Single `fmt_idr()`, `fmt_pct()`, `fmt_short_idr()` in setup cell | Retail pattern: 3 helpers defined once, reused in every cell. Eliminates formatting drift. |
+| 4.5.2 | **Insight callouts missing from 9/15 cells** — only N sections (N1–N4) have `> **Insight:**` | A1/A2/A3/A4/A5/A6/C sections end with chart only | Every analytical cell ends with `> **Insight:**` blockquote | Retail: 12/12 cells have it. Bridges data → decision. |
+| 4.5.3 | **Section numbering blends into hierarchy** — `### A1:` is hard to cross-ref | `### A1: Annual Avg Price` | `## 01 — A1: Annual Avg Price` | Enables `"(see §03)"` cross-refs in findings table. |
+| 4.5.4 | **Stats computed but not embedded in insight prose** — A sections compute `_median_rev`, `_avg_premium` but don't interpolate into narrative | Stats in separate `mo.md()` or `mo.ui.table()` | Pre-compute derived values → f-string into insight text | Retail: `_top_sku = df.iloc[0]` then `"#1: {_top_sku['kd_obat']}"`. |
+| 4.5.5 | **Insights are descriptive, not prescriptive** — tell what happened, not what to do | "Prices normalised by Dec 2022" | "Front-run Ramadan by T-2 months; lock Sugar contracts in Jan" | Retail: "Annual volume contracts recommended for top 3 SKUs." |
+| 4.5.6 | **`mo.lazy()` not applied to reconciliation cell** | `reconciliation` cell queries 3 schemas + 5 JSONs eagerly on load (§66) | Wrap reconciliation in `mo.lazy()` if restructured to return-based rendering | §66 notes `mo.lazy()` only works with return-based cells — may need refactor. |
+| 4.5.7 | **Summary table lacks section cross-refs** | Findings table doesn't reference chart numbers | Append `(see §03)` / `(see §07)` to each finding | Retail notebook cross-refs findings to chart sections. |
+
+**Key Deliverable**: `analysis/eda.py` updated with formatter helpers, insight callouts in every cell, actionable recommendations with computed stats, section-numbered hierarchy, and `mo.lazy()` on reconciliation. All findings cross-referenced to chart sections.
+
+---
+
 ## Phase 5 — Deep Dive Analysis (North Star Method) (2–3 days)
 > **Sequential** — depends on Phase 4 (EDA findings feed into deep dives). Phase 7 can run alongside.
 
