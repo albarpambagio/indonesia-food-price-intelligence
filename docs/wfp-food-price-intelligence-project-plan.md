@@ -143,8 +143,7 @@ indonesia-food-price-intelligence/
 │   └── export_json.py          # Query mart models → static JSON files + verify row counts
 ├── analysis/                   # Marimo notebooks (.py files)
 │   ├── data_validation.py      # Phase 0 validation checkpoint
-│   ├── eda.py                  # Phase 4 SCAN EDA
-│   ├── deep_dive.py            # Phase 5 North Star deep dives
+│   ├── eda.py                  # Phase 4 SCAN EDA + Phase 5 North Star deep dives
 │   └── forecast_experimentation.py  # Phase 3 optional model comparison
 ├── dashboard/                  # Next.js + Shadboard app
 │   ├── public/
@@ -434,7 +433,7 @@ Insights log with minimum 6 findings, each with: metric, dimension, finding (qua
 
 > **Deliverable**: Merged into `analysis/eda.py` — 40+ cell marimo notebook combining Phase 4 EDA (SCAN Framework) with Phase 5 Deep Dive (North Star Method), interactive filters, and embedded findings from both phases.
 
-**Goal:** Answer all four exec-driven questions interactively in **`analysis/deep_dive.py`** (marimo notebook) with quantified, stakeholder-ready findings.
+**Goal:** Answer all four exec-driven questions interactively in **`analysis/eda.py`** (marimo notebook, merged Phase 4 EDA + Phase 5 Deep Dive) with quantified, stakeholder-ready findings.
 
 ### Question 1 — Price Trends + Forecast
 
@@ -497,12 +496,12 @@ Confidence: High / Medium / Low + rationale
 
 ### Marimo Workflow
 
-Each of the 4 deep dives is a marimo section in `analysis/deep_dive.py` with interactive widgets:
+Each of the 4 deep dives is a marimo section in `analysis/eda.py` (merged with Phase 4 EDA) with interactive widgets:
 
 - Date range selector, commodity dropdown, island group dropdown
 - Reactive charts (trend lines, seasonal overlay, geographic index, correlation matrix)
 - Inline markdown cells for narrative and findings capture
-- Also runnable headlessly: `python analysis/deep_dive.py` or interactively: `marimo edit analysis/deep_dive.py`
+- Also runnable headlessly: `python analysis/eda.py` or interactively: `marimo edit analysis/eda.py`
 
 ---
 

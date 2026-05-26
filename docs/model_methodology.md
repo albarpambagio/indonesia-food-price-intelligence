@@ -181,9 +181,9 @@ Mismatch sets `pipeline.lineage.export_status = 'failed'`.
 
 ---
 
-## Phase 5 Deep Dive Validation
+## Phase 5 Deep Dive Validation (North Star Method)
 
-The Phase 5 deep dive analysis (`analysis/deep_dive.py`) independently validates forecast results against trend decomposition and seasonal analysis:
+Each deep dive question maps to a **North Star metric**: procurement savings, contract timing optimization, geographic arbitrage opportunity, and bundled procurement risk. The Phase 5 analysis (merged into `analysis/eda.py`) independently validates forecast results against trend decomposition and seasonal analysis:
 
 ### Forecast vs Trend Decomposition
 

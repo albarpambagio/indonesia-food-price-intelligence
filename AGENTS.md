@@ -87,7 +87,7 @@ Phase 3: Forecasting              → statsforecast AutoARIMA/AutoETS + methodol
 Phase 3e: Bugfix                  → 7 gap fixes from pipeline audit                     ✅ DONE
 Phase 4: EDA                      → Marimo notebook (SCAN framework)                    ✅ DONE
 Phase 4.5: Notebook Improvement   → Formatters, insight callouts, sectioning, mo.lazy    ✅ DONE
-Phase 5: Deep Dive                → Marimo notebook (North Star method)
+Phase 5: Deep Dive                → Marimo notebook (North Star method, merged into `analysis/eda.py`)
 Phase 6: Dashboard                → 4 pages in Next.js + Shadboard + Cloudflare Pages
 Phase 7: Methodology Doc          → model_methodology.md
 Phase 8: Write-up                 → README, insights log, recommendations
@@ -140,8 +140,7 @@ indonesia-food-price-intelligence/
 │   └── export_json.py          # Mart models → static JSON files
 ├── analysis/                   # Marimo notebooks (.py files)
 │   ├── data_validation.py      # Phase 0 validation checkpoint
-│   ├── eda.py                  # Phase 4 SCAN EDA (15 cells, 7 findings)
-│   ├── deep_dive.py            # Phase 5 North Star deep dives
+│   ├── eda.py                  # Phase 4 SCAN EDA + Phase 5 Deep Dive (37 cells, 13 findings)
 │   └── forecast_experimentation.py  # Phase 3 optional model comparison
 ├── seeds/                      # dbt seed data
 │   └── islamic_calendar.csv    # Ramadan/Eid dates 2007–2024

@@ -61,11 +61,10 @@ def setup():
     SYMBOL_MAP = dict(zip(["Rice", "Cooking Oil", "Sugar", "Flour"], ["circle", "square", "diamond", "triangle-up"]))
     TARGET_COMMODITIES = ["Rice", "Cooking Oil", "Sugar", "Flour"]
     MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-    is_script_mode = mo.app_meta().mode == "script"
     return (
         PALETTE, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, TARGET_COMMODITIES, MONTH_NAMES,
         duckdb, fmt_idr, fmt_pct, fmt_cagr, fmt_short_idr,
-        go, json, is_script_mode, make_subplots, mo, np, os, pd, px, scipy_stats,
+        go, json, make_subplots, mo, np, os, pd, px, scipy_stats,
     )
 
 
@@ -1030,6 +1029,7 @@ def q1_trend_decomposition(fmt_pct, fmt_idr, fdf, PALETTE_MAP, MONTH_NAMES, mo, 
 @app.cell
 def q1_forecast_overlay(fmt_idr, fmt_pct, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, mo, go, pd, json, os):
     fc_path = os.path.join("dashboard", "public", "data", "forecast.json")
+    mo.stop(not os.path.exists(fc_path), mo.md(f"⚠ **Forecast file not found**: `{fc_path}` — run `uv run python forecast/run_forecast.py` first."))
     with open(fc_path) as _f:
         _fc = json.load(_f)
     _meta = _fc["metadata"]
@@ -1193,11 +1193,10 @@ def q2_month_of_year(fmt_idr, fmt_pct, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, M
 
 
 @app.cell
-def q2_ramadan_analysis(fmt_idr, fmt_pct, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, MONTH_NAMES, mo, go, pd, duckdb):
-    _c = duckdb.connect("data/wfp.duckdb")
-    _islamic = _c.sql("SELECT year, eid_month, t_minus_1, t_minus_2, t_minus_3, t_plus_1 FROM wfp_intermediate.int_islamic_calendar ORDER BY year").fetchdf()
+def q2_ramadan_analysis(fmt_idr, fmt_pct, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, MONTH_NAMES, mo, go, pd, conn):
+    _islamic = conn.sql("SELECT year, eid_month, t_minus_1, t_minus_2, t_minus_3, t_plus_1 FROM wfp_intermediate.int_islamic_calendar ORDER BY year").fetchdf()
     _islamic["year"] = _islamic["year"].astype(int)
-    _c.close()
+    mo.stop(len(_islamic) == 0, mo.md("⚠ **Islamic calendar data not found** — run `dbt seed` and `dbt run` to populate `int_islamic_calendar`."))
 
     _df = fdf.copy()
     _df = _df.merge(_islamic, on="year", how="left")
@@ -1261,7 +1260,7 @@ def q2_ramadan_analysis(fmt_idr, fmt_pct, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP
 
     _ramadan_cols = ramadan_cols
     _islamic_df = _islamic
-    return _islamic_df, _wd, _ramadan_cols
+    return _wd, _ramadan_cols
 
 
 @app.cell
@@ -1371,19 +1370,25 @@ def q3_island_group_index(fmt_pct, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, mo, p
     if len(_trend_df) > 0:
         _widest = _trend_df.loc[_trend_df["Avg Index"].idxmax()]
         _narrowest = _trend_df.loc[_trend_df["Avg Index"].idxmin()]
-        mo.ui.table(_trend_df.sort_values(["Commodity", "Island Group"]).round(1), label="Island Group Premium Trends")
-        mo.md(f"""
-        > **Insight:**
-        > - Widest premium: **{_widest['Island Group']}** for **{_widest['Commodity']}** at index {_widest['Avg Index']} ({fmt_pct(_widest['Avg Index'] - 100)} above Java)
-        > - Narrowest premium: **{_narrowest['Island Group']}** for **{_narrowest['Commodity']}** at index {_narrowest['Avg Index']}
-        > - Check trend direction: **widening** premiums suggest deteriorating logistics; **narrowing** suggests improving inter-island connectivity
-        > - Sulawesi is the best logistics bridge for outer-island sourcing — lower premium than Eastern Indonesia with better coverage
-        """)
+        _ = mo.hstack([
+            mo.ui.table(_trend_df.sort_values(["Commodity", "Island Group"]).round(1), label="Island Group Premium Trends"),
+            mo.md(f"""
+            > **Insight:**
+            > - Widest premium: **{_widest['Island Group']}** for **{_widest['Commodity']}** at index {_widest['Avg Index']} ({fmt_pct(_widest['Avg Index'] - 100)} above Java)
+            > - Narrowest premium: **{_narrowest['Island Group']}** for **{_narrowest['Commodity']}** at index {_narrowest['Avg Index']}
+            > - Check trend direction: **widening** premiums suggest deteriorating logistics; **narrowing** suggests improving inter-island connectivity
+            > - Sulawesi is the best logistics bridge for outer-island sourcing — lower premium than Eastern Indonesia with better coverage
+            """),
+        ], justify="start")
 
 
 @app.cell
 def q3_province_drilldown(fmt_idr, fdf, mo, pd, np):
-    _prov_avg = fdf.groupby(["commodity_consolidated", "island_group", "admin1"])["price"].agg(["mean", "count", "std"]).reset_index()
+    _eastern = fdf["island_group"] == "Eastern Indonesia"
+    _filtered = fdf.copy()
+    _filtered.loc[_eastern & (_filtered["year"] < 2015), "price"] = np.nan
+    _filtered = _filtered.dropna(subset=["price"])
+    _prov_avg = _filtered.groupby(["commodity_consolidated", "island_group", "admin1"])["price"].agg(["mean", "count", "std"]).reset_index()
     _prov_avg.columns = ["Commodity", "Island Group", "Province", "Avg Price", "Records", "Std Dev"]
     _prov_avg = _prov_avg[_prov_avg["Records"] >= 12].sort_values(["Commodity", "Avg Price"])
 
@@ -1466,6 +1471,7 @@ def q4_cross_correlation(fdf, mo, px):
 @app.cell
 def q4_lagged_correlation(fmt_pct, mo, px, pd, json, os):
     cs_path = os.path.join("dashboard", "public", "data", "correlation_summary.json")
+    mo.stop(not os.path.exists(cs_path), mo.md(f"⚠ **Correlation summary not found**: `{cs_path}` — run `uv run python export/export_json.py` first."))
     with open(cs_path) as _f:
         _cs = json.load(_f)
     _df_cs = pd.DataFrame(_cs)
@@ -1653,13 +1659,13 @@ def summary(mo):
     | 3 | **Sugar Ramadan premium**: Front-run Ramadan by T-2 months; lock contracts in Jan/Feb. | Actionable | Procurement Analyst | EDA §15 |
     | 4 | **Eastern Indonesia premium**: Persistent 15–30% gap vs Java. Source Cooking Oil from Java/Sulawesi. | Actionable | Procurement Analyst | EDA §16 |
     | 5 | **Volatility ranking**: Cooking Oil most volatile — 3-month fixed-price contracts. Rice most stable. | Actionable | Category Manager | EDA §07 |
-    | 6 | **Cross-commodity correlation**: All pairs r=0.73–0.88 pre-2022. Post-2022 not measurable — Rice/Sugar/Flour actual data ends 2020. | Contextual | Category Manager | DD §12 |
+    | 6 | **Cross-commodity correlation**: All pairs r=0.73–0.88 pre-2022. Post-2022 not measurable — Rice/Sugar/Flour actual data ends 2020. | Contextual | Category Manager | Q4.1/Q4.2 |
     | 7 | **Coverage gap**: Eastern Indonesia data sparse before 2015. Restrict to 2015+. | Directional | Both | EDA §02 |
-    | 8 | **Forecast accuracy**: All 6-month Δ <1%. Wide CIs (12–29%). Use 1–2 month for ops; 5–6 month directional only. | Directional | Category Manager | DD §9 |
+    | 8 | **Forecast accuracy**: All 6-month Δ <1%. Wide CIs (12–29%). Use 1–2 month for ops; 5–6 month directional only. | Directional | Category Manager | Q1.3 |
     | 9 | **Export integrity**: All 5 mart JSONs verified — row counts match DB source. ✅ | Contextual | Both | Recon |
-    | 10 | **Rice CAGR 6.7%**: Highest long-term inflation. Multi-year contracts recommended. Actual data ends 2020 for Rice/Sugar/Flour. | Contextual | Category Manager | DD §8 |
-    | 11 | **Only Cooking Oil has geographic coverage**: 43% provincial gap. Geographic arbitrage only data-supported for oil. | Contextual | Procurement Analyst | DD §11 |
-    | 12 | **Rice ↔ Flour leading indicator**: r=0.773 at lag 0, most stable pair through shocks. Monitor Rice for Flour signal. | Directional | Category Manager | DD §12 |
+    | 10 | **Rice CAGR 6.7%**: Highest long-term inflation. Multi-year contracts recommended. Actual data ends 2020 for Rice/Sugar/Flour. | Contextual | Category Manager | Q1.1/Q1.2 |
+    | 11 | **Only Cooking Oil has geographic coverage**: 43% provincial gap. Geographic arbitrage only data-supported for oil. | Contextual | Procurement Analyst | Q3.2 |
+    | 12 | **Rice ↔ Flour leading indicator**: r=0.773 at lag 0, most stable pair through shocks. Monitor Rice for Flour signal. | Directional | Category Manager | Q4.3 |
 
     **Phase 4 EDA (SCAN Framework)** identified 7 initial findings. **Phase 5 Deep Dive (North Star Method)** added 6 quantified findings with deeper analysis.
 
