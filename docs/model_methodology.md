@@ -1,5 +1,34 @@
 # Forecasting Methodology
 
+## Table of Contents
+
+- [1. Problem Statement](#1-problem-statement)
+- [2. Data Preparation](#2-data-preparation)
+  - [National Average Prices](#national-average-prices)
+  - [Data Coverage](#data-coverage)
+  - [Islamic Calendar Regressors](#islamic-calendar-regressors)
+  - [Holdout Split](#holdout-split)
+- [3. Model Candidates Evaluated](#3-model-candidates-evaluated)
+- [4. Model Selection Process](#4-model-selection-process)
+  - [Holdout Validation Approach](#holdout-validation-approach)
+  - [Per-Commodity Results](#per-commodity-results)
+  - [Cooking Oil: Post-2022 Robustness Check](#cooking-oil-post-2022-robustness-check)
+  - [Forecast vs Trend Decomposition Validation](#forecast-vs-trend-decomposition-validation)
+- [5. Confidence Intervals](#5-confidence-intervals)
+  - [What Is a 95% Confidence Interval?](#what-is-a-95-confidence-interval)
+  - [Procurement Action Zone](#procurement-action-zone)
+  - [Interpretation Guidance](#interpretation-guidance)
+- [6. Known Limitations](#6-known-limitations)
+  - [Model Limitations](#model-limitations)
+  - [Data Limitations](#data-limitations)
+  - [Foundational Caveat](#foundational-caveat)
+- [7. Re-Running the Forecast](#7-re-running-the-forecast)
+- [Appendix A: Forecast Output Structure](#appendix-a-forecast-output-structure)
+- [Appendix B: Validation Procedure](#appendix-b-validation-procedure)
+- [Appendix C: Seasonal Pattern Validation](#appendix-c-seasonal-pattern-validation)
+
+---
+
 ## 1. Problem Statement
 
 **What:** National average monthly retail prices for 4 staple commodities — Rice, Cooking Oil, Sugar, Flour — sourced from WFP Indonesia market price data (Jan 2007–May 2024).
@@ -54,7 +83,9 @@ Ramadan and Eid al-Fitr drive predictable demand spikes for staple commodities (
 
 **Source:** Islamic calendar dates (2007–2024) manually populated from IslamicFinder.org, stored as `transform/seeds/islamic_calendar.csv`.
 
-**Usage in models:** Flags are passed as exogenous regressors to AutoARIMA (which supports external regressors). AutoETS models seasonality internally and ignores these flags. The model comparison inherently tests whether explicit Islamic calendar features improve forecast accuracy over pure seasonal decomposition.
+**Usage in models:** Flags are passed as exogenous regressors to AutoARIMA (which supports external regressors). AutoETS models seasonality internally and ignores these flags.
+
+**Comparability note:** This creates a confounded comparison — model architecture and regressor presence vary simultaneously. We accept this trade-off because: (a) AutoETS does not support exogenous regressors in this implementation, (b) the primary decision is which deployed model produces better forecasts (not isolating the effect of regressors), and (c) the comparability hazard is concentrated in Ramadan-adjacent months, not the full series.
 
 **Limitation:** For the forecast period (Jun–Nov 2024), all Islamic calendar flags are 0 since Ramadan 2024 (Mar–Apr 2024) falls before the forecast window.
 
@@ -80,7 +111,7 @@ AutoTheta is available in the `forecast_experimentation.py` notebook for interac
 
 ## 4. Model Selection Process
 
-### Cross-Validation Approach
+### Holdout Validation Approach
 
 For each commodity:
 1. Training window = all data up to `last_date - 12 months`
@@ -89,6 +120,10 @@ For each commodity:
 4. Forecast the holdout period
 5. Select model with lowest holdout MAE (Mean Absolute Error)
 6. Retrain selected model on full dataset and forecast 6 months ahead
+
+**Note on validation strategy:** A single holdout is used rather than walk-forward (rolling-origin) validation because Islamic calendar regressors introduce lookahead leakage across folds — a flag like `t_minus_1_flag` depends on knowing future Ramadan dates, which would be inconsistent under multiple origins. A multi-origin walk-forward that excludes regressor-dependent months from evaluation is the natural next enhancement.
+
+**Why MAE?** Mean Absolute Error is chosen over RMSE (penalizes large errors quadratically, harder to interpret in IDR) and MAPE (asymmetric, undefined at zero, inflates error for low-price commodities like Flour at ~9,500 IDR vs Rice at ~14,500 IDR). MAE expresses average error in the same unit as price (IDR), which maps directly to procurement cost impact. The trade-off is that MAE underweights outlier months (e.g., 2022 Cooking Oil shock), but this aligns with the forecasting goal — directional accuracy across typical conditions, not worst-case fit.
 
 ### Per-Commodity Results
 
@@ -118,7 +153,7 @@ The Phase 5 deep dive validates forecast results against independent trend decom
 | Rice | AutoETS | +0.6% | 28.8% | Directional — wide CI, scenario planning only |
 | Cooking Oil | AutoARIMA | +0.8% | 21.4% | Directional — post-2022 break reduces reliability |
 | Sugar | AutoETS | +0.3% | 27.3% | Directional — CI too wide for operational timing |
-| Flour | AutoETS | +0.0% | 12.2% | Operational — narrowest CI, pre-2020 data |
+| Flour | AutoETS | +0.0% | 12.2% | Pre-2020 only — narrow CI reflects stable pre-COVID prices, not forecast reliability. Do not use operationally. |
 
 ---
 
@@ -180,54 +215,9 @@ As of the last data point:
 
 ---
 
-## 7. How to Re-Run
+## 7. Re-Running the Forecast
 
-### Prerequisites
-
-- Python environment with dependencies installed (`uv sync`)
-- DuckDB database at `data/wfp.duckdb` with `wfp_intermediate.int_prices_normalised` populated
-- Islamic calendar seed file at `transform/seeds/islamic_calendar.csv`
-
-### Step-by-Step
-
-```bash
-# 1. Activate environment (if not already)
-uv sync
-
-# 2. Run the forecast pipeline
-uv run python forecast/run_forecast.py
-```
-
-The script:
-1. Loads national average prices from DuckDB (`wfp_intermediate.int_prices_normalised`)
-2. Loads Islamic calendar flags from seed CSV
-3. For each commodity (Rice, Cooking Oil, Sugar, Flour):
-   - Splits into training (all but last 12 months) and holdout (last 12 months)
-   - Fits AutoARIMA and AutoETS on training data
-   - Forecasts holdout, computes MAE for each model
-   - Selects best model, retrains on full data
-   - Forecasts 6 months ahead with 95% confidence intervals
-4. Runs Cooking Oil post-2022 robustness check separately
-5. Validates all forecast values (NaN check, negative check, CI reversal check)
-6. Writes `dashboard/public/data/forecast.json`
-7. Logs results to `logs/forecast.log`
-8. Updates `pipeline.lineage` table with status
-
-### Output
-
-| File | Description |
-|------|-------------|
-| `dashboard/public/data/forecast.json` | Full forecast data for dashboard |
-| `logs/forecast.log` | Detailed run log with per-commodity MAE |
-| `pipeline.lineage` | Status record in DuckDB |
-
-### Re-Run Scenarios
-
-| Scenario | Command | Expected Duration |
-|----------|---------|-----------------|
-| Full forecast (all 4 commodities) | `uv run python forecast/run_forecast.py` | ~30 seconds |
-| After dbt rebuild | `cd transform && dbt build && cd .. && uv run python forecast/run_forecast.py` | ~2 minutes |
-| After new data load | Run ingest → dbt build → forecast in sequence via `pipeline_orchestrator.ipynb` | ~3 minutes |
+See [`docs/forecast_runbook.md`](./forecast_runbook.md) for step-by-step instructions, prerequisites, output files, and re-run scenarios.
 
 ---
 

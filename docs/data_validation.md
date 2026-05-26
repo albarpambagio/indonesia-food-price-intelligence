@@ -5,6 +5,19 @@
 **Dataset**: WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0)
 **Notebook**: `analysis/data_validation.py`
 
+## Table of Contents
+
+- [Summary of Scoping Decisions](#summary-of-scoping-decisions)
+- [Check 1: Commodity Coverage](#check-1-commodity-coverage)
+- [Check 2: Provincial Coverage](#check-2-provincial-coverage)
+- [Check 3: Priceflag Distribution](#check-3-priceflag-distribution)
+- [Check 4: Unit Consistency](#check-4-unit-consistency)
+- [Check 5: Sugar Split Decision](#check-5-sugar-split-decision)
+- [Check 6: Cooking Oil Split Decision](#check-6-cooking-oil-split-decision)
+- [Check 7: Secondary Enrichment](#check-7-secondary-enrichment)
+- [Data Quality Notes](#data-quality-notes)
+- [Next Steps](#next-steps)
+
 ---
 
 ## Summary of Scoping Decisions

@@ -333,7 +333,7 @@
 | 7.4 | Model selection: CV approach, holdout, MAE/RMSE, final model per commodity | ✅ | `docs/model_methodology.md` §4 |
 | 7.5 | Confidence intervals: plain language explanation of 95% CI, procurement action zone | ✅ | `docs/model_methodology.md` §5 |
 | 7.6 | Known limitations: 5 items per plan | ✅ | `docs/model_methodology.md` §6 — 10 items across model + data |
-| 7.7 | How to re-run: step-by-step retraining instructions | ✅ | `docs/model_methodology.md` §7 |
+| 7.7 | How to re-run: step-by-step retraining instructions | ✅ | `docs/forecast_runbook.md` |
 
 ---
 

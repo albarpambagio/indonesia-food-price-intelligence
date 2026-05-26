@@ -1,5 +1,26 @@
 # Insights Log — Indonesia Staple Food Price Intelligence
 
+## Table of Contents
+
+- [Coverage Gaps](#coverage-gaps)
+- [Findings](#findings)
+  - [1: Cooking Oil 2022 Shock](#finding-1-cooking-oil-2022-shock--100-spike-in-one-month)
+  - [2: Rice Harvest Seasonality](#finding-2-rice-harvest-seasonality--8-12-procurement-savings-window)
+  - [3: Sugar Ramadan Premium](#finding-3-sugar-ramadan-premium--3-5-above-annual-average)
+  - [4: Eastern Indonesia Price Premium](#finding-4-eastern-indonesia--15-30-persistent-price-premium)
+  - [5: Volatility Ranking](#finding-5-volatility-ranking--cooking-oil-most-volatile-rice-most-stable)
+  - [6: Cross-Commodity Correlation](#finding-6-cross-commodity-correlation--weak-across-categories)
+  - [7: Eastern Indonesia Data Gap](#finding-7-eastern-indonesia-data-gap--restricted-analysis-window)
+- [Deep Dive Findings (North Star Method)](#deep-dive-findings-north-star-method)
+  - [8: Rice CAGR](#finding-8-rice-leads-all-commodities-at-67-cagr--but-actual-data-ends-2020)
+  - [9: Flat Forecasts, Wide CI](#finding-9-all-forecasts-show-flat-near-term--wide-ci-limits-operational-use)
+  - [10: Sugar Ramadan Premium](#finding-10-sugar-shows-small-but-consistent-ramadan-premium-27-at-t1)
+  - [11: Cooking Oil Geographic Coverage](#finding-11-only-cooking-oil-has-geographic-market-coverage--provincial-gap-43)
+  - [12: Pre-2022 Correlations](#finding-12-pre-2022-cross-commodity-correlations-moderate-strong-r--073088-post-2022-not-measurable)
+  - [13: Peak/Trough Seasonality](#finding-13-peaktrough-seasonality--modest-within-year-gaps-for-ricesugarflour)
+
+---
+
 ## Coverage Gaps
 
 | Gap | Implication |
