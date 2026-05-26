@@ -251,6 +251,7 @@
 | 5.5 | **Q4 — Commodity Correlations**: cross-correlation at lags 0–3, strongest leading pair, rolling 3-year stability, pre/post 2022 comparison | ✅ | Quantified: Pre-2022 r=0.73–0.88. Post-2022 not measurable (Rice/Sugar/Flour actual data ends 2020). Best lag: oil↔flour at 3mo (r=0.8885) |
 | 5.6 | Populate insights log with quantified findings from all 4 deep dives | ✅ 2026-05-26 | 6 new findings (#8–13) appended to `docs/insights_log.md` — all quantified with actual data |
 | 5.7 | Update `docs/model_methodology.md` — add Deep Dive Validation subsection | ✅ 2026-05-26 | Added cross-reference: forecast vs actual decomposition, wide CI assessment, procurement action zone framework |
+| 5.8 | **Phase 5 gap-closing**: stale doc refs (`deep_dive.py` ×3 files), summary table DD§→Q1-Q4, `mo.stop()` guards, Ramadan conn reuse, Eastern Indonesia 2015+ filter, unused `is_script_mode` removed | ✅ 2026-05-26 | 3 doc files fixed + 6 code fixes in `eda.py`. Added LEARNINGS.md §67 (merge-delete sweep pattern). |
 
 **Marimo**: `marimo edit analysis/eda.py` (merged Phase 4 EDA + Phase 5 Deep Dive — 40+ cells)
 
@@ -427,6 +428,7 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 4 | `feat: EDA notebook + insights log` | Analysis |
 | Phase 4a | `fix: eda gap-closing (mart reconciliation, islamic ramadan, forecast val, usd, export val)` | 10 gaps closed: G1–G8 all addressed |
 | Phase 5 | `feat: deep dive analysis + merge with eda notebook` | 4 North Star deep dives (forecast overlay, ramadan calendar, geographic disparity, rolling correlations), insights log update, model_methodology cross-ref |
+| Phase 5a | `fix: phase 5 gap-closing — stale deep_dive.py refs, eda robustness, summary alignment` | 3 docs fixed (AGENTS.md, project-plan.md, model_methodology.md), 6 code fixes in `eda.py` (mo.stop guards, Ramadan conn, Eastern Indonesia filter, summary table, unused var, lint), LEARNINGS.md §67 |
 | Phase 3d | `docs: forecasting methodology` | `model_methodology.md` |
 | Phase 3e | `fix: phase 3 bugfix — 7 gaps from pipeline audit` | Error handler, lineage DDL, metadata, skips, connection, t_minus_3, status value |
 | Phase 6 | `feat: dashboard (Next.js + Shadboard + export)` | Frontend |
@@ -451,3 +453,4 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | 2026-05-26 | **`mart_commodity_correlation` granularity mismatch**: Cooking Oil averaged across hundreds of markets; Rice/Sugar/Flour from single national avg market (974). | Cross-correlation coefficients may be misleading. Flag in `model_methodology.md` and dashboard footnote. |
 | 2026-05-26 | **Phase 4 gap analysis**: 10 gaps identified — EDA bypassed dbt marts, Ramadan used hardcoded months, no forecast validation, no export verification. | All 10 closed. EDA now reconciled against all 5 marts + JSON exports. See verification cells R1/R2. |
 | 2026-05-26 | **Phase 4/5 merge**: `deep_dive.py` merged into `analysis/eda.py` (40+ cells, 1670+ lines). Plotly 6.7.0 + pandas 3.0.3 incompatibility with `add_vline` annotations on string axes; annotations removed where x-axis uses date strings. | Resolved. Notebook passes headless execution. |
+| 2026-05-26 | **Phase 5 gap analysis**: 3 docs still referenced non-existent `deep_dive.py`; summary table used `DD §` section refs that don't exist; no `mo.stop()` guards on forecast/correlation JSON reads; Ramadan cell opened redundant DuckDB connection; Eastern Indonesia pre-2015 not filtered in province drilldown; unused `is_script_mode` variable. | All closed: 3 docs updated, 6 code fixes in `eda.py`. LEARNINGS.md §67 captures the merge-delete sweep pattern. |
