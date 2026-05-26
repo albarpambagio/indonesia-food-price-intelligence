@@ -75,6 +75,12 @@ def setup():
 
 
 @app.cell
+def script_mode(mo):
+    is_script_mode = mo.app_meta().mode == "script"
+    return (is_script_mode,)
+
+
+@app.cell
 def data_load(mo, duckdb, pd, np, TARGET_COMMODITIES):
     @mo.persistent_cache
     def _query_prices():
@@ -120,7 +126,6 @@ def data_load(mo, duckdb, pd, np, TARGET_COMMODITIES):
             return _row[0], _info
 
     run_id, ingest_info = _pipeline_info()
-    target = TARGET_COMMODITIES
 
     mo.md(f"""
     # Indonesia Staple Food Prices — Full Analysis
@@ -134,8 +139,23 @@ def data_load(mo, duckdb, pd, np, TARGET_COMMODITIES):
 
     > **North Star**: Enable FMCG procurement teams to make contract timing, geographic sourcing,
     > and category risk decisions with quantified confidence.
+    >
+    > **Tracked via**: CAGR trends (Q1.1), Ramadan premium (Q2.2), island price gap (Q3.1),
+    > and cross-commodity correlation (Q4.3) — each quantified below.
     """)
-    return df, run_id, target
+    return df, run_id
+
+
+@app.cell
+def islamic_data(mo, duckdb, pd):
+    @mo.persistent_cache
+    def _query_islamic():
+        with duckdb.connect("data/wfp.duckdb") as _c:
+            return _c.sql("SELECT year, eid_month, t_minus_1, t_minus_2, t_minus_3, t_plus_1 FROM wfp_intermediate.int_islamic_calendar ORDER BY year").fetchdf()
+    islamic_df = _query_islamic()
+    islamic_df["year"] = islamic_df["year"].astype(int)
+    mo.stop(len(islamic_df) == 0, mo.md("⚠ **Islamic calendar data not found** — run `dbt seed` and `dbt run` to populate `int_islamic_calendar`."))
+    return islamic_df,
 
 
 @app.cell
@@ -691,10 +711,10 @@ def cooking_oil_shock(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, fmt_idr, fmt_pct, go, m
         line=dict(color=PALETTE_MAP["Cooking Oil"], dash=DASH_MAP["Cooking Oil"]),
         marker=dict(symbol=SYMBOL_MAP["Cooking Oil"], color=PALETTE_MAP["Cooking Oil"]),
     ))
-    _fig_oil.add_vline(x=SHOCK_BAN_DATE, line_dash="dash", line_color="red", opacity=0.6)
-    _fig_oil.add_vline(x=SHOCK_BAN_LIFTED_DATE, line_dash="dash", line_color="orange", opacity=0.6)
-    _fig_oil.add_annotation(x=SHOCK_BAN_DATE, y=1, yref="paper", text="Export Ban", showarrow=False, yshift=10, font=dict(color="red", size=10))
-    _fig_oil.add_annotation(x=SHOCK_BAN_LIFTED_DATE, y=0.95, yref="paper", text="Ban Lifted", showarrow=False, yshift=10, font=dict(color="orange", size=10))
+    _fig_oil.add_vline(x=SHOCK_BAN_DATE, line_dash="dash", line_color="gray", opacity=0.6)
+    _fig_oil.add_vline(x=SHOCK_BAN_LIFTED_DATE, line_dash="dash", line_color="gray", opacity=0.6)
+    _fig_oil.add_annotation(x=SHOCK_BAN_DATE, y=1, yref="paper", text="Export Ban", showarrow=False, yshift=10, font=dict(color="gray", size=10))
+    _fig_oil.add_annotation(x=SHOCK_BAN_LIFTED_DATE, y=0.95, yref="paper", text="Ban Lifted", showarrow=False, yshift=10, font=dict(color="gray", size=10))
 
     _has_shock = len(_pre) > 0 and len(_peak) > 0 and len(_post) > 0
     if _has_shock:
@@ -786,19 +806,12 @@ def rice_harvest(PALETTE_MAP, df, fmt_idr, fmt_pct, go, mo, np, MONTH_NAMES):
 
 
 @app.cell
-def sugar_ramadan(PALETTE_MAP, df, fmt_idr, fmt_pct, go, mo, pd, duckdb, MONTH_NAMES):
-    @mo.persistent_cache
-    def _query_islamic():
-        with duckdb.connect("data/wfp.duckdb") as _c:
-            return _c.sql("SELECT year, eid_month, t_minus_1, t_minus_2, t_minus_3 FROM wfp_intermediate.int_islamic_calendar ORDER BY year").fetchdf()
-
-    _islamic = _query_islamic()
-    _islamic["year"] = _islamic["year"].astype(int)
+def sugar_ramadan(PALETTE_MAP, df, fmt_idr, fmt_pct, go, mo, pd, MONTH_NAMES, islamic_df):
 
     _sugar = df[df["commodity_consolidated"] == "Sugar"].copy()
     _sugar["ym"] = _sugar["year"].astype(str) + "-" + _sugar["month"].astype(str).str.zfill(2)
 
-    _sugar = _sugar.merge(_islamic, on="year", how="left")
+    _sugar = _sugar.merge(islamic_df, on="year", how="left")
     _sugar["is_ramadan_season"] = (
         _sugar["ym"].isin(_sugar["t_minus_3"].values) |
         _sugar["ym"].isin(_sugar["t_minus_2"].values) |
@@ -819,8 +832,8 @@ def sugar_ramadan(PALETTE_MAP, df, fmt_idr, fmt_pct, go, mo, pd, duckdb, MONTH_N
         x=_sugar_monthly["month"], y=_sugar_monthly["price"],
         name="Sugar", marker_color=PALETTE_MAP["Sugar"],
     ))
-    _ramadan_start = int(_islamic["t_minus_3"].str.split("-").str[1].astype(int).mean())
-    _ramadan_end = int(_islamic["eid_month"].str.split("-").str[1].astype(int).mean())
+    _ramadan_start = int(islamic_df["t_minus_3"].str.split("-").str[1].astype(int).mean())
+    _ramadan_end = int(islamic_df["eid_month"].str.split("-").str[1].astype(int).mean())
     _fig_sugar.add_vrect(x0=_ramadan_start - 0.5, x1=_ramadan_end + 0.5, fillcolor="orange", opacity=0.06, line_width=0, annotation_text="Ramadan window (data-driven)", annotation_position="top left")
     _fig_sugar.update_layout(
         yaxis_title="Avg Price (IDR)", yaxis=dict(tickformat="~s"),
@@ -891,6 +904,7 @@ def eastern_premium(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, df, fmt_pct, mo, px, EAST
 @app.cell
 def forecast_quality(fmt_idr, fmt_pct, mo, np, pd, json, os):
     _fc_path = os.path.join("dashboard", "public", "data", "forecast.json")
+    mo.stop(not os.path.exists(_fc_path), mo.md(f"⚠ **Forecast file not found**: `{_fc_path}` — run `uv run python forecast/run_forecast.py` first."))
     with open(_fc_path) as _f:
         _fc = json.load(_f)
     _meta = _fc["metadata"]
@@ -981,8 +995,8 @@ def q1_annual_trend(fmt_pct, fmt_cagr, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, m
             line=dict(dash=DASH_MAP[_c]), marker=dict(symbol=SYMBOL_MAP[_c]),
             name=_c, legendgroup=_c, selector=dict(name=_c),
         )
-    _fig.add_vline(x=2008, line_dash="dash", line_color="red", opacity=0.4, annotation_text="2008 Food Crisis")
-    _fig.add_vline(x=2022, line_dash="dash", line_color="red", opacity=0.4, annotation_text="2022 Cooking Oil Shock")
+    _fig.add_vline(x=2008, line_dash="dash", line_color="gray", opacity=0.4, annotation_text="2008 Food Crisis")
+    _fig.add_vline(x=2022, line_dash="dash", line_color="gray", opacity=0.4, annotation_text="2022 Cooking Oil Shock")
     _fig.update_layout(yaxis_title="Avg Price (IDR)", yaxis=dict(tickformat="~s"), xaxis=dict(dtick=2))
 
     _cagr_data = []
@@ -1250,18 +1264,9 @@ def q2_month_of_year(fmt_idr, fmt_pct, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, M
 
 
 @app.cell
-def q2_ramadan_analysis(fmt_idr, fmt_pct, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, MONTH_NAMES, mo, go, pd, duckdb):
-    @mo.persistent_cache
-    def _query_islamic():
-        with duckdb.connect("data/wfp.duckdb") as _c:
-            return _c.sql("SELECT year, eid_month, t_minus_1, t_minus_2, t_minus_3, t_plus_1 FROM wfp_intermediate.int_islamic_calendar ORDER BY year").fetchdf()
-
-    _islamic = _query_islamic()
-    _islamic["year"] = _islamic["year"].astype(int)
-    mo.stop(len(_islamic) == 0, mo.md("⚠ **Islamic calendar data not found** — run `dbt seed` and `dbt run` to populate `int_islamic_calendar`."))
-
+def q2_ramadan_analysis(fmt_idr, fmt_pct, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, MONTH_NAMES, mo, go, pd, islamic_df):
     _df = fdf.copy()
-    _df = _df.merge(_islamic, on="year", how="left")
+    _df = _df.merge(islamic_df, on="year", how="left")
 
     ramadan_cols = ["t_minus_3", "t_minus_2", "t_minus_1", "eid_month", "t_plus_1"]
     ramadan_labels = ["T-3", "T-2", "T-1", "Eid Month", "T+1"]
@@ -1320,9 +1325,6 @@ def q2_ramadan_analysis(fmt_idr, fmt_pct, fdf, PALETTE_MAP, DASH_MAP, SYMBOL_MAP
     > calendar independently — it's the stronger price signal than Ramadan for Rice.
     """)
 
-    _ramadan_cols = ramadan_cols
-    _islamic_df = _islamic
-    return _wd, _ramadan_cols
 
 
 @app.cell
@@ -1606,7 +1608,7 @@ def q4_rolling_stability(fmt_pct, fdf, PALETTE_MAP, DASH_MAP, mo, go, pd, np):
         ))
     _fig.add_hline(y=0.5, line_dash="dot", line_color="gray", opacity=0.4, annotation_text="r = 0.5")
     _fig.add_hline(y=-0.5, line_dash="dot", line_color="gray", opacity=0.4, annotation_text="r = -0.5")
-    _fig.add_vline(x="2022-03", line_dash="dash", line_color="red", opacity=0.4)
+    _fig.add_vline(x="2022-03", line_dash="dash", line_color="gray", opacity=0.4)
     _fig.update_layout(
         title="Q4.3: Rolling 3-Year Correlation Stability",
         yaxis_title="Pearson r (36-month window)", template="plotly_white",
@@ -1745,11 +1747,46 @@ def summary(mo):
     | 10 | **Rice CAGR 6.7%**: Highest long-term inflation. Multi-year contracts recommended. Actual data ends 2020 for Rice/Sugar/Flour. | Contextual | Category Manager | Q1.1/Q1.2 |
     | 11 | **Only Cooking Oil has geographic coverage**: 43% provincial gap. Geographic arbitrage only data-supported for oil. | Contextual | Procurement Analyst | Q3.2 |
     | 12 | **Rice ↔ Flour leading indicator**: r=0.773 at lag 0, most stable pair through shocks. Monitor Rice for Flour signal. | Directional | Category Manager | Q4.3 |
+    | 13 | **Peak/Trough seasonality**: Cooking Oil 60.7% gap is 2022 artifact (not true seasonality). Rice 6.3%, Sugar 3.1%, Flour 3.3% — predictable procurement calendar patterns. | Directional | Procurement Analyst | Q1.2/Q2.1 |
 
     **Phase 4 EDA (SCAN Framework)** identified 7 initial findings. **Phase 5 Deep Dive (North Star Method)** added 6 quantified findings with deeper analysis.
 
     ---
     *Analysis complete. All findings verified against dbt marts and exported JSONs.*
+    """)
+
+
+@app.cell
+def references(mo):
+    mo.md("""
+    ## References
+
+    1. **WFP Global Food Prices Database** — World Food Programme, Humanitarian Data Exchange.
+       [data.humdata.org/dataset/wfp-food-prices](https://data.humdata.org/dataset/wfp-food-prices). CC BY-IGO 3.0.
+
+    2. **World Bank Monthly Food Price Estimates (Indonesia)** — Andrée, B. P. J. (2021).
+       IDN\\_2021\\_RTFP\\_v02\\_M. DOI: [10.48529/2ZH0-JF55](https://doi.org/10.48529/2ZH0-JF55).
+
+    3. **Islamic Calendar 2007–2024** — IslamicFinder.org.
+       [islamicfinder.org](https://www.islamicfinder.org).
+
+    4. **StatsForecast** — Garza, F., Canseco, M. M., Challú, C., & Olivares, K. G. (2022).
+       PyCon US 2022. [github.com/Nixtla/statsforecast](https://github.com/Nixtla/statsforecast).
+
+    5. **AutoARIMA algorithm** — Hyndman, R. J., & Khandakar, Y. (2008). *Journal of Statistical
+       Software*, 27(3). DOI: [10.18637/jss.v027.i03](https://doi.org/10.18637/jss.v027.i03).
+
+    6. **Exponential smoothing state space** — Hyndman, R. J., Koehler, A. B., Ord, J. K., &
+       Snyder, R. D. (2008). Springer.
+
+    7. **2008 food crisis** — FAO (2009). *The State of Agricultural Commodity Markets 2009*.
+       [fao.org/4/i0854e/i0854e.pdf](https://www.fao.org/4/i0854e/i0854e.pdf).
+
+    8. **2006/08 commodity boom** — Baffes, J., & Haniotis, T. (2010). World Bank Policy Research
+       Working Paper 5371. [documents.worldbank.org/.../WPS5371](https://documents1.worldbank.org/curated/en/921521468326680723/pdf/WPS5371.pdf).
+
+    9. **2022 Indonesia cooking oil policy** — Amir, M. F., Nidhal, M., & Alta, A. (2022). Center
+       for Indonesian Policy Studies. [repository.cips-indonesia.org/.../558662-from-export-ban-to-export-acceleration-w-6e8e12a2.pdf](https://repository.cips-indonesia.org/media/publications/558662-from-export-ban-to-export-acceleration-w-6e8e12a2.pdf).
     """)
 
 
