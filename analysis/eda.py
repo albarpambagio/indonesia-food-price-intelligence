@@ -27,6 +27,7 @@ def setup():
     from plotly.subplots import make_subplots
     import os
     import json
+    from pathlib import Path
     from scipy import stats as scipy_stats
 
     def fmt_idr(val):
@@ -66,9 +67,11 @@ def setup():
     SHOCK_PEAK_DATE = "2022-04-01"
     SHOCK_POST_DATE = "2022-12-01"
     SHOCK_BAN_LIFTED_DATE = "2022-05-01"
+    PROJECT_DB_PATH = str(Path(__file__).resolve().parent.parent / "data" / "wfp.duckdb")
     return (
         PALETTE, PALETTE_MAP, DASH_MAP, SYMBOL_MAP, TARGET_COMMODITIES, MONTH_NAMES,
         EASTERN_CUTOFF, SHOCK_BAN_DATE, SHOCK_PEAK_DATE, SHOCK_POST_DATE, SHOCK_BAN_LIFTED_DATE,
+        PROJECT_DB_PATH,
         duckdb, fmt_idr, fmt_pct, fmt_cagr, fmt_short_idr,
         go, json, make_subplots, mo, np, os, pd, px, scipy_stats,
     )
@@ -81,10 +84,10 @@ def script_mode(mo):
 
 
 @app.cell
-def data_load(mo, duckdb, pd, np, TARGET_COMMODITIES):
+def data_load(mo, duckdb, pd, np, TARGET_COMMODITIES, PROJECT_DB_PATH):
     @mo.persistent_cache
     def _query_prices():
-        with duckdb.connect("data/wfp.duckdb") as _c:
+        with duckdb.connect(PROJECT_DB_PATH) as _c:
             _df = _c.sql("""
                 SELECT
                     date,
@@ -109,7 +112,7 @@ def data_load(mo, duckdb, pd, np, TARGET_COMMODITIES):
 
     @mo.persistent_cache
     def _pipeline_info():
-        with duckdb.connect("data/wfp.duckdb") as _c:
+        with duckdb.connect(PROJECT_DB_PATH) as _c:
             _has = _c.sql("SELECT COUNT(*) FROM pipeline.lineage").fetchone()[0] > 0
             if not _has:
                 return None, ""
@@ -147,10 +150,10 @@ def data_load(mo, duckdb, pd, np, TARGET_COMMODITIES):
 
 
 @app.cell
-def islamic_data(mo, duckdb, pd):
+def islamic_data(mo, duckdb, pd, PROJECT_DB_PATH):
     @mo.persistent_cache
     def _query_islamic():
-        with duckdb.connect("data/wfp.duckdb") as _c:
+        with duckdb.connect(PROJECT_DB_PATH) as _c:
             return _c.sql("SELECT year, eid_month, t_minus_1, t_minus_2, t_minus_3, t_plus_1 FROM wfp_intermediate.int_islamic_calendar ORDER BY year").fetchdf()
     islamic_df = _query_islamic()
     islamic_df["year"] = islamic_df["year"].astype(int)
@@ -159,10 +162,10 @@ def islamic_data(mo, duckdb, pd):
 
 
 @app.cell
-def stakeholder_goals(df, mo, run_id, duckdb):
+def stakeholder_goals(df, mo, run_id, duckdb, PROJECT_DB_PATH):
     @mo.persistent_cache
     def _query_meta():
-        with duckdb.connect("data/wfp.duckdb") as _c:
+        with duckdb.connect(PROJECT_DB_PATH) as _c:
             _dr = _c.sql(
                 "SELECT MIN(date), MAX(date) FROM wfp_intermediate.int_prices_normalised WHERE NOT filter_out"
             ).fetchone()
@@ -252,10 +255,10 @@ def coverage_island(df, mo):
 
 
 @app.cell
-def pipeline_quality(fmt_pct, mo, pd, duckdb):
+def pipeline_quality(fmt_pct, mo, pd, duckdb, PROJECT_DB_PATH):
     @mo.persistent_cache
     def _query_flags():
-        with duckdb.connect("data/wfp.duckdb") as _c:
+        with duckdb.connect(PROJECT_DB_PATH) as _c:
             return _c.sql("""
                 SELECT
                     COUNT(*) AS total,
@@ -571,7 +574,7 @@ def seasonality(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, fdf, go, make_subplots, mo, n
 
 
 @app.cell
-def correlation(PALETTE_MAP, df, mo, px, pd, np, duckdb):
+def correlation(PALETTE_MAP, df, mo, px, pd, np, duckdb, PROJECT_DB_PATH):
     _pivot = df.pivot_table(index=["year", "month"], columns="commodity_consolidated", values="price", aggfunc="mean").reset_index()
     corr = _pivot[["Rice", "Cooking Oil", "Sugar", "Flour"]].corr()
 
@@ -608,7 +611,7 @@ def correlation(PALETTE_MAP, df, mo, px, pd, np, duckdb):
 
     @mo.persistent_cache
     def _query_corr_summary():
-        with duckdb.connect("data/wfp.duckdb") as _c:
+        with duckdb.connect(PROJECT_DB_PATH) as _c:
             return _c.sql("""
                 SELECT commodity_pair, lag_months, pearson_r
                 FROM wfp_marts.mart_correlation_summary
@@ -635,10 +638,10 @@ def correlation(PALETTE_MAP, df, mo, px, pd, np, duckdb):
 
 
 @app.cell
-def market_coverage(mo, pd, duckdb):
+def market_coverage(mo, pd, duckdb, PROJECT_DB_PATH):
     @mo.persistent_cache
     def _query_market_cov():
-        with duckdb.connect("data/wfp.duckdb") as _c:
+        with duckdb.connect(PROJECT_DB_PATH) as _c:
             return _c.sql("""
                 SELECT
                     i.island_group,
@@ -671,7 +674,7 @@ def market_coverage(mo, pd, duckdb):
 
 
 @app.cell
-def cooking_oil_shock(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, fmt_idr, fmt_pct, go, mo, pd, duckdb,
+def cooking_oil_shock(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, fmt_idr, fmt_pct, go, mo, pd, duckdb, PROJECT_DB_PATH,
                        SHOCK_BAN_DATE, SHOCK_PEAK_DATE, SHOCK_POST_DATE, SHOCK_BAN_LIFTED_DATE):
     # Queries int_commodity_consolidated (not int_prices_normalised) because:
     # 1. WFP Cooking Oil 2021-2023 data is only available as "aggregate" (national avg)
@@ -680,7 +683,7 @@ def cooking_oil_shock(DASH_MAP, PALETTE_MAP, SYMBOL_MAP, fmt_idr, fmt_pct, go, m
     # Without this, the 2022 export ban shock is invisible (see LEARNINGS.md S61)
     @mo.persistent_cache
     def _query_oil():
-        with duckdb.connect("data/wfp.duckdb") as _c:
+        with duckdb.connect(PROJECT_DB_PATH) as _c:
             _raw = _c.sql("""
                 SELECT
                     date,
@@ -1657,12 +1660,12 @@ def q4_rolling_stability(fmt_pct, fdf, PALETTE_MAP, DASH_MAP, mo, go, pd, np):
 
 
 @app.cell
-def reconciliation(mo, pd, json, os, duckdb):
+def reconciliation(mo, pd, json, os, duckdb, PROJECT_DB_PATH):
     def _build():
         @mo.persistent_cache
         def _query_mart_rows():
             _rows = {}
-            with duckdb.connect("data/wfp.duckdb") as _c:
+            with duckdb.connect(PROJECT_DB_PATH) as _c:
                 _schemas = ["wfp_marts", "wfp_intermediate", "wfp_staging"]
                 for _sch in _schemas:
                     _tables = _c.sql(f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{_sch}'").fetchdf()

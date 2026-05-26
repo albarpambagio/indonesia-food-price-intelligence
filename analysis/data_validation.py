@@ -22,7 +22,9 @@ def setup():
     import plotly.express as px
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
-    return duckdb, go, make_subplots, mo, pd, px
+    from pathlib import Path
+    PROJECT_DB_PATH = str(Path(__file__).resolve().parent.parent / "data" / "wfp.duckdb")
+    return duckdb, go, make_subplots, mo, pd, px, PROJECT_DB_PATH
 
 
 @app.cell
@@ -32,8 +34,8 @@ def script_mode(mo):
 
 
 @app.cell
-def connect_db(duckdb, mo):
-    conn = duckdb.connect("data/wfp.duckdb")
+def connect_db(duckdb, mo, PROJECT_DB_PATH):
+    conn = duckdb.connect(PROJECT_DB_PATH)
     conn.execute("CREATE SCHEMA IF NOT EXISTS pipeline;")
     conn.execute("CREATE SCHEMA IF NOT EXISTS raw;")
     fp_rows = conn.sql("SELECT COUNT(*) FROM raw.food_prices").fetchone()[0]

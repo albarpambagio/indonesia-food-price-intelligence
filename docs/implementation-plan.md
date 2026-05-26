@@ -8,7 +8,7 @@
 | **Data First Accessed** | 2026-05-22 |
 | **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
 | **Target Completion** | ~16–20 working days |
-| **Status** | Phase 3 ✅ Complete (7 bugfixes applied Phase 3e). Phase 0/1 engineering fixes applied: quote-wrap SQL idents, idempotent loads, pipeline orchestrator, validation fix. |
+| **Status** | Phase 3 ✅ Complete (7 bugfixes applied Phase 3e). Phase 0/1 engineering fixes applied: quote-wrap SQL idents, idempotent loads, pipeline orchestrator, validation fix. Phase 5f: hardcoded DuckDB paths → PROJECT_DB_PATH (3 notebooks), missing pyproject deps + snapshots dir resolved. |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Next.js (Shadboard) → Cloudflare Pages |
 
 ### Parallelization Opportunities
@@ -19,7 +19,7 @@
 | §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
 
 **Sequential chain** (must wait): Phase 0 → 1 → 2 → 2.5 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
-> **Current**: Phase 0+1 engineering fixes ✅ (quote-wrap SQL, idempotent ingest, pipeline orchestrator, DB-read validation). Phase 1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (bugfix). Phase 4 ✅. Phase 6 deferred.
+> **Current**: Phase 0+1 engineering fixes ✅ (quote-wrap SQL, idempotent ingest, pipeline orchestrator, DB-read validation). Phase 1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (bugfix). Phase 4 ✅. Phase 5 ✅. Phase 5f ✅ (path fix, deps, dirs). Phase 6 deferred.
 
 ---
 
@@ -252,6 +252,9 @@
 | 5.6 | Populate insights log with quantified findings from all 4 deep dives | ✅ 2026-05-26 | 6 new findings (#8–13) appended to `docs/insights_log.md` — all quantified with actual data |
 | 5.7 | Update `docs/model_methodology.md` — add Deep Dive Validation subsection | ✅ 2026-05-26 | Added cross-reference: forecast vs actual decomposition, wide CI assessment, procurement action zone framework |
 | 5.8 | **Phase 5 gap-closing**: stale doc refs (`deep_dive.py` ×3 files), summary table DD§→Q1-Q4, `mo.stop()` guards, Ramadan conn reuse, Eastern Indonesia 2015+ filter, unused `is_script_mode` removed | ✅ 2026-05-26 | 3 doc files fixed + 6 code fixes in `eda.py`. Added LEARNINGS.md §67 (merge-delete sweep pattern). |
+| 5.9 | **P0 fix: Hardcoded DuckDB paths** — replaced `__db_path` (module-level `__` prefixed, filtered by marimo) with `PROJECT_DB_PATH` computed inside `setup()` cell and returned through DAG | ✅ 2026-05-26 | `analysis/eda.py` (9 occurrences), `analysis/data_validation.py` (1), `analysis/forecast_experimentation.py` (1). Marimo filters `__` names from cell namespaces. |
+| 5.10 | **P1 fix: Missing pyproject deps** — `numpy>=1.26.0` + `scipy>=1.11.0` added | ✅ 2026-05-26 | Required by `analysis/eda.py` scipy imports and general numpy usage in notebooks |
+| 5.11 | **P1 fix: Missing `transform/snapshots/` dir** — created directory referenced by `dbt_project.yml` but non-existent | ✅ 2026-05-26 | `dbt_project.yml` references `snapshots/` path — directory must exist for dbt commands |
 
 **Marimo**: `marimo edit analysis/eda.py` (merged Phase 4 EDA + Phase 5 Deep Dive — 40+ cells)
 
@@ -381,17 +384,20 @@
 - [x] Forecast JSON validated against actual prices (holdout MAE per commodity)
 - [x] USD price analysis confirms IDR trends are real
 - [x] All 5 mart→JSON exports verified (row count match)
-- [ ] Source freshness column `_loaded_at` added to raw load
-- [ ] `forecast/run_forecast.py` — trains AutoARIMA/AutoETS per commodity
-- [ ] Ramadan/Eid binary flags used as exogenous regressors
-- [ ] 6-month forecast with 95% CI generated
-- [ ] Forecast output validated (no NaN, negative, or reversed CI)
-- [ ] `forecast_status` and `export_status` updated in pipeline lineage
-- [ ] `export/export_json.py` — all 4 mart models + forecast → JSON
-- [ ] Export verified: JSON record count == mart row count
-- [ ] `run_pipeline.py` updated with forecast + export steps + parameterized schemas
-- [ ] `docs/model_methodology.md` written (7 sections)
-- [ ] `analysis/forecast_experimentation.py` created (optional notebook)
+- [x] Source freshness column `_loaded_at` added to raw load
+- [x] `forecast/run_forecast.py` — trains AutoARIMA/AutoETS per commodity
+- [x] Ramadan/Eid binary flags used as exogenous regressors
+- [x] 6-month forecast with 95% CI generated
+- [x] Forecast output validated (no NaN, negative, or reversed CI)
+- [x] `forecast_status` and `export_status` updated in pipeline lineage
+- [x] `export/export_json.py` — all 4 mart models + forecast → JSON
+- [x] Export verified: JSON record count == mart row count
+- [x] `run_pipeline.py` updated with forecast + export steps + parameterized schemas
+- [x] `docs/model_methodology.md` written (7 sections)
+- [x] `analysis/forecast_experimentation.py` created (optional notebook)
+- [x] Hardcoded DuckDB path replaced with `PROJECT_DB_PATH` (computed from `Path(__file__)` inside `setup()` cell) in all 3 notebooks — avoids marimo `__` name filtering
+- [x] `numpy>=1.26.0` + `scipy>=1.11.0` added to `pyproject.toml` — resolves missing notebook dependency imports
+- [x] `transform/snapshots/` directory created — referenced by `dbt_project.yml` but did not exist on disk
 - [ ] DEFERRED to Phase 6: All 4 dashboard pages
 - [ ] DEFERRED to Phase 6: Mobile responsive
 - [ ] DEFERRED to Phase 6: Cloudflare Pages deploy
@@ -429,6 +435,7 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 4a | `fix: eda gap-closing (mart reconciliation, islamic ramadan, forecast val, usd, export val)` | 10 gaps closed: G1–G8 all addressed |
 | Phase 5 | `feat: deep dive analysis + merge with eda notebook` | 4 North Star deep dives (forecast overlay, ramadan calendar, geographic disparity, rolling correlations), insights log update, model_methodology cross-ref |
 | Phase 5a | `fix: phase 5 gap-closing — stale deep_dive.py refs, eda robustness, summary alignment` | 3 docs fixed (AGENTS.md, project-plan.md, model_methodology.md), 6 code fixes in `eda.py` (mo.stop guards, Ramadan conn, Eastern Indonesia filter, summary table, unused var, lint), LEARNINGS.md §67 |
+| Phase 5f | `fix: post-phase-5 fixes — DuckDB path, deps, snapshot dir` | Hardcoded DuckDB paths -> PROJECT_DB_PATH (3 notebooks, 11 occurrences), numpy/scipy in pyproject, create snapshots/ dir, update stale checklist |
 | Phase 3d | `docs: forecasting methodology` | `model_methodology.md` |
 | Phase 3e | `fix: phase 3 bugfix — 7 gaps from pipeline audit` | Error handler, lineage DDL, metadata, skips, connection, t_minus_3, status value |
 | Phase 6 | `feat: dashboard (Next.js + Shadboard + export)` | Frontend |
@@ -454,3 +461,5 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | 2026-05-26 | **Phase 4 gap analysis**: 10 gaps identified — EDA bypassed dbt marts, Ramadan used hardcoded months, no forecast validation, no export verification. | All 10 closed. EDA now reconciled against all 5 marts + JSON exports. See verification cells R1/R2. |
 | 2026-05-26 | **Phase 4/5 merge**: `deep_dive.py` merged into `analysis/eda.py` (40+ cells, 1670+ lines). Plotly 6.7.0 + pandas 3.0.3 incompatibility with `add_vline` annotations on string axes; annotations removed where x-axis uses date strings. | Resolved. Notebook passes headless execution. |
 | 2026-05-26 | **Phase 5 gap analysis**: 3 docs still referenced non-existent `deep_dive.py`; summary table used `DD §` section refs that don't exist; no `mo.stop()` guards on forecast/correlation JSON reads; Ramadan cell opened redundant DuckDB connection; Eastern Indonesia pre-2015 not filtered in province drilldown; unused `is_script_mode` variable. | All closed: 3 docs updated, 6 code fixes in `eda.py`. LEARNINGS.md §67 captures the merge-delete sweep pattern. |
+| 2026-05-26 | **Phase 5f: Post-Phase-5 path/deps/dirs audit**: 3 notebooks used module-level __db_path (filtered by marimo from cell namespaces -> NameError). pyproject.toml missing numpy + scipy. transform/snapshots/ non-existent despite dbt_project.yml reference. | All 3 fixed: __db_path -> PROJECT_DB_PATH via setup cell DAG across 3 notebooks (11 occurrences). numpy>=1.26.0 + scipy>=1.11.0 in pyproject. transform/snapshots/ created. LEARNINGS.md sec68. |
+| Phase 5f | ix: post-phase-5 fixes -- DuckDB path, deps, snapshot dir | Hardcoded DuckDB paths -> PROJECT_DB_PATH (3 notebooks), numpy/scipy in pyproject, create snapshots/ dir, update stale checklist |

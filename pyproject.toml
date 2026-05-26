@@ -10,6 +10,8 @@ dependencies = [
     "pandas>=2.2.0",
     "marimo>=0.23.0",
     "plotly>=6.7.0",
+    "numpy>=1.26.0",
+    "scipy>=1.11.0",
 ]
 
 [project.optional-dependencies]

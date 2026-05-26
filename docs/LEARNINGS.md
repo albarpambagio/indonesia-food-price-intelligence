@@ -2502,3 +2502,102 @@ _strongest = max(_pairs, key=lambda x: abs(x[1]))
 ### Rule
 
 Never parse values out of strings you just built. Keep a structured representation (tuple, dict, DataFrame) for computation and build display strings only when needed for rendering. The added indirection of maintaining dual representations is worth the clarity gain.
+
+## 69. Marimo Module-Level `__` Variables Are Filtered From Cell Namespaces
+
+### The Problem
+
+The AGENTS.md convention states: *"Use `__` (double underscore) prefix for variables that must not appear in Marimo's reactive graph"*. Based on this, the three notebooks defined the DuckDB path at module level:
+
+```python
+# analysis/eda.py, data_validation.py, forecast_experimentation.py
+__db_path = str(Path(__file__).resolve().parent.parent / "data" / "wfp.duckdb")
+```
+
+But cells could not access `__db_path`, raising `NameError`:
+
+```
+NameError: name '__db_path' is not defined
+```
+
+### Root Cause
+
+Marimo's `__` name filtering works at **all scope levels**, not just within cells. Variables with `__` prefix defined at **module level** are excluded from cell execution namespaces just like variables defined inside cells. The `exec()` call that runs each cell uses a filtered namespace that strips `__`-prefixed names — even those present in the module's `__dict__`.
+
+This differs from Python's normal name-mangling behavior (which only affects class bodies, not module-level code).
+
+### Solution
+
+Compute the DB path inside the `setup()` cell and return it through Marimo's reactive DAG:
+
+```python
+@app.cell
+def setup():
+    from pathlib import Path
+    PROJECT_DB_PATH = str(Path(__file__).resolve().parent.parent / "data" / "wfp.duckdb")
+    return (PROJECT_DB_PATH, ..., ...)
+
+@app.cell
+def data_load(mo, duckdb, pd, PROJECT_DB_PATH):
+    with duckdb.connect(PROJECT_DB_PATH) as _c:
+        ...
+```
+
+Key points:
+- Use a regular name (no `__` prefix) for return values — they enter the cell graph
+- `Path(__file__)` still resolves correctly inside setup cells (marimo preserves `__file__`)
+- Downstream cells list `PROJECT_DB_PATH` as a function parameter — marimo wires it automatically
+
+### Files Affected
+
+- `analysis/eda.py` — 9 occurrences of `__db_path` → `PROJECT_DB_PATH`
+- `analysis/data_validation.py` — 1 occurrence
+- `analysis/forecast_experimentation.py` — 1 occurrence
+
+All instances replaced the module-level `__db_path` with a `setup()` cell return.
+
+### Rule
+
+Do not use `__`-prefixed variables at module level in Marimo notebooks — they are filtered from cell execution namespaces. Compute shared values (DB paths, configs) inside the `setup()` cell and return them through the reactive DAG. See also AGENTS.md §385 (Marimo Notebook conventions) for the `__` underscore convention.
+
+## 70. `pyproject.toml` Dependencies Must Cover Notebook Imports
+
+### The Problem
+
+`analysis/eda.py` imports from `scipy` and `numpy`, but `pyproject.toml` only listed `marimo`, `duckdb`, `dbt-duckdb`, `statsforecast`, `pandas`, and `plotly`:
+
+```python
+# eda.py setup cell
+from scipy import stats as scipy_stats   # ✅ works at runtime (transitive dep)
+import numpy as np                       # ✅ works at runtime (transitive dep)
+```
+
+`uv sync` succeeded because `statsforecast` pulls in `numpy` and `scipy` transitively. But:
+1. **Explicit is better than implicit** — a future version of statsforecast might drop these deps
+2. **`uv sync --no-dev` or locked environments** might prune transitive deps
+3. **`uvx marimo check`** reports missing imports that aren't declared
+
+### Solution
+
+Declare all direct imports in `pyproject.toml` under `[project] dependencies`, even if they're transitively available:
+
+```toml
+dependencies = [
+    "marimo",
+    "duckdb>=1.0.0",
+    "dbt-duckdb>=1.9.0",
+    "statsforecast>=1.7.0",
+    "pandas>=2.2.0",
+    "plotly>=5.24.0",
+    "numpy>=1.26.0",
+    "scipy>=1.11.0",
+]
+```
+
+### Files Affected
+
+- `pyproject.toml` — added `numpy>=1.26.0` and `scipy>=1.11.0`
+
+### Rule
+
+After adding a new import to any notebook or script, verify it's declared in `pyproject.toml`. Transitive dependencies are not guaranteed across version upgrades. Run `uvx marimo check <notebook.py>` to catch missing declarations.

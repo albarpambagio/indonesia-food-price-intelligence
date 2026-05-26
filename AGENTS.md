@@ -87,7 +87,8 @@ Phase 3: Forecasting              → statsforecast AutoARIMA/AutoETS + methodol
 Phase 3e: Bugfix                  → 7 gap fixes from pipeline audit                     ✅ DONE
 Phase 4: EDA                      → Marimo notebook (SCAN framework)                    ✅ DONE
 Phase 4.5: Notebook Improvement   → Formatters, insight callouts, sectioning, mo.lazy    ✅ DONE
-Phase 5: Deep Dive                → Marimo notebook (North Star method, merged into `analysis/eda.py`)
+Phase 5: Deep Dive                → Marimo notebook (North Star method, merged into `analysis/eda.py`) ✅ DONE
+Phase 5f: Post-Phase-5 Fixes      → Hardcoded DuckDB paths → PROJECT_DB_PATH, add numpy/scipy to pyproject, create missing snapshots/ dir, update stale checklist ✅ DONE
 Phase 6: Dashboard                → 4 pages in Next.js + Shadboard + Cloudflare Pages
 Phase 7: Methodology Doc          → model_methodology.md
 Phase 8: Write-up                 → README, insights log, recommendations
@@ -114,6 +115,7 @@ indonesia-food-price-intelligence/
 │   │   └── assert_mart_rows_positive.sql
 │   ├── seeds/
 │   │   └── islamic_calendar.csv
+│   ├── snapshots/
 │   ├── docs/
 │   └── models/
 │       ├── sources/            # Source definitions with freshness config
@@ -395,6 +397,7 @@ This project shares the same dashboard stack (Next.js + Shadboard + Recharts + T
 - **`mo.lazy()`** for deferred computation: `mo.lazy(lambda: expensive_query())` delays work until needed (e.g., tabs, scroll-into-view)
 - **`mo.md()` + `return` ordering**: Final expression renders — ensure `mo.md()` is the last expression before `return`, not an intermediate statement
 - **Underscore convention** (readability): Use `__` (double underscore) prefix for variables that must not appear in Marimo's reactive graph (e.g., `__c = duckdb.connect(...)`). Single `_` for loop variables (`for _i, _val in ...`). No prefix for normal locals that happen to be cell-only. This avoids the visual noise of underscore-prefixing everything while still preventing unintended cross-cell variable capture.
+- **DB_PATH in notebooks**: Compute DuckDB path inside `setup()` cell via `Path(__file__)` and return as `PROJECT_DB_PATH`. Do NOT use module-level `__` prefixed variables — marimo filters `__` names from cell namespaces. Downstream cells receive it as a DAG parameter.
 - **No `mo.state()` unless needed**: 99% of cases handled by reactivity reading `widget.value` across cells
 - **No cross-cell mutations**: Create new objects via `items + [4]`, not `items.append(4)`
 - Use `mo.md()` for markdown explanations

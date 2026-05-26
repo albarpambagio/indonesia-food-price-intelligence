@@ -27,9 +27,11 @@ def setup():
     from statsforecast import StatsForecast
     from statsforecast.models import AutoARIMA, AutoETS, AutoTheta
 
+    from pathlib import Path
     PALETTE = ["#4C72B0", "#DD8452", "#55A868", "#C44E52"]
     PALETTE_MAP = dict(zip(["Rice", "Cooking Oil", "Sugar", "Flour"], PALETTE))
-    return PALETTE, PALETTE_MAP, AutoARIMA, AutoETS, AutoTheta, StatsForecast, duckdb, go, mo, np, pd, px
+    PROJECT_DB_PATH = str(Path(__file__).resolve().parent.parent / "data" / "wfp.duckdb")
+    return PALETTE, PALETTE_MAP, AutoARIMA, AutoETS, AutoTheta, StatsForecast, PROJECT_DB_PATH, duckdb, go, mo, np, pd, px
 
 
 @app.cell
@@ -39,8 +41,8 @@ def script_mode(mo):
 
 
 @app.cell
-def load_data(duckdb, mo):
-    conn = duckdb.connect("data/wfp.duckdb", read_only=True)
+def load_data(duckdb, mo, PROJECT_DB_PATH):
+    conn = duckdb.connect(PROJECT_DB_PATH, read_only=True)
     query = """
         SELECT
             DATE_TRUNC('month', date) AS ds,
