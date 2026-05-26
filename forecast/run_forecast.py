@@ -13,7 +13,7 @@ from statsforecast.models import AutoARIMA, AutoETS
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ingest.config import LINEAGE_TABLE_DDL
+from ingest.config import LINEAGE_TABLE_DDL, ensure_lineage_table
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DB_PATH = str(PROJECT_ROOT / "data" / "wfp.duckdb")
@@ -121,20 +121,21 @@ def extract_forecast_values(fcast: pd.DataFrame, train_unique_id: str, commodity
     return results
 
 
-def fit_and_forecast(
-    full_hist: pd.DataFrame,
-    cal: pd.DataFrame,
-    commodity: str,
-) -> dict[str, Any]:
+def prepare_commodity_data(
+    full_hist: pd.DataFrame, cal: pd.DataFrame, commodity: str
+) -> tuple[pd.DataFrame, pd.DataFrame, list[str], str]:
     hist_id = full_hist[full_hist["unique_id"] == commodity].copy()
     if len(hist_id) < 24:
-        logger.warning("  %s: insufficient data (%d months)", commodity, len(hist_id))
-        return {"commodity": commodity, "error": "insufficient_data"}
-
+        return hist_id, pd.DataFrame(), [], "insufficient_data"
     hist_id = hist_id.sort_values("ds").reset_index(drop=True)
-
     hist_with_flags, exog_cols = add_islamic_flags(hist_id, cal)
+    forecast_start = (hist_id["ds"].max() + pd.DateOffset(months=1)).strftime("%Y-%m-%d")
+    return hist_id, hist_with_flags, exog_cols, forecast_start
 
+
+def select_best_model(
+    hist_with_flags: pd.DataFrame, commodity: str
+) -> tuple[str, dict[str, float], pd.DataFrame, pd.DataFrame]:
     cutoff = hist_with_flags["ds"].max() - pd.DateOffset(months=HOLDOUT_MONTHS)
     train = hist_with_flags[hist_with_flags["ds"] <= cutoff].reset_index(drop=True)
     test = hist_with_flags[hist_with_flags["ds"] > cutoff].reset_index(drop=True)
@@ -145,20 +146,16 @@ def fit_and_forecast(
         test = hist_with_flags[hist_with_flags["ds"] > cutoff].reset_index(drop=True)
 
     if len(test) < 2:
-        logger.warning("  %s: not enough holdout data (%d months)", commodity, len(test))
-        return {"commodity": commodity, "error": "insufficient_holdout"}
+        return "insufficient_holdout", {}, train, test
 
     logger.info("  %s: train=%d months, test=%d months", commodity, len(train), len(test))
 
-    models = [
-        AutoARIMA(season_length=12),
-        AutoETS(season_length=12),
-    ]
+    models = [AutoARIMA(season_length=12), AutoETS(season_length=12)]
     sf = StatsForecast(models=models, freq="MS", n_jobs=1)
     sf.fit(df=train[["unique_id", "ds", "y"]])
     holdout_preds = sf.forecast(h=len(test), df=train[["unique_id", "ds", "y"]])
 
-    mae_scores = {}
+    mae_scores: dict[str, float] = {}
     for m in holdout_preds.columns:
         if m in ("unique_id", "ds") or "-lo-" in m or "-hi-" in m:
             continue
@@ -169,6 +166,23 @@ def fit_and_forecast(
     best_model = min(mae_scores, key=mae_scores.get)
     logger.info("  %s holdout MAE: %s", commodity, {k: f"{v:.1f}" for k, v in mae_scores.items()})
     logger.info("  %s best model: %s", commodity, best_model)
+    return best_model, mae_scores, train, test
+
+
+def fit_and_forecast(
+    full_hist: pd.DataFrame,
+    cal: pd.DataFrame,
+    commodity: str,
+) -> dict[str, Any]:
+    hist_id, hist_with_flags, exog_cols, forecast_start = prepare_commodity_data(full_hist, cal, commodity)
+    if forecast_start == "insufficient_data":
+        logger.warning("  %s: insufficient data (%d months)", commodity, len(hist_id))
+        return {"commodity": commodity, "error": "insufficient_data"}
+
+    best_model, mae_scores, train, test = select_best_model(hist_with_flags, commodity)
+    if best_model == "insufficient_holdout":
+        logger.warning("  %s: not enough holdout data (%d months)", commodity, len(test))
+        return {"commodity": commodity, "error": "insufficient_holdout"}
 
     best_arima = best_model == "AutoARIMA"
     final_model = [AutoARIMA(season_length=12) if best_arima else AutoETS(season_length=12)]
@@ -176,7 +190,7 @@ def fit_and_forecast(
 
     if best_arima:
         sf_final.fit(df=hist_with_flags[["unique_id", "ds", "y"] + exog_cols])
-        future_exog = get_future_exog(cal, "2024-06-01", FORECAST_H, commodity)
+        future_exog = get_future_exog(cal, forecast_start, FORECAST_H, commodity)
         fcast = sf_final.forecast(h=FORECAST_H, df=hist_with_flags[["unique_id", "ds", "y"] + exog_cols],
                                   X_df=future_exog, level=[95])
     else:
@@ -244,7 +258,8 @@ def fit_cooking_oil_post2022(
 
     if best_arima:
         sf_final.fit(df=post_with_flags[["unique_id", "ds", "y"] + exog_cols])
-        future_exog = get_future_exog(cal, "2024-06-01", FORECAST_H, commodity)
+        post_forecast_start = (post2022["ds"].max() + pd.DateOffset(months=1)).strftime("%Y-%m-%d")
+        future_exog = get_future_exog(cal, post_forecast_start, FORECAST_H, commodity)
         fcast = sf_final.forecast(h=FORECAST_H,
                                   df=post_with_flags[["unique_id", "ds", "y"] + exog_cols],
                                   X_df=future_exog, level=[95])
@@ -282,8 +297,7 @@ def validate_forecast(combined_data: list[dict]) -> list[str]:
 def update_lineage(run_id: str, status: str, issues: list[str] | None = None) -> None:
     try:
         conn = duckdb.connect(DB_PATH)
-        conn.execute("CREATE SCHEMA IF NOT EXISTS pipeline")
-        conn.execute(LINEAGE_TABLE_DDL)
+        ensure_lineage_table(conn)
         conn.execute("""
             INSERT INTO pipeline.lineage (run_id, forecast_status, issues_log)
             VALUES (?, ?, ?::JSON)
@@ -297,7 +311,7 @@ def update_lineage(run_id: str, status: str, issues: list[str] | None = None) ->
 
 
 def main() -> None:
-    run_id = datetime.now(timezone.utc).strftime("pipeline_%Y%m%d_%H%M%S")
+    run_id = sys.argv[1] if len(sys.argv) > 1 else datetime.now(timezone.utc).strftime("pipeline_%Y%m%d_%H%M%S")
     logger.info("=" * 60)
     logger.info("Forecast run started | run_id=%s", run_id)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -383,6 +397,13 @@ def main() -> None:
                 "forecast_end": (max_ds + pd.DateOffset(months=FORECAST_H)).strftime("%Y-%m-%d"),
                 "commodity_data_end": commodity_data_end,
                 "models": models_meta,
+                "data_source_note": (
+                    "Forecast aggregates ALL price data (including 'aggregate' flag) "
+                    "to maximize training data for Rice/Sugar/Flour where actual "
+                    "market-level prices end ~2020. Dashboard historical trends use "
+                    "'actual' prices only. Forecast trend line may diverge slightly "
+                    "from dashboard's actual-only history."
+                ),
                 "limitations": (
                     "Forecast assumes no structural breaks (policy interventions, "
                     "import tariff changes, El Nino cycles). 1-2 month forecasts "

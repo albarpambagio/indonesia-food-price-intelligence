@@ -2,11 +2,11 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "marimo",
-#     "duckdb",
-#     "pandas",
-#     "numpy",
-#     "plotly",
-#     "statsforecast",
+#     "duckdb>=1.0.0",
+#     "pandas>=2.2.0",
+#     "numpy>=1.26.0",
+#     "plotly>=5.18.0",
+#     "statsforecast>=1.7.0",
 # ]
 # ///
 

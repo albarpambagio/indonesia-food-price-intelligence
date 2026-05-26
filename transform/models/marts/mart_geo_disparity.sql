@@ -1,3 +1,7 @@
+-- NOTE: island_group IS NOT NULL filters out Rice, Sugar, and Flour because
+-- their actual-price records are national averages (market_id=974, admin1='NATIONAL')
+-- which have no island group mapping. Only Cooking Oil has market-level actual
+-- prices with geographic coordinates. See _marts__models.yml column docs.
 WITH prices AS (
   SELECT
     DATE_TRUNC('month', date) AS month,

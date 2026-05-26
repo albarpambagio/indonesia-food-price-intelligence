@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import duckdb
@@ -30,18 +31,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-transform_log_handler = logging.FileHandler(TRANSFORM_LOG_FILE)
-transform_log_handler.setFormatter(logging.Formatter(LOG_FORMAT))
-
-
 def step(name: str) -> None:
     logger.info("=== STEP: %s ===", name)
 
 
-def run_python(script_path: str, cwd: str, step_label: str) -> None:
+def run_python(script_path: str, cwd: str, step_label: str, *args: str) -> None:
     logger.info("Running %s ...", step_label)
     result = subprocess.run(
-        ["uv", "run", "python", script_path],
+        ["uv", "run", "python", script_path, *args],
         cwd=cwd,
         capture_output=True,
         text=True,
@@ -58,22 +55,26 @@ def run_python(script_path: str, cwd: str, step_label: str) -> None:
 
 def run_dbt(command: list[str]) -> None:
     logger.info("Running dbt %s ...", " ".join(command))
-    logger.addHandler(transform_log_handler)
+    transform_log_path = Path(TRANSFORM_LOG_FILE).resolve()
     result = subprocess.run(
-        ["uv", "run", "dbt"] + command,
+        ["uv", "run", "dbt"] + command + ["--log-path", str(transform_log_path.parent)],
         cwd="transform",
         capture_output=True,
         text=True,
     )
+    with open(TRANSFORM_LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(f"\n--- dbt {' '.join(command)} at {datetime.now(timezone.utc).isoformat()} ---\n")
+        if result.stdout.strip():
+            f.write(result.stdout + "\n")
+        if result.stderr.strip():
+            f.write(result.stderr + "\n")
     if result.returncode != 0:
         logger.error("dbt %s FAILED\n%s", " ".join(command), result.stderr.strip() or result.stdout.strip())
-        logger.removeHandler(transform_log_handler)
         raise RuntimeError(f"dbt {' '.join(command)} failed")
     logger.info("dbt %s OK", " ".join(command))
     for line in result.stdout.splitlines():
         if "PASS" in line or "WARN" in line or "ERROR" in line or "Completed" in line:
             logger.info("  %s", line.strip())
-    logger.removeHandler(transform_log_handler)
 
 
 def reconcile_layer(
@@ -228,7 +229,7 @@ def main() -> None:
         conn = get_connection()
         update_lineage(conn, run_id, forecast_status="running")
         conn.close()
-        run_python("forecast/run_forecast.py", ".", "Forecast")
+        run_python("forecast/run_forecast.py", ".", "Forecast", run_id)
 
         # --- Step 7: Export to JSON ---
         current_step = "export_status"
@@ -237,7 +238,7 @@ def main() -> None:
         conn = get_connection()
         update_lineage(conn, run_id, export_status="running")
         conn.close()
-        run_python("export/export_json.py", ".", "Export")
+        run_python("export/export_json.py", ".", "Export", run_id)
 
         # --- Step 8: Complete ---
         conn = get_connection()

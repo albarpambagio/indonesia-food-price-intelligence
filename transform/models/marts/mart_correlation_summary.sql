@@ -1,3 +1,7 @@
+-- NOTE: commodity_pair is ordered as 'rice-oil' (not 'oil-rice'), meaning
+-- lag_months is applied to the FIRST commodity before correlating with the SECOND.
+-- For the reverse direction (oil leading rice), query mart_commodity_correlation
+-- directly with LAG(oil_price, N) and CORR(oil_lagN, rice_price).
 WITH corr_base AS (
   SELECT
     rice_price,

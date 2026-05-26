@@ -55,14 +55,15 @@ ramadan AS (
     STRFTIME(m.month, '%Y-%m') AS ym,
     m.commodity_consolidated,
     m.island_group,
-    CASE WHEN STRFTIME(m.month, '%Y-%m') = c.eid_month THEN TRUE ELSE FALSE END AS flag_ramadan_eid_month,
-    CASE WHEN STRFTIME(m.month, '%Y-%m') = c.t_minus_1 THEN TRUE ELSE FALSE END AS flag_ramadan_t_minus_1,
-    CASE WHEN STRFTIME(m.month, '%Y-%m') = c.t_minus_2 THEN TRUE ELSE FALSE END AS flag_ramadan_t_minus_2,
-    CASE WHEN STRFTIME(m.month, '%Y-%m') = c.t_minus_3 THEN TRUE ELSE FALSE END AS flag_ramadan_t_minus_3,
-    CASE WHEN STRFTIME(m.month, '%Y-%m') = c.t_plus_1 THEN TRUE ELSE FALSE END AS flag_ramadan_t_plus_1
+    BOOL_OR(STRFTIME(m.month, '%Y-%m') = c.eid_month) AS flag_ramadan_eid_month,
+    BOOL_OR(STRFTIME(m.month, '%Y-%m') = c.t_minus_1) AS flag_ramadan_t_minus_1,
+    BOOL_OR(STRFTIME(m.month, '%Y-%m') = c.t_minus_2) AS flag_ramadan_t_minus_2,
+    BOOL_OR(STRFTIME(m.month, '%Y-%m') = c.t_minus_3) AS flag_ramadan_t_minus_3,
+    BOOL_OR(STRFTIME(m.month, '%Y-%m') = c.t_plus_1) AS flag_ramadan_t_plus_1
   FROM monthly_avg m
   LEFT JOIN {{ ref('int_islamic_calendar') }} c
-    ON EXTRACT(YEAR FROM m.month) = c.year
+    ON EXTRACT(YEAR FROM m.month) IN (c.year, c.year + 1)
+  GROUP BY m.month, m.commodity_consolidated, m.island_group
 )
 
 SELECT

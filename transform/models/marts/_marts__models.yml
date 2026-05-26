@@ -83,6 +83,9 @@ models:
       Grain: year × commodity × island_group × admin1. Includes YoY change in
       index and data completeness (months_with_data). Feeds Page 3 (Geographic Disparity)
       for the question "Which island group offers the best sourcing price?"
+      ⚠ Only Cooking Oil has market-level actual prices — Rice/Sugar/Flour rows
+      are filtered out because their actual-price records are national averages
+      (market_id=974, admin1='NATIONAL') with no island_group mapping.
     columns:
       - name: year
         description: Year of observation — annual grain for stable geographic comparison
@@ -152,9 +155,14 @@ models:
       at lags 0-3 months. 24 rows total. Includes rank per commodity for
       identifying which lag has the strongest signal. Feeds Page 4 leading
       indicator analysis.
+      ⚠ Pairs are directional (e.g., 'rice-oil' means lag is applied to Rice,
+      not Oil). Reverse direction not computed — query mart_commodity_correlation
+      directly with LAG(oil_price, N) for Oil-leading-Rice analysis.
     columns:
       - name: commodity_pair
-        description: Commodity pair in format 'commodity_a-commodity_b' — e.g., 'rice-oil'
+        description: >
+          Commodity pair in format 'commodity_a-commodity_b' — e.g., 'rice-oil'.
+          Lag is applied to commodity_a; reverse direction not included.
         tests:
           - not_null
       - name: lag_months

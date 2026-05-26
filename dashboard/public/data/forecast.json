@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-05-25T07:15:31.537416+00:00",
+    "generated_at": "2026-05-26T05:20:21.915008+00:00",
     "data_start": "2007-01-01",
     "data_end": "2024-12-01",
     "forecast_horizon": "6_months",
@@ -50,6 +50,7 @@
         }
       }
     },
+    "data_source_note": "Forecast aggregates ALL price data (including 'aggregate' flag) to maximize training data for Rice/Sugar/Flour where actual market-level prices end ~2020. Dashboard historical trends use 'actual' prices only. Forecast trend line may diverge slightly from dashboard's actual-only history.",
     "limitations": "Forecast assumes no structural breaks (policy interventions, import tariff changes, El Nino cycles). 1-2 month forecasts more reliable than 5-6 month. Confidence intervals widen explicitly with horizon. Cooking Oil includes a post-2022 robustness check due to the 2022 price shock."
   },
   "data": [

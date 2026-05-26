@@ -17,7 +17,7 @@ transform/logs/
 transform/target/
 
 # Pipeline logs
-logs/*.log
+logs/
 
 # Dashboard
 dashboard/node_modules/

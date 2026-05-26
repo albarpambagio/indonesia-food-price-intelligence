@@ -11,7 +11,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ingest.config import LINEAGE_TABLE_DDL
+from ingest.config import LINEAGE_TABLE_DDL, ensure_lineage_table
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DB_PATH = str(PROJECT_ROOT / "data" / "wfp.duckdb")
@@ -96,8 +96,7 @@ def verify_export(conn: duckdb.DuckDBPyConnection, cfg: dict, exported_count: in
 
 def update_lineage(conn: duckdb.DuckDBPyConnection, run_id: str, status: str, issues: list[str] | None = None) -> None:
     try:
-        conn.execute("CREATE SCHEMA IF NOT EXISTS pipeline")
-        conn.execute(LINEAGE_TABLE_DDL)
+        ensure_lineage_table(conn)
         conn.execute("""
             INSERT INTO pipeline.lineage (run_id, export_status, issues_log)
             VALUES (?, ?, ?::JSON)
@@ -110,7 +109,7 @@ def update_lineage(conn: duckdb.DuckDBPyConnection, run_id: str, status: str, is
 
 
 def main() -> None:
-    run_id = datetime.now(timezone.utc).strftime("pipeline_%Y%m%d_%H%M%S")
+    run_id = sys.argv[1] if len(sys.argv) > 1 else datetime.now(timezone.utc).strftime("pipeline_%Y%m%d_%H%M%S")
     logger.info("=" * 60)
     logger.info("Export run started | run_id=%s", run_id)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
