@@ -11,7 +11,7 @@ Indonesia Staple Food Price Intelligence — End-to-end data pipeline + forecast
 | **Volume** | 325,240 price records + 224 markets |
 | **Date Range** | January 2007 – May 2024 |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Next.js (Shadboard) → Cloudflare Pages |
-| **Phase 2 Status** | ✅ Complete (+ Phase 2.5 corrections: Ramadan flags, YoY delta, correlation summary) |
+| **Phase Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅ (11 pipeline gaps closed), Phase 6 deferred |
 | **Portfolio Goal** | Demonstrate upgraded ETL pipeline (DuckDB + dbt), time-series forecasting, and multi-dimensional procurement analytics |
 
 ### Business Scenario
@@ -52,7 +52,7 @@ cd transform
 dbt seed             # Load seed data (islamic_calendar.csv)
 dbt build            # Run + test all models in DAG order (staging → intermediate → marts)
 dbt run              # Run all models (staging → intermediate → marts)
-dbt test             # Run data tests (33 tests across all layers)
+dbt test             # Run data tests (66 tests across all layers)
 dbt docs generate    # Generate lineage docs
 dbt docs serve       # Serve docs locally (default: http://localhost:8080)
 dbt compile          # Compile SQL without running
@@ -61,12 +61,12 @@ dbt ls               # List models in project
 
 ### Forecasting
 ```bash
-uv run python forecast/run_forecast.py   # DONE — 7 bugfixes applied Phase 3e
+uv run python forecast/run_forecast.py   # DONE — Phase 3e (7 bugfixes) + Phase 3f (11 pipeline gaps)
 ```
 
 ### Export + Dashboard
 ```bash
-uv run python export/export_json.py   # DONE — 5 mart JSONs via verify_export()
+uv run python export/export_json.py   # DONE — 5 mart JSONs via verify_export() + forecast.json
 cd dashboard
 npm install
 npm run dev          # Development server
@@ -85,6 +85,7 @@ Phase 2: Transform                → dbt intermediate + mart models + tests    
 Phase 2.5: Corrections            → Ramadan flags, YoY delta, correlation summary, lineage fix ✅ DONE
 Phase 3: Forecasting              → statsforecast AutoARIMA/AutoETS + methodology doc   ✅ DONE
 Phase 3e: Bugfix                  → 7 gap fixes from pipeline audit                     ✅ DONE
+Phase 3f: Pipeline Gap-Closing    → 11 gaps: Ramadan cross-year bug, hardcoded dates, unified run_id, dbt log, function split, docs, PEP 723 pins, lineage DDL dedup ✅ DONE
 Phase 4: EDA                      → Marimo notebook (SCAN framework)                    ✅ DONE
 Phase 4.5: Notebook Improvement   → Formatters, insight callouts, sectioning, mo.lazy    ✅ DONE
 Phase 5: Deep Dive                → Marimo notebook (North Star method, merged into `analysis/eda.py`) ✅ DONE
@@ -303,7 +304,9 @@ Each exported JSON file is verified against its source mart model:
 - `mart_price_trends` rows == `price_trends.json` records
 - `mart_seasonal_patterns` rows == `seasonal_patterns.json` records
 - `mart_geo_disparity` rows == `geographic_disparity.json` records
-- `mart_corr_relation` rows == `commodity_correlation.json` records
+- `mart_commodity_correlation` rows == `commodity_correlation.json` records
+- `mart_correlation_summary` rows == `correlation_summary.json` records
+- `dashboard/public/data/forecast.json` copied from forecast output (819 records)
 
 Mismatch sets `pipeline.lineage.export_status = 'failed'` and logs detailed counts.
 
@@ -419,6 +422,7 @@ This project shares the same dashboard stack (Next.js + Shadboard + Recharts + T
 | No volume weighting | All markets equal weight; would weight by sourcing volume in production |
 | 2022 structural break (cooking oil) | Model retrained on post-2022 data as robustness check |
 | Rice/Sugar/Flour: no market-level `actual` prices in WFP data — only national avg (market_id=974) | `mart_commodity_correlation` provides all 4 at national level; Pages 2/3 limited to Cooking Oil for geographic/seasonal analysis; documented on dashboard |
+| Forecast uses all price data (incl. `aggregate`) while dashboard plots `actual`-only | Explicitly documented in `forecast.json` metadata via `data_source_note` field |
 
 ---
 

@@ -8,7 +8,7 @@
 | **Data First Accessed** | 2026-05-22 |
 | **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
 | **Target Completion** | ~16–20 working days |
-| **Status** | Phase 3 ✅ Complete (7 bugfixes applied Phase 3e). Phase 0/1 engineering fixes applied: quote-wrap SQL idents, idempotent loads, pipeline orchestrator, validation fix. Phase 5f: hardcoded DuckDB paths → PROJECT_DB_PATH (3 notebooks), missing pyproject deps + snapshots dir resolved. |
+| **Status** | Phase 3 ✅ Complete (7 bugfixes Phase 3e). Phase 0/1 engineering fixes applied. Phase 5f: DuckDB path fix, deps, dirs. **Phase 3f** ✅ (11 pipeline gaps closed): Ramadan cross-year bug, hardcoded forecast dates, unified run_id, dbt log routing, function split, doc gaps, PEP 723 pins, lineage DDL dedup. Phase 6 deferred. |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Next.js (Shadboard) → Cloudflare Pages |
 
 ### Parallelization Opportunities
@@ -19,7 +19,7 @@
 | §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
 
 **Sequential chain** (must wait): Phase 0 → 1 → 2 → 2.5 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
-> **Current**: Phase 0+1 engineering fixes ✅ (quote-wrap SQL, idempotent ingest, pipeline orchestrator, DB-read validation). Phase 1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (bugfix). Phase 4 ✅. Phase 5 ✅. Phase 5f ✅ (path fix, deps, dirs). Phase 6 deferred.
+> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (7 bugfixes) → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ (path, deps, dirs) → **Phase 3f ✅ (11 pipeline gaps)**. Phase 6 deferred.
 
 ---
 
@@ -174,6 +174,25 @@
 | 3.18 | **Fix: Standardize status value** | ✅ | `completed_with_warnings` in both forecast + export |
 
 **Key Deliverable**: `forecast.json` (validated) + all 5 mart JSONs + `docs/model_methodology.md` + 7 gap fixes
+
+### Phase 3f — Pipeline Gap-Closing (post-Phase-5f)
+> **Sequential** — gap assessment across all non-dashboard phases after Phase 5f completion. Fixes span dbt, forecast, export, orchestration, and Python config.
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 3f.1 | **P1: Ramadan `t_plus_1` cross-year bug** — Dec Eid `t_plus_1` (Jan next year) missed by single-year join | ✅ | Changed ramadan CTE from `EXTRACT(YEAR FROM m.month) = c.year` to `IN (c.year, c.year + 1)` with `BOOL_OR()` in `mart_seasonal_patterns.sql` |
+| 3f.2 | **P1: Forecast data source divergence** — forecast uses all price data (incl. `aggregate`) while dashboard plots `actual`-only | ✅ | Added `data_source_note` to `forecast.json` metadata documenting the divergence transparently |
+| 3f.3 | **P2: Hardcoded `"2024-06-01"` in `get_future_exog()`** — 2 instances in `run_forecast.py` | ✅ | Replaced with commodity-specific `forecast_start` computed from `hist_id["ds"].max() + 1 month` |
+| 3f.4 | **P2: Fragmented `run_id`** — forecast and export generated separate IDs from pipeline orchestrator | ✅ | `run_pipeline.py` passes `run_id` as CLI arg; both scripts accept `sys.argv[1]` with fallback |
+| 3f.5 | **P2: `transform.log` empty** — dbt stdout not routed to dedicated log | ✅ | Replaced in-python handler with direct file append via `subprocess` `--log-path` flag |
+| 3f.6 | **P3: 85-line `fit_and_forecast()`** — violated LEARNINGS.md §64 function-split pattern | ✅ | Extracted `prepare_commodity_data()` + `select_best_model()` helpers |
+| 3f.7 | **P3: `mart_geo_disparity` Rice/Sugar/Flour filter undocumented** — only Cooking Oil has market-level actual prices | ✅ | Added inline SQL comment + column description in `_marts__models.yml` |
+| 3f.8 | **P3: `mart_correlation_summary` asymmetry** — 6 directional pairs, not all 12 reverse pairs | ✅ | Documented asymmetry with header note + expanded column descriptions |
+| 3f.9 | **P3: PEP 723 `==` exact version pins** — brittle for marimo notebooks | ✅ | Changed `==` to `>=` in `analysis/eda.py` + `analysis/forecast_experimentation.py` |
+| 3f.10 | **P4: Lineage DDL duplicated** — same `CREATE SCHEMA` + `LINEAGE_TABLE_DDL` in forecast and export | ✅ | Replaced inline DDL with `ensure_lineage_table()` call from `ingest/config.py` |
+| 3f.11 | **Verify all fixes** — run full pipeline end-to-end | ✅ | `dbt build` 66/66 PASS. Pipeline 59.4s. Unified `run_id` across all phases. |
+
+**Key Deliverable**: 11 gaps closed across dbt (1), forecast/export (7), orchestration (2), Python config (1). Full pipeline verified end-to-end.
 
 ---
 
@@ -410,6 +429,8 @@
 - [x] Phase 8: Reproduction instructions (7-step setup)
 - [x] Phase 8: Lessons learned (8 items from LEARNINGS.md)
 - [x] Phase 8: insights_log.md verified — 13 findings, all 3 insight types
+- [x] Phase 3f: 11 pipeline gaps closed (ramadan cross-year, hardcoded dates, run_id, dbt log, func split, docs, pins, lineage DDL)
+- [x] Full pipeline end-to-end verified: ingest → dbt (66/66) → forecast → export — 59.4s, unified run_id
 - [ ] DEFERRED to Phase 6: All 4 dashboard pages
 - [ ] DEFERRED to Phase 6: Mobile responsive
 - [ ] DEFERRED to Phase 6: Cloudflare Pages deploy
@@ -453,6 +474,7 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 6 | `feat: dashboard (Next.js + Shadboard + export)` | Frontend |
 | Phase 7 | `docs: forecasting methodology` | `model_methodology.md` + `forecast_runbook.md` |
 | Phase 8 | `docs: README, insights, recommendations` | Final packaging — README, insights_log verified |
+| Phase 3f | `fix: 11 pipeline gaps — ramadan cross-year, hardcoded date, unified run_id, dbt log, func split, docs, pep723 pins, lineage dedup` | Cross-phase gap closing post-Phase-5f |
 
 **Rules**:
 - Conventional Commits (`feat:`, `docs:`, `fix:`)
@@ -475,4 +497,6 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | 2026-05-26 | **Phase 4/5 merge**: `deep_dive.py` merged into `analysis/eda.py` (40+ cells, 1670+ lines). Plotly 6.7.0 + pandas 3.0.3 incompatibility with `add_vline` annotations on string axes; annotations removed where x-axis uses date strings. | Resolved. Notebook passes headless execution. |
 | 2026-05-26 | **Phase 5 gap analysis**: 3 docs still referenced non-existent `deep_dive.py`; summary table used `DD §` section refs that don't exist; no `mo.stop()` guards on forecast/correlation JSON reads; Ramadan cell opened redundant DuckDB connection; Eastern Indonesia pre-2015 not filtered in province drilldown; unused `is_script_mode` variable. | All closed: 3 docs updated, 6 code fixes in `eda.py`. LEARNINGS.md §67 captures the merge-delete sweep pattern. |
 | 2026-05-26 | **Phase 5f: Post-Phase-5 path/deps/dirs audit**: 3 notebooks used module-level __db_path (filtered by marimo from cell namespaces -> NameError). pyproject.toml missing numpy + scipy. transform/snapshots/ non-existent despite dbt_project.yml reference. | All 3 fixed: __db_path -> PROJECT_DB_PATH via setup cell DAG across 3 notebooks (11 occurrences). numpy>=1.26.0 + scipy>=1.11.0 in pyproject. transform/snapshots/ created. LEARNINGS.md sec68. |
-| Phase 5f | ix: post-phase-5 fixes -- DuckDB path, deps, snapshot dir | Hardcoded DuckDB paths -> PROJECT_DB_PATH (3 notebooks), numpy/scipy in pyproject, create snapshots/ dir, update stale checklist |
+| Phase 5f | fix: post-phase-5 fixes -- DuckDB path, deps, snapshot dir | Hardcoded DuckDB paths -> PROJECT_DB_PATH (3 notebooks), numpy/scipy in pyproject, create snapshots/ dir, update stale checklist |
+| 2026-05-26 | **Phase 3f gap analysis**: 11 gaps found across all non-dashboard phases — Ramadan cross-year test gap (P1), forecast data source divergence (P1), hardcoded forecast dates (P2), fragmented run_ids (P2), empty transform.log (P2), monolithic fit_and_forecast (P3), undocumented geo filter (P3), undocumented correlation asymmetry (P3), PEP 723 == pins (P3), lineage DDL dedup (P4). | All 11 closed. Full pipeline verified (66/66 dbt tests, 59.4s pipeline time, unified run_id). |
+| 2026-05-26 | **Commit c0a74a9** pushed: `fix: 11 pipeline gaps` to `origin/master`. | 12 files, 124 insertions, 85 deletions. |

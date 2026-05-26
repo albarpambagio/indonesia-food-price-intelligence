@@ -65,6 +65,13 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 65 | [`mo.stop()` Prevents Raw Tracebacks in Error States](#65-mostop-prevents-raw-tracebacks-in-error-states) |
 | 66 | [`mo.lazy()` Defers Expensive Computations Until Needed](#66-molazy-defers-expensive-computations-until-needed) |
 | 67 | [Merge-Delete File Sweep — Notebook Content Merge Requires Full Doc Sweep](#67-merge-delete-file-sweep--notebook-content-merge-requires-full-doc-sweep) |
+| 68 | [Don't Parse Values Out of Formatted Strings — Keep Structured Data](#68-dont-parse-values-out-of-formatted-strings--keep-structured-data) |
+| 69 | [Marimo Module-Level `__` Variables Are Filtered From Cell Namespaces](#69-marimo-module-level-__-variables-are-filtered-from-cell-namespaces) |
+| 70 | [`pyproject.toml` Dependencies Must Cover Notebook Imports](#70-pyprojecttoml-dependencies-must-cover-notebook-imports) |
+| 71 | [Ramadan Cross-Year JOIN: `BOOL_OR()` with Multi-Year Matching](#71-ramadan-cross-year-join-bool_or-with-multi-year-matching) |
+| 72 | [Hardcoded Reference Dates: Compute from Data, Not Calendar](#72-hardcoded-reference-dates-compute-from-data-not-calendar) |
+| 73 | [Unified Pipeline `run_id` Across Subprocesses](#73-unified-pipeline-run_id-across-subprocesses) |
+| 74 | [DRY: Importable Pipeline Helpers Over Duplicated DDL](#74-dry-importable-pipeline-helpers-over-duplicated-ddl) |
 
 ---
 
@@ -2601,3 +2608,173 @@ dependencies = [
 ### Rule
 
 After adding a new import to any notebook or script, verify it's declared in `pyproject.toml`. Transitive dependencies are not guaranteed across version upgrades. Run `uvx marimo check <notebook.py>` to catch missing declarations.
+
+---
+
+## 71. Ramadan Cross-Year JOIN: `BOOL_OR()` with Multi-Year Matching
+
+### The Problem
+
+`mart_seasonal_patterns.sql` computed Ramadan proximity flags using a single-year join:
+
+```sql
+LEFT JOIN wfp_intermediate.int_islamic_calendar c
+    ON EXTRACT(YEAR FROM m.month) = c.year
+```
+
+This missed the `t_plus_1` flag for Eids in December. When Eid fell in December 2024, `t_plus_1` (January 2025) had `m.month.year = 2025` but `c.year = 2024` — the join missed, so no January row got flagged as post-Ramadan.
+
+**Root Cause:** The `t_plus_1` expression `m.month = c.eid_date + INTERVAL '1 month'` was correct SQL, but the single-year join guard `EXTRACT(YEAR FROM m.month) = c.year` excluded cross-year matches before the flag expression could evaluate.
+
+### Solution
+
+Use `IN` with both the current and next year, then aggregate with `BOOL_OR()` to avoid double-counting:
+
+```sql
+LEFT JOIN wfp_intermediate.int_islamic_calendar c
+    ON EXTRACT(YEAR FROM m.month) IN (c.year, c.year + 1)
+    AND m.month IN (c.eid_month, c.t_minus_1, c.t_minus_2, c.t_minus_3, c.t_plus_1)
+
+SELECT MAX(
+    CASE WHEN m.month = c.eid_month THEN 1 ELSE 0 END
+) AS flag_ramadan_eid_month,
+...
+
+GROUP BY m.month, m.commodity_consolidated, ...
+```
+
+**Key insight:** `EXTRACT(YEAR FROM m.month) = c.year` is not just a join condition — it's a **filter that silently excludes edge cases**. Any reference-date-based join (T-3 to T+1, fiscal year offsets) risks boundary exclusion. Always test edge cases: what happens when Eid is in January? December? What about the year before the calendar starts?
+
+### Files Affected
+- `transform/models/marts/mart_seasonal_patterns.sql` — ramadan CTE join changed from single-year to `IN (c.year, c.year + 1)` with `BOOL_OR()` aggregation
+
+---
+
+## 72. Hardcoded Reference Dates: Compute from Data, Not Calendar
+
+### The Problem
+
+`forecast/run_forecast.py` had two instances of a hardcoded future date:
+
+```python
+future_exog_df = get_future_exog("2024-06-01", 6)  # Hardcoded!
+```
+
+And in the post-2022 robustness check:
+```python
+future_exog_oil = get_future_exog("2024-06-01", 6)  # Same hardcoded value
+```
+
+These dates were correct at time of writing but would become stale as soon as the pipeline ran against newer data. Any re-run after May 2024 would produce forecasts starting from an incorrect point.
+
+### Solution
+
+Compute `forecast_start` from each commodity's own latest data point:
+
+```python
+forecast_start = hist_id["ds"].max() + pd.DateOffset(months=1)
+future_exog_df = get_future_exog(forecast_start, 6)
+```
+
+**Why per-commodity:** Different commodities have different data end dates (Flour ends 2020-03, Rice ends 2024-05). A single hardcoded date would be wrong for all but one.
+
+### Files Affected
+- `forecast/run_forecast.py` — `fit_and_forecast()` and `fit_cooking_oil_post2022()` both replaced `"2024-06-01"` with computed `forecast_start`
+
+---
+
+## 73. Unified Pipeline `run_id` Across Subprocesses
+
+### The Problem
+
+The pipeline orchestrator (`run_pipeline.py`) generated a `run_id` and passed it to ingest, but **forecast and export generated their own independent IDs** via `generate_run_id()`:
+
+```
+Pipeline lineage:   pipeline_20260526_051924  (from orchestrator, $export_status = pending)
+Forecast lineage:   pipeline_20260526_052000  (separate ID, not linked to pipeline)
+Export lineage:     pipeline_20260526_052010  (separate ID, not linked to pipeline)
+```
+
+This made it impossible to ask "did this pipeline run succeed end-to-end?" — each phase had a different row.
+
+### Solution
+
+Pass `run_id` as a CLI argument from the orchestrator:
+
+```python
+# run_pipeline.py
+subprocess.run(["uv", "run", "python", "forecast/run_forecast.py", run_id])
+subprocess.run(["uv", "run", "python", "export/export_json.py", run_id])
+```
+
+Both scripts accept the first CLI arg as `run_id` and fall back to auto-generation if absent (backward-compatible):
+
+```python
+import sys
+run_id = sys.argv[1] if len(sys.argv) > 1 else generate_run_id()
+```
+
+**Result:** All phases now share a single `run_id` — a single row in `pipeline.lineage` shows `ingest=completed, transform=completed, forecast=completed, export=completed`.
+
+### Files Affected
+- `run_pipeline.py` — passes `run_id` as arg to forecast and export subprocesses
+- `forecast/run_forecast.py` — reads `sys.argv[1]` with fallback
+- `export/export_json.py` — reads `sys.argv[1]` with fallback
+
+---
+
+## 74. DRY: Importable Pipeline Helpers Over Duplicated DDL
+
+### The Problem
+
+Both `forecast/run_forecast.py` and `export/export_json.py` contained identical inline code for creating the lineage table:
+
+```python
+# forecast/run_forecast.py (59 lines)
+conn.execute("CREATE SCHEMA IF NOT EXISTS pipeline;")
+conn.execute("""
+    CREATE TABLE IF NOT EXISTS pipeline.lineage (
+        run_id TEXT PRIMARY KEY,
+        ...
+    )
+""")
+
+# export/export_json.py (same 59 lines, verbatim copy)
+conn.execute("CREATE SCHEMA IF NOT EXISTS pipeline;")
+conn.execute(""" ... """)
+```
+
+This violated DRY — any schema change to the lineage table required editing 3 files (config.py + forecast + export), and updates were missed during Phase 3e.
+
+### Solution
+
+Export `ensure_lineage_table()` from `ingest/config.py` and call it from both scripts:
+
+```python
+# ingest/config.py
+def ensure_lineage_table(conn):
+    conn.execute("CREATE SCHEMA IF NOT EXISTS pipeline;")
+    conn.execute("""CREATE TABLE IF NOT EXISTS pipeline.lineage (...)""")
+
+# forecast/run_forecast.py & export/export_json.py
+from ingest.config import ensure_lineage_table
+ensure_lineage_table(conn)  # Single call replaces 59 lines
+```
+
+**Result:** Schema changes happen in one place. Both scripts are 59 lines shorter. No copy-paste drift risk.
+
+### Files Affected
+- `ingest/config.py` — extracted `ensure_lineage_table()` from inline initialization
+- `forecast/run_forecast.py` — replaced inline DDL with import + call
+- `export/export_json.py` — replaced inline DDL with import + call
+
+---
+
+## Updated Decision Log
+
+| Decision | Rationale |
+|----------|-----------|
+| `BOOL_OR()` with multi-year `IN` join over single-year `=` | Single-year join for Ramadan proximity flags miss cross-year `t_plus_1` cases (Dec Eid → Jan next year). Multi-year `IN` + `BOOL_OR()` handles all boundary cases without double-counting. |
+| Computed `forecast_start` over hardcoded `"2024-06-01"` | Per-commodity end dates differ (Flour: 2020-03, Rice: 2024-05). A single hardcoded date is wrong for all but one commodity. |
+| CLI-passed `run_id` over per-script auto-generation | Forecast and export must share the pipeline's `run_id` for end-to-end auditability. Auto-generated IDs create orphan lineage rows with no parent pipeline link. |
+| Importable `ensure_lineage_table()` over duplicated DDL | 59-line schema DDL duplicated in 2 scripts guaranteed drift on schema changes. A single importable function eliminates the copy-paste risk. |
