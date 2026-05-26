@@ -33,11 +33,15 @@ def generate_run_id() -> str:
     return now.strftime("pipeline_%Y%m%d_%H%M%S")
 
 
+def ensure_lineage_table(conn: duckdb.DuckDBPyConnection) -> None:
+    conn.execute("CREATE SCHEMA IF NOT EXISTS pipeline;")
+    conn.execute(LINEAGE_TABLE_DDL)
+
+
 def get_connection(read_only: bool = False) -> duckdb.DuckDBPyConnection:
     conn = duckdb.connect(DB_PATH, read_only=read_only)
-    conn.execute("CREATE SCHEMA IF NOT EXISTS pipeline;")
+    ensure_lineage_table(conn)
     conn.execute("CREATE SCHEMA IF NOT EXISTS raw;")
-    conn.execute(LINEAGE_TABLE_DDL)
     return conn
 
 

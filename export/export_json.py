@@ -9,6 +9,10 @@ from typing import Any
 import duckdb
 import numpy as np
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from ingest.config import LINEAGE_TABLE_DDL
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DB_PATH = str(PROJECT_ROOT / "data" / "wfp.duckdb")
 OUTPUT_DIR = PROJECT_ROOT / "dashboard" / "public" / "data"
@@ -90,23 +94,6 @@ def verify_export(conn: duckdb.DuckDBPyConnection, cfg: dict, exported_count: in
     return True
 
 
-LINEAGE_TABLE_DDL = """
-    CREATE TABLE IF NOT EXISTS pipeline.lineage (
-        run_id              TEXT PRIMARY KEY,
-        started_at          TIMESTAMP,
-        completed_at        TIMESTAMP,
-        pipeline_status     TEXT DEFAULT 'pending',
-        ingest_status       TEXT DEFAULT 'pending',
-        transform_status    TEXT DEFAULT 'pending',
-        forecast_status     TEXT DEFAULT 'pending',
-        export_status       TEXT DEFAULT 'pending',
-        raw_food_prices_rows INT,
-        raw_markets_rows    INT,
-        issues_log          JSON
-    );
-"""
-
-
 def update_lineage(conn: duckdb.DuckDBPyConnection, run_id: str, status: str, issues: list[str] | None = None) -> None:
     try:
         conn.execute("CREATE SCHEMA IF NOT EXISTS pipeline")
@@ -123,7 +110,7 @@ def update_lineage(conn: duckdb.DuckDBPyConnection, run_id: str, status: str, is
 
 
 def main() -> None:
-    run_id = datetime.now(timezone.utc).strftime("export_%Y%m%d_%H%M%S")
+    run_id = datetime.now(timezone.utc).strftime("pipeline_%Y%m%d_%H%M%S")
     logger.info("=" * 60)
     logger.info("Export run started | run_id=%s", run_id)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

@@ -1,7 +1,9 @@
 import logging
+import shutil
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 import duckdb
 
@@ -15,6 +17,7 @@ from ingest.config import (
 )
 
 LOG_FILE = "logs/pipeline_run.log"
+TRANSFORM_LOG_FILE = "logs/transform.log"
 LOG_FORMAT = "%(asctime)s | %(levelname)s | %(message)s"
 
 logging.basicConfig(
@@ -26,6 +29,9 @@ logging.basicConfig(
     ],
 )
 logger = logging.getLogger(__name__)
+
+transform_log_handler = logging.FileHandler(TRANSFORM_LOG_FILE)
+transform_log_handler.setFormatter(logging.Formatter(LOG_FORMAT))
 
 
 def step(name: str) -> None:
@@ -52,6 +58,7 @@ def run_python(script_path: str, cwd: str, step_label: str) -> None:
 
 def run_dbt(command: list[str]) -> None:
     logger.info("Running dbt %s ...", " ".join(command))
+    logger.addHandler(transform_log_handler)
     result = subprocess.run(
         ["uv", "run", "dbt"] + command,
         cwd="transform",
@@ -60,11 +67,13 @@ def run_dbt(command: list[str]) -> None:
     )
     if result.returncode != 0:
         logger.error("dbt %s FAILED\n%s", " ".join(command), result.stderr.strip() or result.stdout.strip())
+        logger.removeHandler(transform_log_handler)
         raise RuntimeError(f"dbt {' '.join(command)} failed")
     logger.info("dbt %s OK", " ".join(command))
     for line in result.stdout.splitlines():
         if "PASS" in line or "WARN" in line or "ERROR" in line or "Completed" in line:
             logger.info("  %s", line.strip())
+    logger.removeHandler(transform_log_handler)
 
 
 def reconcile_layer(
@@ -81,6 +90,39 @@ def reconcile_layer(
         logger.error(msg)
         raise RuntimeError(msg)
     return target_count
+
+
+def reconcile_mart(
+    conn: duckdb.DuckDBPyConnection,
+    label: str,
+    target_table: str,
+) -> int:
+    target_count = conn.execute(f"SELECT COUNT(*) FROM {target_table}").fetchone()[0]
+    if target_count > 0:
+        logger.info("  OK %s: %d rows", label, target_count)
+    else:
+        msg = f"  FAIL {label}: 0 rows"
+        logger.error(msg)
+        raise RuntimeError(msg)
+    return target_count
+
+
+def copy_dbt_artifacts(run_id: str) -> None:
+    artifacts_path = Path("transform/target/run_results.json")
+    if artifacts_path.exists():
+        dest = Path(f"logs/dbt_run_results_{run_id}.json")
+        shutil.copy(str(artifacts_path), str(dest))
+        logger.info("  dbt artifacts copied to %s", dest)
+
+
+def get_connection_safe() -> duckdb.DuckDBPyConnection | None:
+    for attempt in range(2):
+        try:
+            return get_connection()
+        except Exception:
+            if attempt == 0:
+                time.sleep(1)
+    return None
 
 
 current_step_map: dict[str, str] = {}
@@ -136,6 +178,7 @@ def main() -> None:
         update_lineage(conn, run_id, transform_status="running")
         conn.close()
         run_dbt(["run"])
+        copy_dbt_artifacts(run_id)
 
         # --- Step 4: dbt test ---
         current_step = "transform_status"
@@ -152,20 +195,18 @@ def main() -> None:
         reconcile_layer(
             conn, "markets: raw -> staging", raw_markets, "wfp_staging.stg_markets"
         )
-
         reconcile_layer(
             conn, "food_prices: staging -> int_prices_normalised",
             stg_food, "wfp_intermediate.int_prices_normalised",
         )
 
-        mart_trends = conn.execute("SELECT COUNT(*) FROM wfp_marts.mart_price_trends").fetchone()[0]
-        logger.info("  mart_price_trends: %d rows", mart_trends)
-        mart_seasonal = conn.execute("SELECT COUNT(*) FROM wfp_marts.mart_seasonal_patterns").fetchone()[0]
-        logger.info("  mart_seasonal_patterns: %d rows", mart_seasonal)
-        mart_geo = conn.execute("SELECT COUNT(*) FROM wfp_marts.mart_geo_disparity").fetchone()[0]
-        logger.info("  mart_geo_disparity: %d rows", mart_geo)
-        mart_corr = conn.execute("SELECT COUNT(*) FROM wfp_marts.mart_commodity_correlation").fetchone()[0]
-        logger.info("  mart_commodity_correlation: %d rows", mart_corr)
+        # Mart reconciliation (verify each mart has rows)
+        step("Mart reconciliation")
+        mart_trends = reconcile_mart(conn, "mart_price_trends", "wfp_marts.mart_price_trends")
+        mart_seasonal = reconcile_mart(conn, "mart_seasonal_patterns", "wfp_marts.mart_seasonal_patterns")
+        mart_geo = reconcile_mart(conn, "mart_geo_disparity", "wfp_marts.mart_geo_disparity")
+        mart_corr = reconcile_mart(conn, "mart_commodity_correlation", "wfp_marts.mart_commodity_correlation")
+        mart_corr_summary = reconcile_mart(conn, "mart_correlation_summary", "wfp_marts.mart_correlation_summary")
 
         update_lineage(
             conn, run_id,
@@ -175,6 +216,7 @@ def main() -> None:
                 "mart_seasonal_patterns_rows": mart_seasonal,
                 "mart_geo_disparity_rows": mart_geo,
                 "mart_commodity_correlation_rows": mart_corr,
+                "mart_correlation_summary_rows": mart_corr_summary,
             },
         )
         conn.close()
@@ -207,12 +249,13 @@ def main() -> None:
 
     except Exception as e:
         logger.exception("Pipeline failed at step '%s': %s", current_step_name, e)
-        try:
-            conn = get_connection()
-            update_lineage(conn, run_id, **{current_step: "failed"}, issues_log={"error": str(e), "step": current_step_name})
-            conn.close()
-        except Exception:
-            pass
+        fail_conn = get_connection_safe()
+        if fail_conn:
+            try:
+                update_lineage(fail_conn, run_id, **{current_step: "failed"}, issues_log={"error": str(e), "step": current_step_name})
+                fail_conn.close()
+            except Exception:
+                pass
         sys.exit(1)
 
 

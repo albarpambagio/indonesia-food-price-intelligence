@@ -327,13 +327,13 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 7.1 | Problem statement: grain, horizon, what/why | ⬜ | `docs/model_methodology.md` |
-| 7.2 | Data preparation: national avg, actual prices only, monthly grain, Islamic calendar regressors | ⬜ | |
-| 7.3 | Model candidates: AutoARIMA, AutoETS, AutoTheta — what each does | ⬜ | |
-| 7.4 | Model selection: CV approach, holdout, MAE/RMSE, final model per commodity | ⬜ | |
-| 7.5 | Confidence intervals: plain language explanation of 95% CI, procurement action zone | ⬜ | |
-| 7.6 | Known limitations: 5 items per plan | ⬜ | Gov price controls, tariff shocks, El Niño, calendar approximation, policy unpredictability |
-| 7.7 | How to re-run: step-by-step retraining instructions | ⬜ | |
+| 7.1 | Problem statement: grain, horizon, what/why | ✅ | `docs/model_methodology.md` §1 |
+| 7.2 | Data preparation: national avg, actual prices only, monthly grain, Islamic calendar regressors | ✅ | `docs/model_methodology.md` §2 |
+| 7.3 | Model candidates: AutoARIMA, AutoETS, AutoTheta — what each does | ✅ | `docs/model_methodology.md` §3 |
+| 7.4 | Model selection: CV approach, holdout, MAE/RMSE, final model per commodity | ✅ | `docs/model_methodology.md` §4 |
+| 7.5 | Confidence intervals: plain language explanation of 95% CI, procurement action zone | ✅ | `docs/model_methodology.md` §5 |
+| 7.6 | Known limitations: 5 items per plan | ✅ | `docs/model_methodology.md` §6 — 10 items across model + data |
+| 7.7 | How to re-run: step-by-step retraining instructions | ✅ | `docs/model_methodology.md` §7 |
 
 ---
 

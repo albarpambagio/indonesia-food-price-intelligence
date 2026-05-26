@@ -11,6 +11,10 @@ import pandas as pd
 from statsforecast import StatsForecast
 from statsforecast.models import AutoARIMA, AutoETS
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from ingest.config import LINEAGE_TABLE_DDL
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DB_PATH = str(PROJECT_ROOT / "data" / "wfp.duckdb")
 SEED_CSV = str(PROJECT_ROOT / "transform" / "seeds" / "islamic_calendar.csv")
@@ -275,23 +279,6 @@ def validate_forecast(combined_data: list[dict]) -> list[str]:
     return errors
 
 
-LINEAGE_TABLE_DDL = """
-    CREATE TABLE IF NOT EXISTS pipeline.lineage (
-        run_id              TEXT PRIMARY KEY,
-        started_at          TIMESTAMP,
-        completed_at        TIMESTAMP,
-        pipeline_status     TEXT DEFAULT 'pending',
-        ingest_status       TEXT DEFAULT 'pending',
-        transform_status    TEXT DEFAULT 'pending',
-        forecast_status     TEXT DEFAULT 'pending',
-        export_status       TEXT DEFAULT 'pending',
-        raw_food_prices_rows INT,
-        raw_markets_rows    INT,
-        issues_log          JSON
-    );
-"""
-
-
 def update_lineage(run_id: str, status: str, issues: list[str] | None = None) -> None:
     try:
         conn = duckdb.connect(DB_PATH)
@@ -310,7 +297,7 @@ def update_lineage(run_id: str, status: str, issues: list[str] | None = None) ->
 
 
 def main() -> None:
-    run_id = datetime.now(timezone.utc).strftime("forecast_%Y%m%d_%H%M%S")
+    run_id = datetime.now(timezone.utc).strftime("pipeline_%Y%m%d_%H%M%S")
     logger.info("=" * 60)
     logger.info("Forecast run started | run_id=%s", run_id)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
