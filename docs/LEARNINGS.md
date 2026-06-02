@@ -2776,6 +2776,8 @@ ensure_lineage_table(conn)  # Single call replaces 59 lines
 
 ---
 
+> **SUPERSEDED 2026-06-02** — HF Spaces replaces Cloudflare Pages as deployment target. §80's "Plotly EDA → Plotly dashboard" parity now realized.
+
 ## 75. Cloudflare Pages Constraint Hard-Blocks All Python Server Frameworks
 
 ### The Problem

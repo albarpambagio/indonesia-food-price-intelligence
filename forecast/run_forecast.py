@@ -411,6 +411,11 @@ def main() -> None:
                     "explicitly with horizon. Cooking Oil includes a post-2022 "
                     "robustness check due to the 2022 price shock."
                 ),
+                "cooking_oil_forecast_behavior": {
+                    "primary": "Full-history AutoARIMA (default trace on Page 1)",
+                    "secondary": "Post-2022 AutoARIMA robustness check (toggleable via Page 1 checkbox)",
+                    "rationale": "2022 cooking oil price shock creates a structural break. Primary model uses all history for trend context; secondary model retrained on post-2022 data to show structural-break sensitivity."
+                },
             },
             "data": combined_data,
         }

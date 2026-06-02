@@ -1,6 +1,6 @@
 [
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "BALI",
@@ -11,7 +11,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU",
@@ -22,7 +22,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU UTARA",
@@ -33,7 +33,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA BARAT",
@@ -44,7 +44,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA TIMUR",
@@ -55,7 +55,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA",
@@ -66,7 +66,7 @@
     "max_price_idr": 28000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA BARAT",
@@ -77,7 +77,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "BANTEN",
@@ -88,7 +88,7 @@
     "max_price_idr": 19000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DAERAH ISTIMEWA YOGYAKARTA",
@@ -99,7 +99,7 @@
     "max_price_idr": 19500.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DKI JAKARTA",
@@ -110,7 +110,7 @@
     "max_price_idr": 20250.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA BARAT",
@@ -121,7 +121,7 @@
     "max_price_idr": 21250.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TENGAH",
@@ -132,7 +132,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TIMUR",
@@ -143,7 +143,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN BARAT",
@@ -154,7 +154,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN SELATAN",
@@ -165,7 +165,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TENGAH",
@@ -176,7 +176,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TIMUR",
@@ -187,7 +187,7 @@
     "max_price_idr": 30000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN UTARA",
@@ -198,7 +198,7 @@
     "max_price_idr": 21500.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "GORONTALO",
@@ -209,7 +209,7 @@
     "max_price_idr": 28450.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI BARAT",
@@ -220,7 +220,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI SELATAN",
@@ -231,7 +231,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGAH",
@@ -242,7 +242,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGGARA",
@@ -253,7 +253,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI UTARA",
@@ -264,7 +264,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "ACEH",
@@ -275,7 +275,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "BENGKULU",
@@ -286,7 +286,7 @@
     "max_price_idr": 19000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "JAMBI",
@@ -297,7 +297,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN BANGKA BELITUNG",
@@ -308,7 +308,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN RIAU",
@@ -319,7 +319,7 @@
     "max_price_idr": 21250.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "LAMPUNG",
@@ -330,7 +330,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "RIAU",
@@ -341,7 +341,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA BARAT",
@@ -352,7 +352,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA SELATAN",
@@ -363,7 +363,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-06-01 00:00:00",
+    "month": "2024-06-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA UTARA",
@@ -374,7 +374,7 @@
     "max_price_idr": 23500.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "BALI",
@@ -385,7 +385,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU",
@@ -396,7 +396,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU UTARA",
@@ -407,7 +407,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA BARAT",
@@ -418,7 +418,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA TIMUR",
@@ -429,7 +429,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA",
@@ -440,7 +440,7 @@
     "max_price_idr": 28000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA BARAT",
@@ -451,7 +451,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "BANTEN",
@@ -462,7 +462,7 @@
     "max_price_idr": 19000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DAERAH ISTIMEWA YOGYAKARTA",
@@ -473,7 +473,7 @@
     "max_price_idr": 19500.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DKI JAKARTA",
@@ -484,7 +484,7 @@
     "max_price_idr": 20250.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA BARAT",
@@ -495,7 +495,7 @@
     "max_price_idr": 21250.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TENGAH",
@@ -506,7 +506,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TIMUR",
@@ -517,7 +517,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN BARAT",
@@ -528,7 +528,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN SELATAN",
@@ -539,7 +539,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TENGAH",
@@ -550,7 +550,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TIMUR",
@@ -561,7 +561,7 @@
     "max_price_idr": 30000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN UTARA",
@@ -572,7 +572,7 @@
     "max_price_idr": 21500.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "GORONTALO",
@@ -583,7 +583,7 @@
     "max_price_idr": 28450.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI BARAT",
@@ -594,7 +594,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI SELATAN",
@@ -605,7 +605,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGAH",
@@ -616,7 +616,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGGARA",
@@ -627,7 +627,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI UTARA",
@@ -638,7 +638,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "ACEH",
@@ -649,7 +649,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "BENGKULU",
@@ -660,7 +660,7 @@
     "max_price_idr": 19500.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "JAMBI",
@@ -671,7 +671,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN BANGKA BELITUNG",
@@ -682,7 +682,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN RIAU",
@@ -693,7 +693,7 @@
     "max_price_idr": 21250.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "LAMPUNG",
@@ -704,7 +704,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "RIAU",
@@ -715,7 +715,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA BARAT",
@@ -726,7 +726,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA SELATAN",
@@ -737,7 +737,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-07-01 00:00:00",
+    "month": "2024-07-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA UTARA",
@@ -748,7 +748,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "BALI",
@@ -759,7 +759,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU",
@@ -770,7 +770,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU UTARA",
@@ -781,7 +781,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA BARAT",
@@ -792,7 +792,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA TIMUR",
@@ -803,7 +803,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA",
@@ -814,7 +814,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA BARAT",
@@ -825,7 +825,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "BANTEN",
@@ -836,7 +836,7 @@
     "max_price_idr": 19000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DAERAH ISTIMEWA YOGYAKARTA",
@@ -847,7 +847,7 @@
     "max_price_idr": 19500.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DKI JAKARTA",
@@ -858,7 +858,7 @@
     "max_price_idr": 20250.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA BARAT",
@@ -869,7 +869,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TENGAH",
@@ -880,7 +880,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TIMUR",
@@ -891,7 +891,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN BARAT",
@@ -902,7 +902,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN SELATAN",
@@ -913,7 +913,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TENGAH",
@@ -924,7 +924,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TIMUR",
@@ -935,7 +935,7 @@
     "max_price_idr": 30000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN UTARA",
@@ -946,7 +946,7 @@
     "max_price_idr": 21500.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "GORONTALO",
@@ -957,7 +957,7 @@
     "max_price_idr": 28450.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI BARAT",
@@ -968,7 +968,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI SELATAN",
@@ -979,7 +979,7 @@
     "max_price_idr": 21250.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGAH",
@@ -990,7 +990,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGGARA",
@@ -1001,7 +1001,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI UTARA",
@@ -1012,7 +1012,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "ACEH",
@@ -1023,7 +1023,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "BENGKULU",
@@ -1034,7 +1034,7 @@
     "max_price_idr": 19500.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "JAMBI",
@@ -1045,7 +1045,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN BANGKA BELITUNG",
@@ -1056,7 +1056,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN RIAU",
@@ -1067,7 +1067,7 @@
     "max_price_idr": 21250.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "LAMPUNG",
@@ -1078,7 +1078,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "RIAU",
@@ -1089,7 +1089,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA BARAT",
@@ -1100,7 +1100,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA SELATAN",
@@ -1111,7 +1111,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-08-01 00:00:00",
+    "month": "2024-08-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA UTARA",
@@ -1122,7 +1122,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "BALI",
@@ -1133,7 +1133,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU",
@@ -1144,7 +1144,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU UTARA",
@@ -1155,7 +1155,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA BARAT",
@@ -1166,7 +1166,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA TIMUR",
@@ -1177,7 +1177,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA",
@@ -1188,7 +1188,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA BARAT",
@@ -1199,7 +1199,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "BANTEN",
@@ -1210,7 +1210,7 @@
     "max_price_idr": 19000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DAERAH ISTIMEWA YOGYAKARTA",
@@ -1221,7 +1221,7 @@
     "max_price_idr": 19500.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DKI JAKARTA",
@@ -1232,7 +1232,7 @@
     "max_price_idr": 20250.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA BARAT",
@@ -1243,7 +1243,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TENGAH",
@@ -1254,7 +1254,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TIMUR",
@@ -1265,7 +1265,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN BARAT",
@@ -1276,7 +1276,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN SELATAN",
@@ -1287,7 +1287,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TENGAH",
@@ -1298,7 +1298,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TIMUR",
@@ -1309,7 +1309,7 @@
     "max_price_idr": 30000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN UTARA",
@@ -1320,7 +1320,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "GORONTALO",
@@ -1331,7 +1331,7 @@
     "max_price_idr": 28450.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI BARAT",
@@ -1342,7 +1342,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI SELATAN",
@@ -1353,7 +1353,7 @@
     "max_price_idr": 21250.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGAH",
@@ -1364,7 +1364,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGGARA",
@@ -1375,7 +1375,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI UTARA",
@@ -1386,7 +1386,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "ACEH",
@@ -1397,7 +1397,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "BENGKULU",
@@ -1408,7 +1408,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "JAMBI",
@@ -1419,7 +1419,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN BANGKA BELITUNG",
@@ -1430,7 +1430,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN RIAU",
@@ -1441,7 +1441,7 @@
     "max_price_idr": 21250.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "LAMPUNG",
@@ -1452,7 +1452,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "RIAU",
@@ -1463,7 +1463,7 @@
     "max_price_idr": 20250.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA BARAT",
@@ -1474,7 +1474,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA SELATAN",
@@ -1485,7 +1485,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-09-01 00:00:00",
+    "month": "2024-09-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA UTARA",
@@ -1496,7 +1496,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "BALI",
@@ -1507,7 +1507,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU",
@@ -1518,7 +1518,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU UTARA",
@@ -1529,7 +1529,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA BARAT",
@@ -1540,7 +1540,7 @@
     "max_price_idr": 23500.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA TIMUR",
@@ -1551,7 +1551,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA",
@@ -1562,7 +1562,7 @@
     "max_price_idr": 25500.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA BARAT",
@@ -1573,7 +1573,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "BANTEN",
@@ -1584,7 +1584,7 @@
     "max_price_idr": 19750.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DAERAH ISTIMEWA YOGYAKARTA",
@@ -1595,7 +1595,7 @@
     "max_price_idr": 19500.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DKI JAKARTA",
@@ -1606,7 +1606,7 @@
     "max_price_idr": 20250.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA BARAT",
@@ -1617,7 +1617,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TENGAH",
@@ -1628,7 +1628,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TIMUR",
@@ -1639,7 +1639,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN BARAT",
@@ -1650,7 +1650,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN SELATAN",
@@ -1661,7 +1661,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TENGAH",
@@ -1672,7 +1672,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TIMUR",
@@ -1683,7 +1683,7 @@
     "max_price_idr": 30000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN UTARA",
@@ -1694,7 +1694,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "GORONTALO",
@@ -1705,7 +1705,7 @@
     "max_price_idr": 28450.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI BARAT",
@@ -1716,7 +1716,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI SELATAN",
@@ -1727,7 +1727,7 @@
     "max_price_idr": 21250.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGAH",
@@ -1738,7 +1738,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGGARA",
@@ -1749,7 +1749,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI UTARA",
@@ -1760,7 +1760,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "ACEH",
@@ -1771,7 +1771,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "BENGKULU",
@@ -1782,7 +1782,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "JAMBI",
@@ -1793,7 +1793,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN BANGKA BELITUNG",
@@ -1804,7 +1804,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN RIAU",
@@ -1815,7 +1815,7 @@
     "max_price_idr": 21250.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "LAMPUNG",
@@ -1826,7 +1826,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "RIAU",
@@ -1837,7 +1837,7 @@
     "max_price_idr": 20450.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA BARAT",
@@ -1848,7 +1848,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA SELATAN",
@@ -1859,7 +1859,7 @@
     "max_price_idr": 19500.0
   },
   {
-    "month": "2024-10-01 00:00:00",
+    "month": "2024-10-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA UTARA",
@@ -1870,7 +1870,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "BALI",
@@ -1881,7 +1881,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU",
@@ -1892,7 +1892,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU UTARA",
@@ -1903,7 +1903,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA BARAT",
@@ -1914,7 +1914,7 @@
     "max_price_idr": 23500.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA TIMUR",
@@ -1925,7 +1925,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA",
@@ -1936,7 +1936,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA BARAT",
@@ -1947,7 +1947,7 @@
     "max_price_idr": 27500.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "BANTEN",
@@ -1958,7 +1958,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DAERAH ISTIMEWA YOGYAKARTA",
@@ -1969,7 +1969,7 @@
     "max_price_idr": 19500.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DKI JAKARTA",
@@ -1980,7 +1980,7 @@
     "max_price_idr": 20250.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA BARAT",
@@ -1991,7 +1991,7 @@
     "max_price_idr": 23500.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TENGAH",
@@ -2002,7 +2002,7 @@
     "max_price_idr": 21000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TIMUR",
@@ -2013,7 +2013,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN BARAT",
@@ -2024,7 +2024,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN SELATAN",
@@ -2035,7 +2035,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TENGAH",
@@ -2046,7 +2046,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TIMUR",
@@ -2057,7 +2057,7 @@
     "max_price_idr": 30000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN UTARA",
@@ -2068,7 +2068,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "GORONTALO",
@@ -2079,7 +2079,7 @@
     "max_price_idr": 28450.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI BARAT",
@@ -2090,7 +2090,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI SELATAN",
@@ -2101,7 +2101,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGAH",
@@ -2112,7 +2112,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGGARA",
@@ -2123,7 +2123,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI UTARA",
@@ -2134,7 +2134,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "ACEH",
@@ -2145,7 +2145,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "BENGKULU",
@@ -2156,7 +2156,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "JAMBI",
@@ -2167,7 +2167,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN BANGKA BELITUNG",
@@ -2178,7 +2178,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN RIAU",
@@ -2189,7 +2189,7 @@
     "max_price_idr": 21250.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "LAMPUNG",
@@ -2200,7 +2200,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "RIAU",
@@ -2211,7 +2211,7 @@
     "max_price_idr": 20650.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA BARAT",
@@ -2222,7 +2222,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA SELATAN",
@@ -2233,7 +2233,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-11-01 00:00:00",
+    "month": "2024-11-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA UTARA",
@@ -2244,7 +2244,7 @@
     "max_price_idr": 23500.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "BALI",
@@ -2255,7 +2255,7 @@
     "max_price_idr": 21500.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU",
@@ -2266,7 +2266,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "MALUKU UTARA",
@@ -2277,7 +2277,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA BARAT",
@@ -2288,7 +2288,7 @@
     "max_price_idr": 23500.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "NUSA TENGGARA TIMUR",
@@ -2299,7 +2299,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA",
@@ -2310,7 +2310,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Eastern Indonesia",
     "admin1": "PAPUA BARAT",
@@ -2321,7 +2321,7 @@
     "max_price_idr": 27500.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "BANTEN",
@@ -2332,7 +2332,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DAERAH ISTIMEWA YOGYAKARTA",
@@ -2343,7 +2343,7 @@
     "max_price_idr": 21250.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "DKI JAKARTA",
@@ -2354,7 +2354,7 @@
     "max_price_idr": 20375.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA BARAT",
@@ -2365,7 +2365,7 @@
     "max_price_idr": 23500.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TENGAH",
@@ -2376,7 +2376,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Java",
     "admin1": "JAWA TIMUR",
@@ -2387,7 +2387,7 @@
     "max_price_idr": 20500.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN BARAT",
@@ -2398,7 +2398,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN SELATAN",
@@ -2409,7 +2409,7 @@
     "max_price_idr": 23000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TENGAH",
@@ -2420,7 +2420,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN TIMUR",
@@ -2431,7 +2431,7 @@
     "max_price_idr": 31000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Kalimantan",
     "admin1": "KALIMANTAN UTARA",
@@ -2442,7 +2442,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "GORONTALO",
@@ -2453,7 +2453,7 @@
     "max_price_idr": 28750.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI BARAT",
@@ -2464,7 +2464,7 @@
     "max_price_idr": 25000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI SELATAN",
@@ -2475,7 +2475,7 @@
     "max_price_idr": 21500.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGAH",
@@ -2486,7 +2486,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI TENGGARA",
@@ -2497,7 +2497,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sulawesi",
     "admin1": "SULAWESI UTARA",
@@ -2508,7 +2508,7 @@
     "max_price_idr": 22000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "ACEH",
@@ -2519,7 +2519,7 @@
     "max_price_idr": 22500.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "BENGKULU",
@@ -2530,7 +2530,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "JAMBI",
@@ -2541,7 +2541,7 @@
     "max_price_idr": 21500.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN BANGKA BELITUNG",
@@ -2552,7 +2552,7 @@
     "max_price_idr": 20000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "KEPULAUAN RIAU",
@@ -2563,7 +2563,7 @@
     "max_price_idr": 21250.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "LAMPUNG",
@@ -2574,7 +2574,7 @@
     "max_price_idr": 23500.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "RIAU",
@@ -2585,7 +2585,7 @@
     "max_price_idr": 21450.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA BARAT",
@@ -2596,7 +2596,7 @@
     "max_price_idr": 24000.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA SELATAN",
@@ -2607,7 +2607,7 @@
     "max_price_idr": 19500.0
   },
   {
-    "month": "2024-12-01 00:00:00",
+    "month": "2024-12-01",
     "commodity_consolidated": "Cooking Oil",
     "island_group": "Sumatera",
     "admin1": "SUMATERA UTARA",

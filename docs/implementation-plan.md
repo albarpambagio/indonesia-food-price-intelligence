@@ -280,34 +280,34 @@
 ---
 
 ### Phase 5g — Pre-Dashboard Gap Closing (post-stack-change, 2026-06-02)
-> **Sequential** — gap analysis run 2026-06-02 against `implementation-plan.md` (Phases 0–5, 7, 8), `LEARNINGS.md`, `AGENTS.md`, and current filesystem state. 13 gaps found across 3 tiers. Tier 1 = data gaps blocking dashboard pages. Tier 2 = stale docs reflecting pre-stack-change reality. Tier 3 = pipeline cleanup. Tier 4 (Phase 6 init) deferred with Phase 6. **Execution deferred at user request (2026-06-02) — plan written, will run when user gives go-ahead.**
+> **Sequential** — gap analysis run 2026-06-02 against `implementation-plan.md` (Phases 0–5, 7, 8), `LEARNINGS.md`, `AGENTS.md`, and current filesystem state. 13 gaps found across 3 tiers. Tier 1 = data gaps blocking dashboard pages. Tier 2 = stale docs reflecting pre-stack-change reality. Tier 3 = pipeline cleanup. Tier 4 (Phase 6 init) deferred with Phase 6. **Execution deferred at user request (2026-06-02) — plan written, will run when user gives go-ahead.** ~~**Completed 2026-06-02** — all 13 gaps closed, dbt build passes (77 tests), export verified (6 marts + forecast).~~
 
 #### Tier 1 — Data Gaps Blocking Dashboard Pages
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 5g.1 | **G1: Add `mart_price_trends_national.sql`** — new mart for national avg × commodity × month, all 4 commodities, no `island_group` filter | ⬜ | Decision: option (a) per user. Cleanest; parallels existing mart pattern. Needed for Page 1 KPI cards (4 commodities) + multi-commodity trend chart. Add to `_marts__models.yml` with `not_null` + `accepted_values` tests. Add export entry to `export_json.py`. |
-| 5g.2 | **G2: Vendor Indonesia provinces GeoJSON** — ~1 MB file at `dashboard/assets/indonesia_provinces.geojson` | ⬜ | Source: `github.com/superpikar/indonesia-geojson` (public domain). Needed for Page 3 choropleth map. Add to `.dockerignore` keep-list to ship with HF Spaces image. |
-| 5g.3 | **G3: Add pre/post-2022 correlation columns** — `pearson_r_pre_2022` + `pearson_r_post_2022` to `mart_correlation_summary` | ⬜ | Decision: option (a) per user. Splits full-period Pearson r at `2022-01-01` boundary. Needed for Page 4 scatter (§6.4.3) and rolling chart (§6.4.4). Update `_marts__models.yml` column docs + add `not_null` tests. |
-| 5g.4 | **G4: Document Cooking Oil dual-forecast behavior** — clarify which forecast is primary; secondary is `post2022_robustness` trace | ⬜ | User decision: show both. Primary = full-history AutoARIMA (default Page 1 trace). Secondary = `post2022_robustness` AutoARIMA (toggled via Page 1 checkbox). Update `forecast.json` `metadata` block + §6.1.2 wireframe. |
+| 5g.1 | **G1: Add `mart_price_trends_national.sql`** — new mart for national avg × commodity × month, all 4 commodities, no `island_group` filter | ✅ | Decision: option (a) per user. Cleanest; parallels existing mart pattern. Needed for Page 1 KPI cards (4 commodities) + multi-commodity trend chart. Add to `_marts__models.yml` with `not_null` + `accepted_values` tests. Add export entry to `export_json.py`. |
+| 5g.2 | **G2: Vendor Indonesia provinces GeoJSON** — ~1 MB file at `dashboard/assets/indonesia_provinces.geojson` | ✅ | Source: `github.com/denyherianto/indonesia-geojson-topojson-maps-with-38-provinces` (38 provinces, public). Needed for Page 3 choropleth map. Add to `.dockerignore` keep-list to ship with HF Spaces image. |
+| 5g.3 | **G3: Add pre/post-2022 correlation columns** — `pearson_r_pre_2022` + `pearson_r_post_2022` to `mart_correlation_summary` | ✅ | Decision: option (a) per user. Splits full-period Pearson r at `2022-01-01` boundary. Needed for Page 4 scatter (§6.4.3) and rolling chart (§6.4.4). Update `_marts__models.yml` column docs + add `not_null` tests. `pearson_r_post_2022` allows NULL (Flour pairs post-2022). |
+| 5g.4 | **G4: Document Cooking Oil dual-forecast behavior** — clarify which forecast is primary; secondary is `post2022_robustness` trace | ✅ | User decision: show both. Primary = full-history AutoARIMA (default Page 1 trace). Secondary = `post2022_robustness` AutoARIMA (toggled via Page 1 checkbox). Update `forecast.json` `metadata` block + §6.1.2 wireframe. |
 
 #### Tier 2 — Stale Documentation (Stack Change)
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 5g.5 | **G5: AGENTS.md stack sweep** — replace "Next.js + Shadboard + Cloudflare Pages" with "Plotly Dash + dash-bootstrap-components + HF Spaces" | ⬜ | 6 sections: L13 (Project Overview table), L70-73 (Export + Dashboard commands), L93 (Phase Pipeline), L338 (Shared Learnings subsection), L388 (Recharts/TanStack refs), L495 (Verify Dashboard). Drop "Shared Learnings" subsection per plan §318. |
-| 5g.6 | **G6: LEARNINGS.md §75 SUPERSEDED banner** — mark section as overridden; do NOT draft §81–§85 stubs (deferred to Phase 6) | ⬜ | User decision: defer §81-§85 (Dash-specific learnings earned during implementation). Add banner: `> **SUPERSEDED 2026-06-02** — HF Spaces replaces Cloudflare Pages as deployment target. §80's "Plotly EDA → Plotly dashboard" parity now realized.` |
-| 5g.7 | **G7: README.md + G8: project-plan.md stack sync** — mirror AGENTS.md update in 2 sister docs | ⬜ | README: replace npm commands with `uv run python dashboard/app.py` (Phase 8.10/8.11). `docs/wfp-food-price-intelligence-project-plan.md`: update Stack row, Setup Commands, Phase 6 mention. |
+| 5g.5 | **G5: AGENTS.md stack sweep** — replace "Next.js + Shadboard + Cloudflare Pages" with "Plotly Dash + dash-bootstrap-components + HF Spaces" | ✅ | 6 sections: L13 (Project Overview table), L70-73 (Export + Dashboard commands), L93 (Phase Pipeline), L338 (Shared Learnings subsection), L388 (Recharts/TanStack refs), L495 (Verify Dashboard). Drop "Shared Learnings" subsection per plan §318. |
+| 5g.6 | **G6: LEARNINGS.md §75 SUPERSEDED banner** — mark section as overridden; do NOT draft §81–§85 stubs (deferred to Phase 6) | ✅ | User decision: defer §81-§85 (Dash-specific learnings earned during implementation). Add banner: `> **SUPERSEDED 2026-06-02** — HF Spaces replaces Cloudflare Pages as deployment target. §80's "Plotly EDA → Plotly dashboard" parity now realized.` |
+| 5g.7 | **G7: README.md + G8: project-plan.md stack sync** — mirror AGENTS.md update in 2 sister docs | ✅ | README: replace npm commands with `uv run python dashboard/app.py` (Phase 8.10/8.11). `docs/wfp-food-price-intelligence-project-plan.md`: update Stack row, Setup Commands, Phase 6 mention. |
 
 #### Tier 3 — Pipeline Cleanup
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 5g.8 | **G9: Remove dead code** — `current_step_map: dict[str, str] = {}` in `run_pipeline.py:129` | ⬜ | Defined but never read/written. Pure dead state. |
-| 5g.9 | **G10: Move `transform_status="running"`** to before `dbt seed` (not between seed and run) | ⬜ | Currently set at `run_pipeline.py:179`, after `dbt seed` succeeds. If seed fails, lineage shows `transform_status='pending'` not `failed`. Move to immediately after Step 1 ingest completes. |
-| 5g.10 | **G11: Add `dbt source freshness` step** — invoke after `dbt seed` in pipeline | ⬜ | Per LEARNINGS §49. Catches stale raw loads (>72h). Cost: ~2s. `_sources.yml` config already present. |
-| 5g.11 | **G12: Sync `requirements.txt` with `pyproject.toml`** — or delete it | ⬜ | Currently missing `numpy`, `scipy`, `chart-studio`. Plan §322 says "auto-synced" but isn't. Recommend delete + add AGENTS.md note that pyproject is the source of truth (uv-native project). |
-| 5g.12 | **G13: Normalize date format in JSON exports** — add `dt.strftime("%Y-%m-%d")` to `export_json.py:export_table()` | ⬜ | 4 marts export `"2024-06-01 00:00:00"`; forecast exports `"2024-06-01"`. Single 3-line patch in `export_table()` after `fetchdf()`. Prevents dual-parser handling in Dash. |
+| 5g.8 | **G9: Remove dead code** — `current_step_map: dict[str, str] = {}` in `run_pipeline.py:129` | ✅ | Defined but never read/written. Pure dead state. |
+| 5g.9 | **G10: Move `transform_status="running"`** to before `dbt seed` (not between seed and run) | ✅ | Currently set at `run_pipeline.py:179`, after `dbt seed` succeeds. If seed fails, lineage shows `transform_status='pending'` not `failed`. Move to immediately after Step 1 ingest completes. |
+| 5g.10 | **G11: Add `dbt source freshness` step** — invoke after `dbt seed` in pipeline | ✅ | Per LEARNINGS §49. Catches stale raw loads (>72h). Cost: ~2s. `_sources.yml` config already present. |
+| 5g.11 | **G12: Sync `requirements.txt` with `pyproject.toml`** — or delete it | ✅ | Currently missing `numpy`, `scipy`, `chart-studio`. Plan §322 says "auto-synced" but isn't. Recommend delete + add AGENTS.md note that pyproject is the source of truth (uv-native project). |
+| 5g.12 | **G13: Normalize date format in JSON exports** — add `dt.strftime("%Y-%m-%d")` to `export_json.py:export_table()` | ✅ | 4 marts export `"2024-06-01 00:00:00"`; forecast exports `"2024-06-01"`. Single 3-line patch in `export_table()` after `fetchdf()`. Prevents dual-parser handling in Dash. |
 
 #### Key Decisions Made (2026-06-02)
 
@@ -334,7 +334,7 @@
 | 9 | 5g.11 (G12) — requirements.txt | 1 file edit or delete | 5 min |
 | 10 | 5g.12 (G13) — date format normalization | `export_json.py` | 5 min |
 
-**Total**: ~2 hours of work to close all 13 gaps. Execution deferred — pipeline orchestrator, exported JSONs, and dbt marts remain in current state until user triggers.
+**Total**: ~2 hours of work to close all 13 gaps. ~~Execution deferred — pipeline orchestrator, exported JSONs, and dbt marts remain in current state until user triggers.~~ **All 13 gaps closed 2026-06-02.**
 
 ---
 
@@ -385,55 +385,65 @@ Dash wins on the multi-page pattern (Dash Pages plugin is the most mature multi-
 ### Page 1 — Price Trends & Forecast
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.1.1 | KPI cards: current price + YoY% + sparkline per commodity (4 cards) | ⬜ | Wireframe [4] — `dbc.Card` × 4, always visible regardless of filter. `go.Scatter` sparkline + `dcc.Markdown` delta text. Reusable component in `components/kpi_cards.py` |
-| 6.1.2 | Main trend + forecast chart (`go.Figure` + `add_vline` + CI area) | ⬜ | Wireframe [5] — `dcc.Graph(figure=fig)`; solid line for actuals, `add_vrect` for forecast region, `add_vline(x="2022-01-15", line_dash="dash", annotation_text="Cooking oil export ban")`. EDA `eda.py` Q1 chart spec is directly portable (§80 win) |
-| 6.1.3 | Procurement action zone (BUY/HOLD/WATCH signals) | ⬜ | Wireframe [6] — `dbc.Alert` color-coded per signal; signal logic: `BUY = forecast_lower < current_price`, `HOLD = abs(forecast_change) < 1%`, `WATCH = forecast_rising` |
-| 6.1.4 | YoY inflation table (`dash-ag-grid` with cellStyle conditional formatting) | ⬜ | Wireframe [7] — replaces TanStack Table. `dag.AgGrid` with `cellStyle` JS for red/green >10% threshold |
-| 6.1.5 | Model limitations footnote (always visible) | ⬜ | Wireframe [8] — `dcc.Markdown` footer in `components/layout.py`; pulled from `forecast.json` `metadata.data_source_note` |
-| 6.1.6 | Wire page to DuckDB via `data_access.load_mart("mart_price_trends", ...)` | ⬜ | Filtered query through `lru_cache`-decorated function; reads JSON for forecast only |
+| 6.1.1 | KPI cards: current price + YoY% per commodity (4 cards) | ⬜ | `dbc.Card` × 4 via `components/kpi_cards.py`. Data source: `load_mart("mart_price_trends_national")` — gets latest row per commodity. `compute_yoy_delta()` adds YoY% column. Color-coded: green for price drops, red for increases. Always visible regardless of filter. |
+| 6.1.2 | Main trend + forecast chart (`go.Figure` + `add_vline` + CI area) | ⬜ | `dcc.Graph(figure=fig)`. Solid lines for actuals from `mart_price_trends_national`. Dashed lines for forecast from `forecast.json`. `add_vrect` for forecast region. `add_vline(x="2022-01-01", line_dash="dash", annotation_text="Cooking oil export ban")`. EDA `eda.py` Q1 chart spec directly portable (§80 win). CI shaded area via `go.Scatter(fill="toself")` with inverted upper/lower traces. |
+| 6.1.3 | Procurement action zone (BUY/HOLD/WATCH signals) | ⬜ | `dbc.Card` with `dbc.Badge` per commodity. Signal logic: compute mean of 6-month forecast, compare to current price. `BUY = forecast_avg < current * 0.98` (green badge), `HOLD = abs(forecast_change) < 2%` (gray badge), `WATCH = forecast_avg > current * 1.02` (red badge). Plain language explanation in each badge. |
+| 6.1.4 | YoY bar chart (`go.Bar` grouped by commodity) | ⬜ | `dcc.Graph(id="yoy-chart")`. `compute_yoy_delta()` on `mart_price_trends_national`. Grouped bars, one color per commodity. `add_hline(y=0)` baseline. Shows inflation trajectory per commodity. |
+| 6.1.5 | Model info card | ⬜ | `dbc.Card` showing per-commodity model selection (AutoARIMA/AutoETS) and holdout MAE from `forecast.json` `metadata.models`. Read-only display, no interactivity. |
+| 6.1.6 | Model limitations footnote (always visible) | ⬜ | `dcc.Markdown` footer in `components/layout.py:forecast_footnote()`. Text from `forecast.json` `metadata.data_source_note`. Links to `/methodology` page. |
+| 6.1.7 | Wire page to DuckDB via `data_access.load_mart("mart_price_trends_national", ...)` | ⬜ | Single callback with `Input` on all 3 global filters. Returns: `kpi_cards`, `trend_chart.figure`, `signal_children`, `model_info`, `yoy_chart.figure`. Forecast loaded via `load_forecast_data()` (cached JSON read). |
 
 ### Page 2 — Seasonal Patterns
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.2.1 | Procurement timing callout cards (commodity × driver) | ⬜ | Wireframe [4] — `dbc.Card` × N from `load_mart("mart_seasonal_patterns")` filtered by driver toggle; spike magnitude + consistency score |
-| 6.2.2 | Seasonal heatmap: month × commodity, Gregorian calendar | ⬜ | Wireframe [5] — `px.imshow` (Plotly Express) → `dcc.Graph(figure=fig)`; 12×4 cells, single-hue scale (Blues) |
-| 6.2.3 | Ramadan overlay chart: price index T-3 to T+1, all years overlaid | ⬜ | Wireframe [6] — `go.Figure` with one `go.Scatter` trace per year (thin lines, opacity=0.3) + one bold average trace. EDA `eda.py` Q2 chart spec directly portable (§80 win) |
-| 6.2.4 | Harvest season chart (rice discount) + year-end chart | ⬜ | Wireframe [7][8] — `dcc.Graph` panels toggled by driver dropdown via `dcc.RadioItems` callback |
-| 6.2.5 | Seasonal summary table (`dash-ag-grid`, sortable) | ⬜ | Wireframe [9] — `dag.AgGrid` with `sortable=True`. Lead time column is the most actionable column |
-| 6.2.6 | Page-specific driver toggle (Ramadan / Harvest / Year-End / All) | ⬜ | `dcc.RadioItems` filter wired into `load_mart("mart_seasonal_patterns", driver=...)` |
+| 6.2.1 | Seasonal heatmap: month × commodity price index | ⬜ | `px.imshow` with `mart_seasonal_patterns` pivoted to 12×4 matrix. `color_continuous_scale="RdYlGn_r"` (red = above avg, green = below avg). Y-axis: commodities, X-axis: months (Jan–Dec). Instant visual scan for seasonal patterns. |
+| 6.2.2 | Monthly price line chart (filtered by driver toggle) | ⬜ | `go.Figure` with one trace per commodity. Filtered by `dcc.RadioItems` (Ramadan / Harvest / Year-End / All). When driver selected, highlights relevant months with `vrect` bands. |
+| 6.2.3 | Ramadan overlay chart: price index T-3 to T+1 | ⬜ | Filter `mart_seasonal_patterns` where `flag_ramadan_*` columns are TRUE. Plot `price_index_vs_annual_avg` for each commodity. `add_hline(y=100)` as annual average baseline. One trace per commodity, bold lines. |
+| 6.2.4 | Seasonal summary table (`dbc.Table`) | ⬜ | Aggregated from `mart_seasonal_patterns`: commodity, avg price, peak month, Ramadan premium (%). Computed as `(ramadan_avg - non_ramadan_avg) / non_ramadan_avg * 100`. Sortable via `dbc.Table` with `hover=True`. |
+| 6.2.5 | Page-specific driver toggle (Ramadan / Harvest / Year-End / All) | ⬜ | `dcc.RadioItems(id="seasonal-driver")`. Filters `mart_seasonal_patterns` by relevant `flag_*` columns. `callback` returns filtered DataFrame to all 4 charts. |
+| 6.2.6 | Wire page via single callback | ⬜ | `Input`: 3 global filters + `seasonal-driver`. `Output`: 4 chart figures + summary table children. Data source: `load_mart("mart_seasonal_patterns")`. |
 
 ### Page 3 — Geographic Disparity
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.3.1 | KPI cards: price index per island group (5 cards) | ⬜ | Wireframe [4] — `dbc.Card` × 5; Java = 100 baseline; clickable to set island filter via `dcc.Store` |
-| 6.3.2 | Indonesia choropleth map (Plotly `choropleth` with island-group granularity) | ⬜ | Wireframe [5] — `px.choropleth` with `geojson=Indonesia_provinces_geojson`; year slider via `dcc.Slider` triggers `go.Frame` animation. **Note**: GeoJSON file (~1 MB) must be vendored or fetched from a stable URL |
-| 6.3.3 | Island group comparison line chart (5 series, Java baseline) | ⬜ | Wireframe [6] — `go.Figure` with 5 `go.Scatter` traces; horizontal `add_hline(y=100, line_dash="dash", annotation_text="Java baseline")` |
-| 6.3.4 | Province drill-down table (`dash-ag-grid`, coverage column) | ⬜ | Wireframe [7] — `dag.AgGrid` with honesty column for data gaps (Rice/Sugar/Flour limited to national agg, see Phase 5.4 finding) |
+| 6.3.1 | KPI cards: price index per island group (5 cards) | ⬜ | `dbc.Card` × 5 from `mart_geo_disparity`. Java = 100 baseline (hardcoded). Each card shows island group name, current price index, and YoY change (`yoy_change_index`). Clickable cards set island filter via callback to `dcc.Store`. |
+| 6.3.2 | Indonesia choropleth map | ⬜ | `px.choropleth` with vendored GeoJSON (`dashboard/assets/indonesia_provinces.geojson`, ~1 MB). GeoJSON already vendored (G2). `locationmode="geojson-id"` with province names matched to `admin1` in `mart_geo_disparity`. Color scale: `price_index_vs_java`. Year slider via `dcc.Slider` with `go.Frame` animation. Only Cooking Oil has province-level data (Rice/Sugar/Flour = national aggregate only). |
+| 6.3.3 | Island group comparison line chart (5 series, Java baseline) | ⬜ | `go.Figure` with 5 `go.Scatter` traces (one per island group). `add_hline(y=100, line_dash="dash", annotation_text="Java baseline")`. X-axis: year. Y-axis: `price_index_vs_java`. Color per island group. Filtered by commodity dropdown. |
+| 6.3.4 | Province drill-down table (`dbc.Table`) | ⬜ | Filtered by selected island group. Columns: province, price index, YoY change, months with data. Sorted by price index ascending (cheapest first). Includes "coverage" honesty column noting data gaps (Rice/Sugar/Flour limited to national agg). |
+| 6.3.5 | Data limitation callout (Cooking Oil only) | ⬜ | `dbc.Alert` with `color="warning"` explaining that geographic analysis is limited to Cooking Oil because Rice/Sugar/Flour have no market-level actual prices (only national avg market_id=974). Always visible on page. |
+| 6.3.6 | Wire page via single callback | ⬜ | `Input`: 3 global filters. `Output`: KPI cards, choropleth figure, comparison chart figure, drill-down table children. Data source: `load_mart("mart_geo_disparity")`. |
 
 ### Page 4 — Commodity Signals
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.4.1 | Leading indicator callout cards (top 2 relationships, plain language) | ⬜ | Wireframe [4] — `dbc.Card` × 2 from `mart_correlation_summary` filtered to top 2 by `pearson_r`. Category Manager audience, no r values in user-facing copy |
-| 6.4.2 | Correlation matrix heatmap (4×4, asymmetric, lag selector) | ⬜ | Wireframe [5] — `px.imshow` with lag dimension animated via `dcc.Slider`. Row leads column label. EDA `eda.py` Q4 chart spec directly portable |
-| 6.4.3 | Commodity pair scatter chart (pre/post 2022 dot split) | ⬜ | Wireframe [6] — `go.Scatter` with two traces (`mode='markers'`, pre-2022 in one color, post-2022 in another) split at `add_vline(x="2022-01-15")` |
-| 6.4.4 | Rolling correlation stability chart (3-year window, 2022 marker) | ⬜ | Wireframe [7] — `go.Figure` with `go.Scatter(mode='lines')` for rolling r + `add_vrect` for 2022 break region. Most analytically honest visual on the page |
-| 6.4.5 | Procurement implication card (plain language, post-2022 caveat) | ⬜ | Wireframe [8] — `dbc.Card` with `dcc.Markdown` body; analytical centerpiece of page |
-| 6.4.6 | Full correlation detail table (`dash-ag-grid`, pre/post 2022 columns) | ⬜ | Wireframe [9] — `dag.AgGrid` with differentiation column showing `r_pre - r_post` delta |
-| 6.4.7 | Page-specific lag selector (0 / 1 / 2 / 3 months) | ⬜ | `dcc.RadioItems` filter wired into `load_mart("mart_correlation_summary", lag=...)` |
+| 6.4.1 | Leading indicator callout cards (top 2 relationships, plain language) | ⬜ | `dbc.Card` × 2 from `mart_correlation_summary` filtered to top 2 by `ABS(pearson_r)` at lag_months > 0. Category Manager audience — no r values in user-facing copy. Plain language: "When [Commodity A] rises, [Commodity B] typically follows within N months." Data: `load_mart("mart_correlation_summary", lag_months=selected_lag)` sorted by `ABS(pearson_r)` desc. |
+| 6.4.2 | Correlation matrix heatmap (4×4, lag dimension) | ⬜ | `px.imshow` pivoted from `mart_commodity_correlation` at selected lag. Row = lead commodity, Column = following commodity. `color_continuous_scale="RdBu_r"` (red = positive, blue = negative). Lag selector via `dcc.RadioItems(id="lag-selector")` with options 0/1/2/3 months. Matrix recomputes on lag change via callback. |
+| 6.4.3 | Commodity pair scatter chart (pre/post 2022 dot split) | ⬜ | `go.Scatter` with two traces per selected pair. Pre-2022: one color. Post-2022: another color. `add_vline(x="2022-01-01", line_dash="dash")` as structural break marker. Pair selector via `dcc.Dropdown` (6 pairs: rice-oil, rice-sugar, rice-flour, oil-sugar, oil-flour, sugar-flour). Data: `load_mart("mart_commodity_correlation")`. |
+| 6.4.4 | Rolling correlation stability chart (3-year window) | ⬜ | `go.Figure` with `go.Scatter(mode='lines')` for rolling Pearson r over time. 3-year (36-month) rolling window. `add_vrect(x0="2022-01-01", x1="2022-12-31", fillcolor="red", opacity=0.1)` for structural break region. Most analytically honest visual on the page — shows correlation stability degrading post-2022. |
+| 6.4.5 | Pre/post 2022 comparison table (`dbc.Table`) | ⬜ | From `mart_correlation_summary`: commodity_pair, `pearson_r_pre_2022`, `pearson_r_post_2022`, delta column (`r_pre - r_post`). Color-coded delta: red if correlation weakened, green if strengthened. Only pairs with data on both sides of 2022-01-01 boundary. |
+| 6.4.6 | Procurement implication card (plain language) | ⬜ | `dbc.Card` with `dcc.Markdown` body. Analytical centerpiece: explains what correlation changes mean for bundled procurement timing. Post-2022 caveat prominently displayed. Data: computed from top relationships in `mart_correlation_summary`. |
+| 6.4.7 | Page-specific lag selector (0 / 1 / 2 / 3 months) | ⬜ | `dcc.RadioItems(id="lag-selector", value=1)`. Default lag = 1 month (most operationally useful). Wired into matrix heatmap callback and leading indicator card callback. |
+| 6.4.8 | Wire page via callbacks | ⬜ | 2 callbacks: (1) lag selector → matrix + leading indicator cards, (2) pair selector → scatter chart. Data source: `load_mart("mart_correlation_summary")` for summary, `load_mart("mart_commodity_correlation")` for scatter/rolling. |
 
 ### 6.6 Dashboard Init
 > **Parallel** — zero data dependency. Can run any time after Phase 0. No need to wait for pipeline phases.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.6.1 | Update `pyproject.toml` — add `dash>=3.0` + `dash-bootstrap-components>=2.0`; `uv sync` | ⬜ | Plotly already in deps. No new lockfile conflicts expected |
-| 6.6.2 | Create `dashboard/data_access.py` — DuckDB read-only connection + `@functools.lru_cache(maxsize=32)` on `load_mart(mart, **filters)` | ⬜ | Single importable layer; pages never query DuckDB directly. Mirrors `ingest/config.py` pattern |
-| 6.6.3 | Create `dashboard/_data/snapshot.py` — DuckDB → Parquet snapshot writer (5 marts + forecast) | ⬜ | Cold-start optimization; Parquet reads ~10× faster than JSON at runtime |
-| 6.6.4 | Create `dashboard/app.py` — `Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.CERULEAN])` + `dbc.NavbarSimple` with `dash.page_registry` links | ⬜ | ~30 lines. `server = app.server` for gunicorn |
-| 6.6.5 | Create `dashboard/components/filters.py` — `dcc.Dropdown` × 2 + `dcc.RangeSlider` + `dcc.Store(id="filters-store")` | ⬜ | Global filter bar, shared across all 4 pages via the Store |
-| 6.6.6 | Create `dashboard/components/kpi_cards.py` — 4-card row (Rice / Oil / Sugar / Flour) | ⬜ | Reusable across pages 1 and 3 |
-| 6.6.7 | Create `dashboard/components/layout.py` — page header, footer, "forecast limitations" footnote | ⬜ | Loads `forecast.json` `metadata.data_source_note` once, exposes via `dcc.Markdown` |
-| 6.6.8 | Add `run_pipeline.py` Step 7.5 — call `snapshot.py` after Step 7 export | ⬜ | Logs to `logs/snapshot.log`; updates `pipeline.lineage` with snapshot row counts |
+| 6.6.1 | Update `pyproject.toml` — add `dash>=3.0`, `dash-bootstrap-components>=2.0`, `dash-ag-grid>=31.0`, `gunicorn>=22.0`; `uv sync` | ⬜ | Plotly already in deps. No new lockfile conflicts expected. `dash-ag-grid` for sortable/filterable tables. `gunicorn` for HF Spaces production server. |
+| 6.6.2 | Create `dashboard/__init__.py` — empty init file | ⬜ | Makes `dashboard` a Python package. Required for `from dashboard.app import app` in HF Spaces Dockerfile CMD. |
+| 6.6.3 | Create `dashboard/data_access.py` — DuckDB read-only connection + `@functools.lru_cache(maxsize=32)` on `load_mart(mart, **filters)` | ⬜ | Single importable layer; pages never query DuckDB directly. Mirrors `ingest/config.py` pattern. Key functions: `load_mart(name, **filters)`, `load_forecast_data()`, `load_forecast_metadata()`, `get_latest_prices(df)`, `compute_yoy_delta(df)`. Filter dict unpacked into SQL WHERE clauses dynamically. |
+| 6.6.4 | Create `dashboard/app.py` — `Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.CERULEAN])` + `dbc.NavbarSimple` with `dash.page_registry` links | ⬜ | ~40 lines. `server = app.server` for gunicorn. `dbc.Container(fluid=True)` wrapper. Navbar auto-populates from page_registry. Add `css/` link for custom overrides if needed. |
+| 6.6.5 | Create `dashboard/components/__init__.py` — empty init | ⬜ | Package marker |
+| 6.6.6 | Create `dashboard/components/filters.py` — `dcc.Dropdown` × 2 + `dcc.RangeSlider` + `dcc.Store(id="filters-store")` | ⬜ | Global filter bar, shared across all 4 pages via the Store. Commodity dropdown (All/Rice/Cooking Oil/Sugar/Flour). Island Group dropdown (All/Java/Sumatera/Kalimantan/Sulawesi/Eastern Indonesia). Year Range slider (2007–2024). Wrapped in `dbc.Row` with `bg-light` background. |
+| 6.6.7 | Create `dashboard/components/kpi_cards.py` — 4-card row (Rice / Cooking Oil / Sugar / Flour) | ⬜ | Reusable across pages 1 and 3. Each card: commodity icon, name, current price (Rp formatted), YoY% delta (green/red). `dbc.Col(md=3)` per card. Color-coded border per commodity. |
+| 6.6.8 | Create `dashboard/components/layout.py` — page header, footer, "forecast limitations" footnote, methodology page placeholder | ⬜ | `page_header(title, subtitle)` returns `html.Div` with `H3` + `P`. `forecast_footnote()` returns `dbc.Alert` with model limitations text from `forecast.json` `metadata.data_source_note`. `methodology_page()` placeholder for `/methodology` route. |
+| 6.6.9 | Create `dashboard/pages/__init__.py` — empty init | ⬜ | Package marker |
+| 6.6.10 | Create `dashboard/pages/price_trends.py` — Page 1 (see §6.1 task table) | ⬜ | 1 module: `layout()` function + `update_page1` callback. Registered via `dash.register_page(__name__, path="/", name="Price Trends")`. |
+| 6.6.11 | Create `dashboard/pages/seasonal_patterns.py` — Page 2 (see §6.2 task table) | ⬜ | 1 module: `layout()` function + `update_page2` callback. Registered via `dash.register_page(__name__, path="/seasonal", name="Seasonal Patterns")`. |
+| 6.6.12 | Create `dashboard/pages/geographic_disparity.py` — Page 3 (see §6.3 task table) | ⬜ | 1 module: `layout()` function + `update_page3` callback. Registered via `dash.register_page(__name__, path="/geographic", name="Geographic Disparity")`. |
+| 6.6.13 | Create `dashboard/pages/commodity_signals.py` — Page 4 (see §6.4 task table) | ⬜ | 1 module: `layout()` function + `update_page4` callback. Registered via `dash.register_page(__name__, path="/signals", name="Commodity Signals")`. |
+| 6.6.14 | Smoke test: `uv run python -c "from dashboard.app import app; print('Pages:', len(dash.page_registry))"` | ⬜ | Expected: `Pages: 4`. Validates all page modules import without error. |
 
 ### 6.7 Global Filters + Export + Deploy
 > **Sequential** — depends on §6.6 (components must exist before pages can subscribe to them).
@@ -444,13 +454,139 @@ Dash wins on the multi-page pattern (Dash Pages plugin is the most mature multi-
 | 6.7.2 | (Unchanged) `export/export_json.py` — query all 4 mart models + forecast → static JSON | ✅ DONE | Writes to `dashboard/public/data/`. Retained as row-count verification artefact per §78 preservation |
 | 6.7.3 | (Unchanged) `verify_export()` — validates mart row count matches JSON record count per file | ✅ DONE | Continues to log to `logs/export.log` + update `pipeline.lineage.export_status` |
 | 6.7.4 | (Unchanged) Log export results to `logs/export.log` + update `pipeline.lineage.export_status` | ✅ DONE | |
-| 6.7.5 | Create `dashboard/Dockerfile` — `python:3.11-slim` base, copy `app.py` + `pages/` + `components/` + `data_access.py`, copy `data/wfp.duckdb` (12 MB) + `dashboard/public/data/forecast.json` (91 KB), `CMD ["gunicorn", "app:server", "-b", "0.0.0.0:7860", "-w", "2"]` | ⬜ | HF Spaces uses port 7860; `app:server` is the Flask handle exposed via `app.server` |
-| 6.7.6 | Create `dashboard/README_HF.md` (HF metadata) — `title`, `emoji: 🌾`, `colorFrom: green`, `colorTo: yellow`, `sdk: docker`, `app_port: 7860` | ⬜ | HF Spaces renders this as the Space header |
-| 6.7.7 | Create `dashboard/.dockerignore` — exclude `.venv/`, `__pycache__/`, `analysis/`, `transform/`, `forecast/`, `logs/`, `docs/` | ⬜ | Keeps Docker image lean; only runtime files ship |
-| 6.7.8 | Create Hugging Face Space `albarpambagio/wfp-food-price` — SDK = Docker, visibility = Public | ⬜ | One-time manual step in HF UI |
-| 6.7.9 | Push dashboard code to Space — `hf upload albarpambagio/wfp-food-price .` from `dashboard/` | ⬜ | Wait for Docker build (~3–5 min first push); get public URL `https://albarpambagio-wfp-food-price.hf.space` |
-| 6.7.10 | Smoke test: `uv run python -c "from dashboard.app import app; print('OK', len(dash.page_registry))"` | ⬜ | Validates the app object loads without error before deploy |
-| 6.7.11 | Verify live URL — all 4 pages answerable in 60 seconds with cold start | ⬜ | Per AGENTS.md Success Criteria §1 (rewritten for HF Spaces) |
+
+### 6.8 Docker Build + HF Spaces Deploy (expanded per HF CLI skill)
+
+> **Prerequisite**: Install HF CLI once: `curl -LsSf https://hf.co/cli/install.sh | bash -s`
+
+#### 6.8.1 — HF CLI Authentication
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.8.1a | `hf auth login` — paste token from `https://huggingface.co/settings/tokens` (write access) | ⬜ | One-time. Token stored in `~/.cache/huggingface/credentials`. Use `HF_TOKEN` env var for CI. |
+| 6.8.1b | `hf auth whoami` — verify `albarpambagio` | ⬜ | Confirms authenticated identity before Space creation |
+
+#### 6.8.2 — Create Space (CLI, not UI)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.8.2a | `hf repos create albarpambagio/wfp-food-price --type space --space-sdk docker --public --exist-ok` | ⬜ | Creates the Space repo on Hub. `--exist-ok` prevents error if already exists. |
+| 6.8.2b | `hf spaces info albarpambagio/wfp-food-price` — verify `sdk: docker`, `visibility: public` | ⬜ | Confirms Space was created correctly before uploading code |
+
+#### 6.8.3 — Dockerfile
+
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+
+# Layer 1: deps (cached unless pyproject.toml changes)
+COPY pyproject.toml uv.lock ./
+RUN pip install uv && uv sync --frozen --no-dev
+
+# Layer 2: dashboard code
+COPY dashboard/app.py dashboard/
+COPY dashboard/pages/ dashboard/pages/
+COPY dashboard/components/ dashboard/components/
+COPY dashboard/data_access.py dashboard/
+
+# Layer 3: runtime data
+COPY data/wfp.duckdb data/wfp.duckdb
+COPY dashboard/public/data/forecast.json dashboard/public/data/forecast.json
+
+EXPOSE 7860
+CMD ["gunicorn", "app:server", "--bind", "0.0.0.0:7860", "--workers", "2", "--timeout", "120"]
+```
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.8.3a | Create `dashboard/Dockerfile` per above spec | ⬜ | Port **7860** (HF Spaces standard, not 8050 from local dev). `app:server` = Flask handle exposed via `app.server`. 2 workers (free tier CPU limit). 120s timeout for cold-start DuckDB. |
+| 6.8.3b | Create `dashboard/.dockerignore` — exclude `.venv/`, `__pycache__/`, `analysis/`, `transform/`, `forecast/`, `logs/`, `docs/`, `.git/`, `data/raw/` | ⬜ | Keeps Docker image lean (~200 MB vs ~1 GB). `data/raw/` excluded (CSVs not needed at runtime). |
+| 6.8.3c | Create `dashboard/README_HF.md` (HF Spaces metadata header) | ⬜ | Required for HF to recognize the Space. See YAML below. |
+
+**`dashboard/README_HF.md` content:**
+```yaml
+---
+title: WFP Food Price Intelligence
+emoji: 🌾
+colorFrom: green
+colorTo: yellow
+sdk: docker
+app_port: 7860
+pinned: false
+---
+```
+
+#### 6.8.4 — Upload + Build
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.8.4a | `cd "D:\PROJECT\food price dashboard" && hf upload albarpambagio/wfp-food-price --type space dashboard/ --delete --commit-message "feat: Phase 6 — Dash dashboard (4 pages + DuckDB)"` | ⬜ | Upload from **project root** so Dockerfile `COPY` paths resolve. `--delete` removes Hub files not in local dir. First push triggers Docker build (~3–5 min). |
+| 6.8.4b | `hf spaces logs albarpambagio/wfp-food-price --build --follow` | ⬜ | Monitor Docker build in real-time. Watch for: COPY failures, port mismatch, import errors. |
+| 6.8.4c | If build fails: fix, re-upload with same command | ⬜ | HF rebuilds incrementally (Docker layer caching). Only changed layers rebuild. |
+
+#### 6.8.5 — Post-Deploy Verification
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.8.5a | `curl -s https://albarpambagio-wfp-food-price.hf.space/ \| Select-Object -First 5` | ⬜ | Verify homepage loads (returns HTML, not 502) |
+| 6.8.5b | Verify all 4 page routes respond: `/`, `/seasonal`, `/geographic`, `/signals` | ⬜ | Each page should render within 30s of first request (cold start) |
+| 6.8.5c | Verify KPI cards render with real data (Rp prices, YoY%) | ⬜ | Confirms DuckDB read-only connection works inside Docker |
+| 6.8.5d | Verify forecast overlay loads (dashed lines + CI area) | ⬜ | Confirms `forecast.json` COPY path is correct |
+| 6.8.5e | Check Space info: `hf spaces info albarpambagio/wfp-food-price` — `runtime: running` | ⬜ | Space must show running, not building or paused |
+
+#### 6.8.6 — Iterative Updates (post-initial-deploy)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.8.6a | **Hot-reload** (Python-only changes, no new deps): `hf spaces hot-reload albarpambagio/wfp-food-price --local-file dashboard/app.py` | ⬜ | Skips full Docker rebuild. Changes any Python file instantly. Good for callback logic fixes. |
+| 6.8.6b | **Full re-upload** (new deps, Dockerfile changes): `hf upload albarpambagio/wfp-food-price --type space dashboard/ --delete --commit-message "fix: <description>"` | ⬜ | Triggers full Docker rebuild. Use when `pyproject.toml` or `Dockerfile` changes. |
+| 6.8.6c | **Restart** (stuck build, OOM): `hf spaces restart albarpambagio-wfp-food-price` | ⬜ | Full restart. Cold start ~15-30s. |
+| 6.8.6d | **Dev mode** (SSH debugging): `hf spaces dev-mode albarpambagio/wfp-food-price --stop` then `hf spaces ssh albarpambagio/wfp-food-price` | ⬜ | Opens SSH tunnel into running container. Use for debugging import errors or DuckDB path issues. |
+
+#### 6.8.7 — Sleep/Wake + Maintenance
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.8.7a | HF Spaces free tier: auto-sleeps after 48h inactivity. First request wakes it (~15-30s cold start). | ⬜ | No wake-up hook needed. HF auto-wakes on HTTP request. |
+| 6.8.7b | **Pause manually**: `hf spaces pause albarpambagio/wfp-food-price` | ⬜ | Saves compute quota when not demonstrating the project |
+| 6.8.7c | **Resume**: `hf spaces restart albarpambagio/wfp-food-price` | ⬜ | |
+| 6.8.7d | **Delete Space** (if needed): `hf repos delete albarpambagio/wfp-food-price --type space --yes` | ⬜ | Irreversible. Only if rebuilding from scratch. |
+
+#### 6.8.8 — HF CLI Command Reference (for this project)
+
+| Step | Command | Purpose |
+|------|---------|---------|
+| Auth | `hf auth login` | One-time token setup |
+| Auth check | `hf auth whoami` | Verify identity |
+| Create Space | `hf repos create ... --type space --space-sdk docker --public --exist-ok` | Create repo on Hub |
+| Upload code | `hf upload ... --type space dashboard/ --delete --commit-message "..."` | Push code + data |
+| Build logs | `hf spaces logs ... --build --follow` | Watch Docker build |
+| Hot reload | `hf spaces hot-reload ... --local-file <path>` | Python-only instant update |
+| Restart | `hf spaces restart` | Full restart if stuck |
+| Status | `hf spaces info` | Check runtime state |
+| SSH debug | `hf spaces dev-mode ... && hf spaces ssh ...` | Container shell access |
+| Pause | `hf spaces pause` | Manual sleep |
+| Secrets | `hf spaces secrets add ... --secrets "KEY=VALUE"` | Add env secrets (future use) |
+| Env vars | `hf spaces variables add ... --env "KEY=VALUE"` | Add env variables |
+
+#### 6.8.9 — Smoke Test (local, before deploy)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.8.9a | `uv run python -c "from dashboard.app import app; print('OK', len(dash.page_registry))"` | ⬜ | Validates app object loads. Expected: `OK 4` (4 pages registered) |
+| 6.8.9b | `uv run python dashboard/app.py` — visit `http://localhost:7860` | ⬜ | Full local test. All 4 pages, filters, charts, DuckDB queries. |
+| 6.8.9c | Verify cold start < 3s (data loaded once via `lru_cache`, charts built in callback) | ⬜ | Performance acceptance criterion |
+
+#### 6.8.10 — Local Dev vs Production Differences
+
+| Aspect | Local (`uv run python dashboard/app.py`) | HF Spaces (Docker) |
+|--------|------------------------------------------|---------------------|
+| Port | 7860 (configured to match) | 7860 (HF default) |
+| DuckDB path | `PROJECT_ROOT / "data" / "wfp.duckdb"` (relative to `dashboard/`) | Same — `COPY`'d into container at `/app/data/wfp.duckdb` |
+| Forecast JSON | `PROJECT_ROOT / "dashboard" / "public" / "data" / "forecast.json"` | Same — `COPY`'d into container |
+| Workers | 1 (Flask dev server) | 2 (gunicorn) |
+| Cold start | Instant (already running) | 15-30s (first request after sleep) |
+| Hot reload | Auto (Flask dev mode) | `hf spaces hot-reload` or full re-upload |
 
 ### New Dash Conventions Block (will be added to AGENTS.md "Key Conventions")
 

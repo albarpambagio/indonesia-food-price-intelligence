@@ -26,6 +26,11 @@ MART_EXPORTS = [
         "order_by": "month, commodity_consolidated, island_group, admin1",
     },
     {
+        "source": f"{SCHEMA}.mart_price_trends_national",
+        "filename": "price_trends_national.json",
+        "order_by": "month, commodity_consolidated",
+    },
+    {
         "source": f"{SCHEMA}.mart_seasonal_patterns",
         "filename": "seasonal_patterns.json",
         "order_by": "month, commodity_consolidated, island_group",
@@ -68,6 +73,9 @@ def export_table(conn: duckdb.DuckDBPyConnection, cfg: dict) -> int:
         query += f" ORDER BY {order_by}"
 
     df = conn.execute(query).fetchdf()
+    for col in df.columns:
+        if "datetime" in str(df[col].dtype):
+            df[col] = df[col].dt.strftime("%Y-%m-%d")
     df = df.replace({np.nan: None, float("nan"): None, float("inf"): None, float("-inf"): None})
     records = df.to_dict(orient="records")
 

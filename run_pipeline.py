@@ -126,8 +126,6 @@ def get_connection_safe() -> duckdb.DuckDBPyConnection | None:
     return None
 
 
-current_step_map: dict[str, str] = {}
-
 def main() -> None:
     start = time.time()
     run_id = generate_run_id()
@@ -139,7 +137,6 @@ def main() -> None:
 
     current_step = "pipeline_status"
     current_step_name = "pipeline"
-    current_step_map.clear()
 
     try:
         # --- Step 1: Ingest ---
@@ -163,6 +160,7 @@ def main() -> None:
         raw_food = conn.execute("SELECT COUNT(*) FROM raw.food_prices").fetchone()[0]
         raw_markets = conn.execute("SELECT COUNT(*) FROM raw.markets").fetchone()[0]
         update_lineage(conn, run_id, raw_food_prices_rows=raw_food, raw_markets_rows=raw_markets)
+        update_lineage(conn, run_id, transform_status="running")
         conn.close()
 
         # --- Step 2: dbt seed (islamic calendar) ---
@@ -171,13 +169,16 @@ def main() -> None:
         step("dbt seed")
         run_dbt(["seed"])
 
+        # --- Step 2b: dbt source freshness ---
+        current_step = "transform_status"
+        current_step_name = "dbt source freshness"
+        step("dbt source freshness")
+        run_dbt(["source", "freshness"])
+
         # --- Step 3: dbt run (staging + intermediate + marts) ---
         current_step = "transform_status"
         current_step_name = "dbt run"
         step("dbt run")
-        conn = get_connection()
-        update_lineage(conn, run_id, transform_status="running")
-        conn.close()
         run_dbt(["run"])
         copy_dbt_artifacts(run_id)
 

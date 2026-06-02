@@ -149,12 +149,41 @@ models:
       - name: flour_price
         description: Monthly national average price of Flour (IDR) — NULL in months with no actual-level price data (limited to national avg market_id=974)
 
+  - name: mart_price_trends_national
+    description: >
+      National monthly average price per commodity — no island_group or province filter.
+      Grain: month × commodity_consolidated. Includes all 4 staples (Rice, Cooking Oil,
+      Sugar, Flour) even where market-level actual prices are limited to national avg
+      (market_id=974). Feeds Page 1 KPI cards and multi-commodity trend chart.
+    columns:
+      - name: month
+        description: Month of observation — truncated to month grain
+        tests:
+          - not_null
+      - name: commodity_consolidated
+        description: Normalised commodity name — all 4 staples present
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Rice
+                  - Cooking Oil
+                  - Sugar
+                  - Flour
+      - name: avg_price_idr
+        description: Average price in IDR across all markets for the month-commodity
+        tests:
+          - not_null
+          - positive_values
+
   - name: mart_correlation_summary
     description: >
       Cross-correlation coefficients (Pearson's r) for all 6 commodity pairs
       at lags 0-3 months. 24 rows total. Includes rank per commodity for
-      identifying which lag has the strongest signal. Feeds Page 4 leading
-      indicator analysis.
+      identifying which lag has the strongest signal. Also includes pre/post-2022
+      split correlations to detect structural break impact (2022 cooking oil shock).
+      Feeds Page 4 leading indicator analysis.
       ⚠ Pairs are directional (e.g., 'rice-oil' means lag is applied to Rice,
       not Oil). Reverse direction not computed — query mart_commodity_correlation
       directly with LAG(oil_price, N) for Oil-leading-Rice analysis.
@@ -170,6 +199,12 @@ models:
         tests:
           - not_null
       - name: pearson_r
-        description: Pearson correlation coefficient between the lagged and unlagged series
+        description: Pearson correlation coefficient between the lagged and unlagged series (full period)
         tests:
           - not_null
+      - name: pearson_r_pre_2022
+        description: Pearson r computed on months before 2022-01-01 — captures pre-structural-break relationship
+        tests:
+          - not_null
+      - name: pearson_r_post_2022
+        description: Pearson r computed on months from 2022-01-01 onward — captures post-structural-break relationship. NULL for pairs involving commodities with no post-2022 data (e.g., Flour ends 2020).

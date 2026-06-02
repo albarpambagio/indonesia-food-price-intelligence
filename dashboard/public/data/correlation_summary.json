@@ -3,144 +3,192 @@
     "commodity_pair": "oil-flour",
     "lag_months": 0,
     "pearson_r": 0.8777,
+    "pearson_r_pre_2022": 0.8777,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 4
   },
   {
     "commodity_pair": "oil-flour",
     "lag_months": 1,
     "pearson_r": 0.882,
+    "pearson_r_pre_2022": 0.882,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 3
   },
   {
     "commodity_pair": "oil-flour",
     "lag_months": 2,
     "pearson_r": 0.8852,
+    "pearson_r_pre_2022": 0.8852,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 2
   },
   {
     "commodity_pair": "oil-flour",
     "lag_months": 3,
     "pearson_r": 0.8885,
+    "pearson_r_pre_2022": 0.8885,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 1
   },
   {
     "commodity_pair": "oil-sugar",
     "lag_months": 0,
     "pearson_r": 0.746,
+    "pearson_r_pre_2022": 0.746,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 5
   },
   {
     "commodity_pair": "oil-sugar",
     "lag_months": 1,
     "pearson_r": 0.7385,
+    "pearson_r_pre_2022": 0.7385,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 6
   },
   {
     "commodity_pair": "oil-sugar",
     "lag_months": 2,
     "pearson_r": 0.7306,
+    "pearson_r_pre_2022": 0.7306,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 7
   },
   {
     "commodity_pair": "oil-sugar",
     "lag_months": 3,
     "pearson_r": 0.7228,
+    "pearson_r_pre_2022": 0.7228,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 8
   },
   {
     "commodity_pair": "rice-flour",
     "lag_months": 0,
     "pearson_r": 0.7727,
+    "pearson_r_pre_2022": 0.7727,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 9
   },
   {
     "commodity_pair": "rice-flour",
     "lag_months": 1,
     "pearson_r": 0.7719,
+    "pearson_r_pre_2022": 0.7719,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 10
   },
   {
     "commodity_pair": "rice-flour",
     "lag_months": 2,
     "pearson_r": 0.7708,
+    "pearson_r_pre_2022": 0.7708,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 11
   },
   {
     "commodity_pair": "rice-flour",
     "lag_months": 3,
     "pearson_r": 0.7708,
+    "pearson_r_pre_2022": 0.7708,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 12
   },
   {
     "commodity_pair": "rice-oil",
     "lag_months": 0,
     "pearson_r": 0.8599,
+    "pearson_r_pre_2022": 0.8599,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 4
   },
   {
     "commodity_pair": "rice-oil",
     "lag_months": 1,
     "pearson_r": 0.8296,
+    "pearson_r_pre_2022": 0.8653,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 6
   },
   {
     "commodity_pair": "rice-oil",
     "lag_months": 2,
     "pearson_r": 0.8039,
+    "pearson_r_pre_2022": 0.8706,
+    "pearson_r_post_2022": 1.0,
     "rank_for_commodity": 7
   },
   {
     "commodity_pair": "rice-oil",
     "lag_months": 3,
     "pearson_r": 0.7817,
+    "pearson_r_pre_2022": 0.8767,
+    "pearson_r_post_2022": 0.7634,
     "rank_for_commodity": 8
   },
   {
     "commodity_pair": "rice-sugar",
     "lag_months": 0,
     "pearson_r": 0.871,
+    "pearson_r_pre_2022": 0.871,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 1
   },
   {
     "commodity_pair": "rice-sugar",
     "lag_months": 1,
     "pearson_r": 0.8666,
+    "pearson_r_pre_2022": 0.8666,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 2
   },
   {
     "commodity_pair": "rice-sugar",
     "lag_months": 2,
     "pearson_r": 0.8622,
+    "pearson_r_pre_2022": 0.8622,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 3
   },
   {
     "commodity_pair": "rice-sugar",
     "lag_months": 3,
     "pearson_r": 0.858,
+    "pearson_r_pre_2022": 0.858,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 5
   },
   {
     "commodity_pair": "sugar-flour",
     "lag_months": 0,
     "pearson_r": 0.7311,
+    "pearson_r_pre_2022": 0.7311,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 1
   },
   {
     "commodity_pair": "sugar-flour",
     "lag_months": 1,
     "pearson_r": 0.7178,
+    "pearson_r_pre_2022": 0.7178,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 2
   },
   {
     "commodity_pair": "sugar-flour",
     "lag_months": 2,
     "pearson_r": 0.7058,
+    "pearson_r_pre_2022": 0.7058,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 3
   },
   {
     "commodity_pair": "sugar-flour",
     "lag_months": 3,
     "pearson_r": 0.6952,
+    "pearson_r_pre_2022": 0.6952,
+    "pearson_r_post_2022": null,
     "rank_for_commodity": 4
   }
 ]

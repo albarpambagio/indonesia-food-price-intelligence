@@ -1,0 +1,5753 @@
+[
+  {
+    "month": "2007-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 8178.86,
+    "avg_price_usd": 0.9,
+    "min_price_idr": 8178.86,
+    "max_price_idr": 8178.86
+  },
+  {
+    "month": "2007-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 4328.26,
+    "avg_price_usd": 0.48,
+    "min_price_idr": 4328.26,
+    "max_price_idr": 4328.26
+  },
+  {
+    "month": "2007-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 5941.98,
+    "avg_price_usd": 0.65,
+    "min_price_idr": 5941.98,
+    "max_price_idr": 5941.98
+  },
+  {
+    "month": "2007-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6554.75,
+    "avg_price_usd": 0.72,
+    "min_price_idr": 6554.75,
+    "max_price_idr": 6554.75
+  },
+  {
+    "month": "2007-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 8405.0,
+    "avg_price_usd": 0.93,
+    "min_price_idr": 8405.0,
+    "max_price_idr": 8405.0
+  },
+  {
+    "month": "2007-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 4386.0,
+    "avg_price_usd": 0.49,
+    "min_price_idr": 4386.0,
+    "max_price_idr": 4386.0
+  },
+  {
+    "month": "2007-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6445.0,
+    "avg_price_usd": 0.71,
+    "min_price_idr": 6445.0,
+    "max_price_idr": 6445.0
+  },
+  {
+    "month": "2007-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6598.0,
+    "avg_price_usd": 0.73,
+    "min_price_idr": 6598.0,
+    "max_price_idr": 6598.0
+  },
+  {
+    "month": "2007-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 8513.0,
+    "avg_price_usd": 0.92,
+    "min_price_idr": 8513.0,
+    "max_price_idr": 8513.0
+  },
+  {
+    "month": "2007-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 4416.0,
+    "avg_price_usd": 0.48,
+    "min_price_idr": 4416.0,
+    "max_price_idr": 4416.0
+  },
+  {
+    "month": "2007-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6414.0,
+    "avg_price_usd": 0.7,
+    "min_price_idr": 6414.0,
+    "max_price_idr": 6414.0
+  },
+  {
+    "month": "2007-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6603.0,
+    "avg_price_usd": 0.72,
+    "min_price_idr": 6603.0,
+    "max_price_idr": 6603.0
+  },
+  {
+    "month": "2007-04-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 8788.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 8788.0,
+    "max_price_idr": 8788.0
+  },
+  {
+    "month": "2007-04-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 4459.0,
+    "avg_price_usd": 0.49,
+    "min_price_idr": 4459.0,
+    "max_price_idr": 4459.0
+  },
+  {
+    "month": "2007-04-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6083.0,
+    "avg_price_usd": 0.67,
+    "min_price_idr": 6083.0,
+    "max_price_idr": 6083.0
+  },
+  {
+    "month": "2007-04-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6645.0,
+    "avg_price_usd": 0.73,
+    "min_price_idr": 6645.0,
+    "max_price_idr": 6645.0
+  },
+  {
+    "month": "2007-05-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 9319.0,
+    "avg_price_usd": 1.06,
+    "min_price_idr": 9319.0,
+    "max_price_idr": 9319.0
+  },
+  {
+    "month": "2007-05-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 4475.0,
+    "avg_price_usd": 0.51,
+    "min_price_idr": 4475.0,
+    "max_price_idr": 4475.0
+  },
+  {
+    "month": "2007-05-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 5955.0,
+    "avg_price_usd": 0.68,
+    "min_price_idr": 5955.0,
+    "max_price_idr": 5955.0
+  },
+  {
+    "month": "2007-05-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6630.0,
+    "avg_price_usd": 0.75,
+    "min_price_idr": 6630.0,
+    "max_price_idr": 6630.0
+  },
+  {
+    "month": "2007-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 9853.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 9853.0,
+    "max_price_idr": 9853.0
+  },
+  {
+    "month": "2007-06-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 4499.0,
+    "avg_price_usd": 0.5,
+    "min_price_idr": 4499.0,
+    "max_price_idr": 4499.0
+  },
+  {
+    "month": "2007-06-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 5949.0,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 5949.0,
+    "max_price_idr": 5949.0
+  },
+  {
+    "month": "2007-06-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6579.0,
+    "avg_price_usd": 0.73,
+    "min_price_idr": 6579.0,
+    "max_price_idr": 6579.0
+  },
+  {
+    "month": "2007-07-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 10018.0,
+    "avg_price_usd": 1.11,
+    "min_price_idr": 10018.0,
+    "max_price_idr": 10018.0
+  },
+  {
+    "month": "2007-07-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 4558.0,
+    "avg_price_usd": 0.5,
+    "min_price_idr": 4558.0,
+    "max_price_idr": 4558.0
+  },
+  {
+    "month": "2007-07-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 5944.0,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 5944.0,
+    "max_price_idr": 5944.0
+  },
+  {
+    "month": "2007-07-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6527.0,
+    "avg_price_usd": 0.72,
+    "min_price_idr": 6527.0,
+    "max_price_idr": 6527.0
+  },
+  {
+    "month": "2007-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 10453.0,
+    "avg_price_usd": 1.11,
+    "min_price_idr": 10453.0,
+    "max_price_idr": 10453.0
+  },
+  {
+    "month": "2007-08-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 4717.0,
+    "avg_price_usd": 0.5,
+    "min_price_idr": 4717.0,
+    "max_price_idr": 4717.0
+  },
+  {
+    "month": "2007-08-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 5965.0,
+    "avg_price_usd": 0.63,
+    "min_price_idr": 5965.0,
+    "max_price_idr": 5965.0
+  },
+  {
+    "month": "2007-08-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6575.0,
+    "avg_price_usd": 0.7,
+    "min_price_idr": 6575.0,
+    "max_price_idr": 6575.0
+  },
+  {
+    "month": "2007-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 10608.0,
+    "avg_price_usd": 1.13,
+    "min_price_idr": 10608.0,
+    "max_price_idr": 10608.0
+  },
+  {
+    "month": "2007-09-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 4975.0,
+    "avg_price_usd": 0.53,
+    "min_price_idr": 4975.0,
+    "max_price_idr": 4975.0
+  },
+  {
+    "month": "2007-09-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 5977.0,
+    "avg_price_usd": 0.64,
+    "min_price_idr": 5977.0,
+    "max_price_idr": 5977.0
+  },
+  {
+    "month": "2007-09-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6559.0,
+    "avg_price_usd": 0.7,
+    "min_price_idr": 6559.0,
+    "max_price_idr": 6559.0
+  },
+  {
+    "month": "2007-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 10669.0,
+    "avg_price_usd": 1.18,
+    "min_price_idr": 10669.0,
+    "max_price_idr": 10669.0
+  },
+  {
+    "month": "2007-10-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 5300.0,
+    "avg_price_usd": 0.58,
+    "min_price_idr": 5300.0,
+    "max_price_idr": 5300.0
+  },
+  {
+    "month": "2007-10-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 5981.0,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 5981.0,
+    "max_price_idr": 5981.0
+  },
+  {
+    "month": "2007-10-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6545.0,
+    "avg_price_usd": 0.72,
+    "min_price_idr": 6545.0,
+    "max_price_idr": 6545.0
+  },
+  {
+    "month": "2007-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 10768.0,
+    "avg_price_usd": 1.16,
+    "min_price_idr": 10768.0,
+    "max_price_idr": 10768.0
+  },
+  {
+    "month": "2007-11-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 5426.0,
+    "avg_price_usd": 0.58,
+    "min_price_idr": 5426.0,
+    "max_price_idr": 5426.0
+  },
+  {
+    "month": "2007-11-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 5985.0,
+    "avg_price_usd": 0.64,
+    "min_price_idr": 5985.0,
+    "max_price_idr": 5985.0
+  },
+  {
+    "month": "2007-11-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6527.0,
+    "avg_price_usd": 0.7,
+    "min_price_idr": 6527.0,
+    "max_price_idr": 6527.0
+  },
+  {
+    "month": "2007-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 10953.0,
+    "avg_price_usd": 1.17,
+    "min_price_idr": 10953.0,
+    "max_price_idr": 10953.0
+  },
+  {
+    "month": "2007-12-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 5846.0,
+    "avg_price_usd": 0.63,
+    "min_price_idr": 5846.0,
+    "max_price_idr": 5846.0
+  },
+  {
+    "month": "2007-12-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6147.0,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 6147.0,
+    "max_price_idr": 6147.0
+  },
+  {
+    "month": "2007-12-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6478.0,
+    "avg_price_usd": 0.69,
+    "min_price_idr": 6478.0,
+    "max_price_idr": 6478.0
+  },
+  {
+    "month": "2008-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11381.0,
+    "avg_price_usd": 1.21,
+    "min_price_idr": 11381.0,
+    "max_price_idr": 11381.0
+  },
+  {
+    "month": "2008-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 6474.0,
+    "avg_price_usd": 0.69,
+    "min_price_idr": 6474.0,
+    "max_price_idr": 6474.0
+  },
+  {
+    "month": "2008-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6405.0,
+    "avg_price_usd": 0.68,
+    "min_price_idr": 6405.0,
+    "max_price_idr": 6405.0
+  },
+  {
+    "month": "2008-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6519.0,
+    "avg_price_usd": 0.69,
+    "min_price_idr": 6519.0,
+    "max_price_idr": 6519.0
+  },
+  {
+    "month": "2008-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11954.0,
+    "avg_price_usd": 1.3,
+    "min_price_idr": 11954.0,
+    "max_price_idr": 11954.0
+  },
+  {
+    "month": "2008-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 6970.0,
+    "avg_price_usd": 0.76,
+    "min_price_idr": 6970.0,
+    "max_price_idr": 6970.0
+  },
+  {
+    "month": "2008-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6375.0,
+    "avg_price_usd": 0.7,
+    "min_price_idr": 6375.0,
+    "max_price_idr": 6375.0
+  },
+  {
+    "month": "2008-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6531.0,
+    "avg_price_usd": 0.71,
+    "min_price_idr": 6531.0,
+    "max_price_idr": 6531.0
+  },
+  {
+    "month": "2008-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12914.0,
+    "avg_price_usd": 1.4,
+    "min_price_idr": 12914.0,
+    "max_price_idr": 12914.0
+  },
+  {
+    "month": "2008-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7101.0,
+    "avg_price_usd": 0.77,
+    "min_price_idr": 7101.0,
+    "max_price_idr": 7101.0
+  },
+  {
+    "month": "2008-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6221.0,
+    "avg_price_usd": 0.67,
+    "min_price_idr": 6221.0,
+    "max_price_idr": 6221.0
+  },
+  {
+    "month": "2008-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6540.0,
+    "avg_price_usd": 0.71,
+    "min_price_idr": 6540.0,
+    "max_price_idr": 6540.0
+  },
+  {
+    "month": "2008-04-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12809.0,
+    "avg_price_usd": 1.39,
+    "min_price_idr": 12809.0,
+    "max_price_idr": 12809.0
+  },
+  {
+    "month": "2008-04-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7062.0,
+    "avg_price_usd": 0.77,
+    "min_price_idr": 7062.0,
+    "max_price_idr": 7062.0
+  },
+  {
+    "month": "2008-04-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6132.0,
+    "avg_price_usd": 0.67,
+    "min_price_idr": 6132.0,
+    "max_price_idr": 6132.0
+  },
+  {
+    "month": "2008-04-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6561.0,
+    "avg_price_usd": 0.71,
+    "min_price_idr": 6561.0,
+    "max_price_idr": 6561.0
+  },
+  {
+    "month": "2008-05-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12944.0,
+    "avg_price_usd": 1.39,
+    "min_price_idr": 12944.0,
+    "max_price_idr": 12944.0
+  },
+  {
+    "month": "2008-05-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7080.0,
+    "avg_price_usd": 0.76,
+    "min_price_idr": 7080.0,
+    "max_price_idr": 7080.0
+  },
+  {
+    "month": "2008-05-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6253.0,
+    "avg_price_usd": 0.67,
+    "min_price_idr": 6253.0,
+    "max_price_idr": 6253.0
+  },
+  {
+    "month": "2008-05-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6533.0,
+    "avg_price_usd": 0.7,
+    "min_price_idr": 6533.0,
+    "max_price_idr": 6533.0
+  },
+  {
+    "month": "2008-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13045.0,
+    "avg_price_usd": 1.4,
+    "min_price_idr": 13045.0,
+    "max_price_idr": 13045.0
+  },
+  {
+    "month": "2008-06-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7110.0,
+    "avg_price_usd": 0.76,
+    "min_price_idr": 7110.0,
+    "max_price_idr": 7110.0
+  },
+  {
+    "month": "2008-06-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6406.0,
+    "avg_price_usd": 0.69,
+    "min_price_idr": 6406.0,
+    "max_price_idr": 6406.0
+  },
+  {
+    "month": "2008-06-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6540.0,
+    "avg_price_usd": 0.7,
+    "min_price_idr": 6540.0,
+    "max_price_idr": 6540.0
+  },
+  {
+    "month": "2008-07-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12973.0,
+    "avg_price_usd": 1.42,
+    "min_price_idr": 12973.0,
+    "max_price_idr": 12973.0
+  },
+  {
+    "month": "2008-07-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7078.0,
+    "avg_price_usd": 0.77,
+    "min_price_idr": 7078.0,
+    "max_price_idr": 7078.0
+  },
+  {
+    "month": "2008-07-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6405.0,
+    "avg_price_usd": 0.7,
+    "min_price_idr": 6405.0,
+    "max_price_idr": 6405.0
+  },
+  {
+    "month": "2008-07-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6524.0,
+    "avg_price_usd": 0.71,
+    "min_price_idr": 6524.0,
+    "max_price_idr": 6524.0
+  },
+  {
+    "month": "2008-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12799.0,
+    "avg_price_usd": 1.39,
+    "min_price_idr": 12799.0,
+    "max_price_idr": 12799.0
+  },
+  {
+    "month": "2008-08-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7105.0,
+    "avg_price_usd": 0.77,
+    "min_price_idr": 7105.0,
+    "max_price_idr": 7105.0
+  },
+  {
+    "month": "2008-08-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6404.0,
+    "avg_price_usd": 0.7,
+    "min_price_idr": 6404.0,
+    "max_price_idr": 6404.0
+  },
+  {
+    "month": "2008-08-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6516.0,
+    "avg_price_usd": 0.71,
+    "min_price_idr": 6516.0,
+    "max_price_idr": 6516.0
+  },
+  {
+    "month": "2008-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12527.0,
+    "avg_price_usd": 1.33,
+    "min_price_idr": 12527.0,
+    "max_price_idr": 12527.0
+  },
+  {
+    "month": "2008-09-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7276.0,
+    "avg_price_usd": 0.77,
+    "min_price_idr": 7276.0,
+    "max_price_idr": 7276.0
+  },
+  {
+    "month": "2008-09-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6436.0,
+    "avg_price_usd": 0.68,
+    "min_price_idr": 6436.0,
+    "max_price_idr": 6436.0
+  },
+  {
+    "month": "2008-09-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6555.0,
+    "avg_price_usd": 0.69,
+    "min_price_idr": 6555.0,
+    "max_price_idr": 6555.0
+  },
+  {
+    "month": "2008-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12143.0,
+    "avg_price_usd": 1.24,
+    "min_price_idr": 12143.0,
+    "max_price_idr": 12143.0
+  },
+  {
+    "month": "2008-10-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7326.0,
+    "avg_price_usd": 0.75,
+    "min_price_idr": 7326.0,
+    "max_price_idr": 7326.0
+  },
+  {
+    "month": "2008-10-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6440.0,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 6440.0,
+    "max_price_idr": 6440.0
+  },
+  {
+    "month": "2008-10-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6538.0,
+    "avg_price_usd": 0.67,
+    "min_price_idr": 6538.0,
+    "max_price_idr": 6538.0
+  },
+  {
+    "month": "2008-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11697.0,
+    "avg_price_usd": 1.01,
+    "min_price_idr": 11697.0,
+    "max_price_idr": 11697.0
+  },
+  {
+    "month": "2008-11-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7277.0,
+    "avg_price_usd": 0.63,
+    "min_price_idr": 7277.0,
+    "max_price_idr": 7277.0
+  },
+  {
+    "month": "2008-11-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6441.0,
+    "avg_price_usd": 0.56,
+    "min_price_idr": 6441.0,
+    "max_price_idr": 6441.0
+  },
+  {
+    "month": "2008-11-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6525.0,
+    "avg_price_usd": 0.56,
+    "min_price_idr": 6525.0,
+    "max_price_idr": 6525.0
+  },
+  {
+    "month": "2008-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11598.0,
+    "avg_price_usd": 1.05,
+    "min_price_idr": 11598.0,
+    "max_price_idr": 11598.0
+  },
+  {
+    "month": "2008-12-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7218.0,
+    "avg_price_usd": 0.65,
+    "min_price_idr": 7218.0,
+    "max_price_idr": 7218.0
+  },
+  {
+    "month": "2008-12-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6504.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 6504.0,
+    "max_price_idr": 6504.0
+  },
+  {
+    "month": "2008-12-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6560.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 6560.0,
+    "max_price_idr": 6560.0
+  },
+  {
+    "month": "2009-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11614.0,
+    "avg_price_usd": 1.05,
+    "min_price_idr": 11614.0,
+    "max_price_idr": 11614.0
+  },
+  {
+    "month": "2009-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7294.0,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 7294.0,
+    "max_price_idr": 7294.0
+  },
+  {
+    "month": "2009-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6591.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 6591.0,
+    "max_price_idr": 6591.0
+  },
+  {
+    "month": "2009-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 6713.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 6713.0,
+    "max_price_idr": 6713.0
+  },
+  {
+    "month": "2009-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11567.0,
+    "avg_price_usd": 0.98,
+    "min_price_idr": 11567.0,
+    "max_price_idr": 11567.0
+  },
+  {
+    "month": "2009-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7352.0,
+    "avg_price_usd": 0.62,
+    "min_price_idr": 7352.0,
+    "max_price_idr": 7352.0
+  },
+  {
+    "month": "2009-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6725.0,
+    "avg_price_usd": 0.57,
+    "min_price_idr": 6725.0,
+    "max_price_idr": 6725.0
+  },
+  {
+    "month": "2009-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 7352.0,
+    "avg_price_usd": 0.62,
+    "min_price_idr": 7352.0,
+    "max_price_idr": 7352.0
+  },
+  {
+    "month": "2009-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11576.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 11576.0,
+    "max_price_idr": 11576.0
+  },
+  {
+    "month": "2009-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7437.0,
+    "avg_price_usd": 0.62,
+    "min_price_idr": 7437.0,
+    "max_price_idr": 7437.0
+  },
+  {
+    "month": "2009-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6706.0,
+    "avg_price_usd": 0.56,
+    "min_price_idr": 6706.0,
+    "max_price_idr": 6706.0
+  },
+  {
+    "month": "2009-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 7687.0,
+    "avg_price_usd": 0.64,
+    "min_price_idr": 7687.0,
+    "max_price_idr": 7687.0
+  },
+  {
+    "month": "2009-04-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11636.0,
+    "avg_price_usd": 1.07,
+    "min_price_idr": 11636.0,
+    "max_price_idr": 11636.0
+  },
+  {
+    "month": "2009-04-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7423.0,
+    "avg_price_usd": 0.68,
+    "min_price_idr": 7423.0,
+    "max_price_idr": 7423.0
+  },
+  {
+    "month": "2009-04-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6643.0,
+    "avg_price_usd": 0.61,
+    "min_price_idr": 6643.0,
+    "max_price_idr": 6643.0
+  },
+  {
+    "month": "2009-04-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 7789.0,
+    "avg_price_usd": 0.72,
+    "min_price_idr": 7789.0,
+    "max_price_idr": 7789.0
+  },
+  {
+    "month": "2009-05-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11766.07,
+    "avg_price_usd": 1.13,
+    "min_price_idr": 11766.07,
+    "max_price_idr": 11766.07
+  },
+  {
+    "month": "2009-05-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7380.33,
+    "avg_price_usd": 0.71,
+    "min_price_idr": 7380.33,
+    "max_price_idr": 7380.33
+  },
+  {
+    "month": "2009-05-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6641.0,
+    "avg_price_usd": 0.64,
+    "min_price_idr": 6641.0,
+    "max_price_idr": 6641.0
+  },
+  {
+    "month": "2009-05-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 8012.97,
+    "avg_price_usd": 0.77,
+    "min_price_idr": 8012.97,
+    "max_price_idr": 8012.97
+  },
+  {
+    "month": "2009-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11646.29,
+    "avg_price_usd": 1.15,
+    "min_price_idr": 11646.29,
+    "max_price_idr": 11646.29
+  },
+  {
+    "month": "2009-06-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7374.93,
+    "avg_price_usd": 0.73,
+    "min_price_idr": 7374.93,
+    "max_price_idr": 7374.93
+  },
+  {
+    "month": "2009-06-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6640.06,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 6640.06,
+    "max_price_idr": 6640.06
+  },
+  {
+    "month": "2009-06-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 8162.6,
+    "avg_price_usd": 0.81,
+    "min_price_idr": 8162.6,
+    "max_price_idr": 8162.6
+  },
+  {
+    "month": "2009-07-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11413.21,
+    "avg_price_usd": 1.13,
+    "min_price_idr": 11413.21,
+    "max_price_idr": 11413.21
+  },
+  {
+    "month": "2009-07-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7392.31,
+    "avg_price_usd": 0.73,
+    "min_price_idr": 7392.31,
+    "max_price_idr": 7392.31
+  },
+  {
+    "month": "2009-07-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6640.18,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 6640.18,
+    "max_price_idr": 6640.18
+  },
+  {
+    "month": "2009-07-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 8315.03,
+    "avg_price_usd": 0.82,
+    "min_price_idr": 8315.03,
+    "max_price_idr": 8315.03
+  },
+  {
+    "month": "2009-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11423.48,
+    "avg_price_usd": 1.15,
+    "min_price_idr": 11423.48,
+    "max_price_idr": 11423.48
+  },
+  {
+    "month": "2009-08-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7387.87,
+    "avg_price_usd": 0.74,
+    "min_price_idr": 7387.87,
+    "max_price_idr": 7387.87
+  },
+  {
+    "month": "2009-08-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6658.78,
+    "avg_price_usd": 0.67,
+    "min_price_idr": 6658.78,
+    "max_price_idr": 6658.78
+  },
+  {
+    "month": "2009-08-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 8795.64,
+    "avg_price_usd": 0.88,
+    "min_price_idr": 8795.64,
+    "max_price_idr": 8795.64
+  },
+  {
+    "month": "2009-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11409.0,
+    "avg_price_usd": 1.15,
+    "min_price_idr": 11409.0,
+    "max_price_idr": 11409.0
+  },
+  {
+    "month": "2009-09-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7406.0,
+    "avg_price_usd": 0.75,
+    "min_price_idr": 7406.0,
+    "max_price_idr": 7406.0
+  },
+  {
+    "month": "2009-09-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6699.4,
+    "avg_price_usd": 0.68,
+    "min_price_idr": 6699.4,
+    "max_price_idr": 6699.4
+  },
+  {
+    "month": "2009-09-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 9822.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 9822.0,
+    "max_price_idr": 9822.0
+  },
+  {
+    "month": "2009-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11264.0,
+    "avg_price_usd": 1.21,
+    "min_price_idr": 11264.0,
+    "max_price_idr": 11264.0
+  },
+  {
+    "month": "2009-10-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7374.0,
+    "avg_price_usd": 0.79,
+    "min_price_idr": 7374.0,
+    "max_price_idr": 7374.0
+  },
+  {
+    "month": "2009-10-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6705.42,
+    "avg_price_usd": 0.72,
+    "min_price_idr": 6705.42,
+    "max_price_idr": 6705.42
+  },
+  {
+    "month": "2009-10-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 9940.0,
+    "avg_price_usd": 1.07,
+    "min_price_idr": 9940.0,
+    "max_price_idr": 9940.0
+  },
+  {
+    "month": "2009-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11147.0,
+    "avg_price_usd": 1.19,
+    "min_price_idr": 11147.0,
+    "max_price_idr": 11147.0
+  },
+  {
+    "month": "2009-11-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7364.0,
+    "avg_price_usd": 0.79,
+    "min_price_idr": 7364.0,
+    "max_price_idr": 7364.0
+  },
+  {
+    "month": "2009-11-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6706.77,
+    "avg_price_usd": 0.72,
+    "min_price_idr": 6706.77,
+    "max_price_idr": 6706.77
+  },
+  {
+    "month": "2009-11-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 9916.0,
+    "avg_price_usd": 1.06,
+    "min_price_idr": 9916.0,
+    "max_price_idr": 9916.0
+  },
+  {
+    "month": "2009-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11195.0,
+    "avg_price_usd": 1.19,
+    "min_price_idr": 11195.0,
+    "max_price_idr": 11195.0
+  },
+  {
+    "month": "2009-12-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7366.0,
+    "avg_price_usd": 0.78,
+    "min_price_idr": 7366.0,
+    "max_price_idr": 7366.0
+  },
+  {
+    "month": "2009-12-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 6938.15,
+    "avg_price_usd": 0.73,
+    "min_price_idr": 6938.15,
+    "max_price_idr": 6938.15
+  },
+  {
+    "month": "2009-12-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10375.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 10375.0,
+    "max_price_idr": 10375.0
+  },
+  {
+    "month": "2010-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11368.0,
+    "avg_price_usd": 1.24,
+    "min_price_idr": 11368.0,
+    "max_price_idr": 11368.0
+  },
+  {
+    "month": "2010-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7376.0,
+    "avg_price_usd": 0.8,
+    "min_price_idr": 7376.0,
+    "max_price_idr": 7376.0
+  },
+  {
+    "month": "2010-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 7494.59,
+    "avg_price_usd": 0.82,
+    "min_price_idr": 7494.59,
+    "max_price_idr": 7494.59
+  },
+  {
+    "month": "2010-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11079.0,
+    "avg_price_usd": 1.21,
+    "min_price_idr": 11079.0,
+    "max_price_idr": 11079.0
+  },
+  {
+    "month": "2010-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11315.0,
+    "avg_price_usd": 1.21,
+    "min_price_idr": 11315.0,
+    "max_price_idr": 11315.0
+  },
+  {
+    "month": "2010-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7375.0,
+    "avg_price_usd": 0.79,
+    "min_price_idr": 7375.0,
+    "max_price_idr": 7375.0
+  },
+  {
+    "month": "2010-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 7720.93,
+    "avg_price_usd": 0.83,
+    "min_price_idr": 7720.93,
+    "max_price_idr": 7720.93
+  },
+  {
+    "month": "2010-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11202.0,
+    "avg_price_usd": 1.2,
+    "min_price_idr": 11202.0,
+    "max_price_idr": 11202.0
+  },
+  {
+    "month": "2010-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11341.0,
+    "avg_price_usd": 1.24,
+    "min_price_idr": 11341.0,
+    "max_price_idr": 11341.0
+  },
+  {
+    "month": "2010-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7303.0,
+    "avg_price_usd": 0.8,
+    "min_price_idr": 7303.0,
+    "max_price_idr": 7303.0
+  },
+  {
+    "month": "2010-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 7491.61,
+    "avg_price_usd": 0.82,
+    "min_price_idr": 7491.61,
+    "max_price_idr": 7491.61
+  },
+  {
+    "month": "2010-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11105.0,
+    "avg_price_usd": 1.21,
+    "min_price_idr": 11105.0,
+    "max_price_idr": 11105.0
+  },
+  {
+    "month": "2010-04-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11249.0,
+    "avg_price_usd": 1.25,
+    "min_price_idr": 11249.0,
+    "max_price_idr": 11249.0
+  },
+  {
+    "month": "2010-04-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7239.0,
+    "avg_price_usd": 0.8,
+    "min_price_idr": 7239.0,
+    "max_price_idr": 7239.0
+  },
+  {
+    "month": "2010-04-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 7392.72,
+    "avg_price_usd": 0.82,
+    "min_price_idr": 7392.72,
+    "max_price_idr": 7392.72
+  },
+  {
+    "month": "2010-04-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10801.0,
+    "avg_price_usd": 1.2,
+    "min_price_idr": 10801.0,
+    "max_price_idr": 10801.0
+  },
+  {
+    "month": "2010-05-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11260.0,
+    "avg_price_usd": 1.24,
+    "min_price_idr": 11260.0,
+    "max_price_idr": 11260.0
+  },
+  {
+    "month": "2010-05-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7189.0,
+    "avg_price_usd": 0.79,
+    "min_price_idr": 7189.0,
+    "max_price_idr": 7189.0
+  },
+  {
+    "month": "2010-05-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 7403.07,
+    "avg_price_usd": 0.81,
+    "min_price_idr": 7403.07,
+    "max_price_idr": 7403.07
+  },
+  {
+    "month": "2010-05-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10676.0,
+    "avg_price_usd": 1.17,
+    "min_price_idr": 10676.0,
+    "max_price_idr": 10676.0
+  },
+  {
+    "month": "2010-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11247.0,
+    "avg_price_usd": 1.23,
+    "min_price_idr": 11247.0,
+    "max_price_idr": 11247.0
+  },
+  {
+    "month": "2010-06-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7141.0,
+    "avg_price_usd": 0.78,
+    "min_price_idr": 7141.0,
+    "max_price_idr": 7141.0
+  },
+  {
+    "month": "2010-06-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 7600.74,
+    "avg_price_usd": 0.83,
+    "min_price_idr": 7600.74,
+    "max_price_idr": 7600.74
+  },
+  {
+    "month": "2010-06-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10379.0,
+    "avg_price_usd": 1.13,
+    "min_price_idr": 10379.0,
+    "max_price_idr": 10379.0
+  },
+  {
+    "month": "2010-07-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11195.0,
+    "avg_price_usd": 1.24,
+    "min_price_idr": 11195.0,
+    "max_price_idr": 11195.0
+  },
+  {
+    "month": "2010-07-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7091.0,
+    "avg_price_usd": 0.78,
+    "min_price_idr": 7091.0,
+    "max_price_idr": 7091.0
+  },
+  {
+    "month": "2010-07-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 8037.02,
+    "avg_price_usd": 0.89,
+    "min_price_idr": 8037.02,
+    "max_price_idr": 8037.02
+  },
+  {
+    "month": "2010-07-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10521.0,
+    "avg_price_usd": 1.16,
+    "min_price_idr": 10521.0,
+    "max_price_idr": 10521.0
+  },
+  {
+    "month": "2010-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11325.0,
+    "avg_price_usd": 1.26,
+    "min_price_idr": 11325.0,
+    "max_price_idr": 11325.0
+  },
+  {
+    "month": "2010-08-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7120.0,
+    "avg_price_usd": 0.79,
+    "min_price_idr": 7120.0,
+    "max_price_idr": 7120.0
+  },
+  {
+    "month": "2010-08-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 8382.61,
+    "avg_price_usd": 0.93,
+    "min_price_idr": 8382.61,
+    "max_price_idr": 8382.61
+  },
+  {
+    "month": "2010-08-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10655.0,
+    "avg_price_usd": 1.19,
+    "min_price_idr": 10655.0,
+    "max_price_idr": 10655.0
+  },
+  {
+    "month": "2010-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11376.0,
+    "avg_price_usd": 1.27,
+    "min_price_idr": 11376.0,
+    "max_price_idr": 11376.0
+  },
+  {
+    "month": "2010-09-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7189.0,
+    "avg_price_usd": 0.8,
+    "min_price_idr": 7189.0,
+    "max_price_idr": 7189.0
+  },
+  {
+    "month": "2010-09-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 8430.0,
+    "avg_price_usd": 0.94,
+    "min_price_idr": 8430.0,
+    "max_price_idr": 8430.0
+  },
+  {
+    "month": "2010-09-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10687.0,
+    "avg_price_usd": 1.19,
+    "min_price_idr": 10687.0,
+    "max_price_idr": 10687.0
+  },
+  {
+    "month": "2010-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11453.0,
+    "avg_price_usd": 1.28,
+    "min_price_idr": 11453.0,
+    "max_price_idr": 11453.0
+  },
+  {
+    "month": "2010-10-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7194.0,
+    "avg_price_usd": 0.81,
+    "min_price_idr": 7194.0,
+    "max_price_idr": 7194.0
+  },
+  {
+    "month": "2010-10-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 8493.0,
+    "avg_price_usd": 0.95,
+    "min_price_idr": 8493.0,
+    "max_price_idr": 8493.0
+  },
+  {
+    "month": "2010-10-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10959.0,
+    "avg_price_usd": 1.23,
+    "min_price_idr": 10959.0,
+    "max_price_idr": 10959.0
+  },
+  {
+    "month": "2010-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 11832.0,
+    "avg_price_usd": 1.32,
+    "min_price_idr": 11832.0,
+    "max_price_idr": 11832.0
+  },
+  {
+    "month": "2010-11-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7196.0,
+    "avg_price_usd": 0.8,
+    "min_price_idr": 7196.0,
+    "max_price_idr": 7196.0
+  },
+  {
+    "month": "2010-11-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 8668.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 8668.0,
+    "max_price_idr": 8668.0
+  },
+  {
+    "month": "2010-11-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11087.0,
+    "avg_price_usd": 1.24,
+    "min_price_idr": 11087.0,
+    "max_price_idr": 11087.0
+  },
+  {
+    "month": "2010-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12302.0,
+    "avg_price_usd": 1.36,
+    "min_price_idr": 12302.0,
+    "max_price_idr": 12302.0
+  },
+  {
+    "month": "2010-12-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7182.0,
+    "avg_price_usd": 0.8,
+    "min_price_idr": 7182.0,
+    "max_price_idr": 7182.0
+  },
+  {
+    "month": "2010-12-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 9082.0,
+    "avg_price_usd": 1.01,
+    "min_price_idr": 9082.0,
+    "max_price_idr": 9082.0
+  },
+  {
+    "month": "2010-12-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11125.0,
+    "avg_price_usd": 1.23,
+    "min_price_idr": 11125.0,
+    "max_price_idr": 11125.0
+  },
+  {
+    "month": "2011-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12764.0,
+    "avg_price_usd": 1.41,
+    "min_price_idr": 12764.0,
+    "max_price_idr": 12764.0
+  },
+  {
+    "month": "2011-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7179.0,
+    "avg_price_usd": 0.79,
+    "min_price_idr": 7179.0,
+    "max_price_idr": 7179.0
+  },
+  {
+    "month": "2011-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 9244.0,
+    "avg_price_usd": 1.02,
+    "min_price_idr": 9244.0,
+    "max_price_idr": 9244.0
+  },
+  {
+    "month": "2011-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11162.0,
+    "avg_price_usd": 1.23,
+    "min_price_idr": 11162.0,
+    "max_price_idr": 11162.0
+  },
+  {
+    "month": "2011-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13013.0,
+    "avg_price_usd": 1.46,
+    "min_price_idr": 13013.0,
+    "max_price_idr": 13013.0
+  },
+  {
+    "month": "2011-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7179.0,
+    "avg_price_usd": 0.8,
+    "min_price_idr": 7179.0,
+    "max_price_idr": 7179.0
+  },
+  {
+    "month": "2011-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 9118.0,
+    "avg_price_usd": 1.02,
+    "min_price_idr": 9118.0,
+    "max_price_idr": 9118.0
+  },
+  {
+    "month": "2011-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11114.0,
+    "avg_price_usd": 1.25,
+    "min_price_idr": 11114.0,
+    "max_price_idr": 11114.0
+  },
+  {
+    "month": "2011-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13025.0,
+    "avg_price_usd": 1.48,
+    "min_price_idr": 13025.0,
+    "max_price_idr": 13025.0
+  },
+  {
+    "month": "2011-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7179.0,
+    "avg_price_usd": 0.82,
+    "min_price_idr": 7179.0,
+    "max_price_idr": 7179.0
+  },
+  {
+    "month": "2011-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 8795.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 8795.0,
+    "max_price_idr": 8795.0
+  },
+  {
+    "month": "2011-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11032.0,
+    "avg_price_usd": 1.26,
+    "min_price_idr": 11032.0,
+    "max_price_idr": 11032.0
+  },
+  {
+    "month": "2011-04-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12884.0,
+    "avg_price_usd": 1.49,
+    "min_price_idr": 12884.0,
+    "max_price_idr": 12884.0
+  },
+  {
+    "month": "2011-04-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7171.0,
+    "avg_price_usd": 0.83,
+    "min_price_idr": 7171.0,
+    "max_price_idr": 7171.0
+  },
+  {
+    "month": "2011-04-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 8711.0,
+    "avg_price_usd": 1.01,
+    "min_price_idr": 8711.0,
+    "max_price_idr": 8711.0
+  },
+  {
+    "month": "2011-04-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10933.0,
+    "avg_price_usd": 1.26,
+    "min_price_idr": 10933.0,
+    "max_price_idr": 10933.0
+  },
+  {
+    "month": "2011-05-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12918.0,
+    "avg_price_usd": 1.51,
+    "min_price_idr": 12918.0,
+    "max_price_idr": 12918.0
+  },
+  {
+    "month": "2011-05-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7138.0,
+    "avg_price_usd": 0.83,
+    "min_price_idr": 7138.0,
+    "max_price_idr": 7138.0
+  },
+  {
+    "month": "2011-05-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 8741.0,
+    "avg_price_usd": 1.02,
+    "min_price_idr": 8741.0,
+    "max_price_idr": 8741.0
+  },
+  {
+    "month": "2011-05-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10725.0,
+    "avg_price_usd": 1.25,
+    "min_price_idr": 10725.0,
+    "max_price_idr": 10725.0
+  },
+  {
+    "month": "2011-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12947.0,
+    "avg_price_usd": 1.52,
+    "min_price_idr": 12947.0,
+    "max_price_idr": 12947.0
+  },
+  {
+    "month": "2011-06-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7176.0,
+    "avg_price_usd": 0.84,
+    "min_price_idr": 7176.0,
+    "max_price_idr": 7176.0
+  },
+  {
+    "month": "2011-06-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 8870.0,
+    "avg_price_usd": 1.04,
+    "min_price_idr": 8870.0,
+    "max_price_idr": 8870.0
+  },
+  {
+    "month": "2011-06-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10590.0,
+    "avg_price_usd": 1.24,
+    "min_price_idr": 10590.0,
+    "max_price_idr": 10590.0
+  },
+  {
+    "month": "2011-07-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12898.0,
+    "avg_price_usd": 1.51,
+    "min_price_idr": 12898.0,
+    "max_price_idr": 12898.0
+  },
+  {
+    "month": "2011-07-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7185.0,
+    "avg_price_usd": 0.84,
+    "min_price_idr": 7185.0,
+    "max_price_idr": 7185.0
+  },
+  {
+    "month": "2011-07-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 9297.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 9297.0,
+    "max_price_idr": 9297.0
+  },
+  {
+    "month": "2011-07-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10629.0,
+    "avg_price_usd": 1.25,
+    "min_price_idr": 10629.0,
+    "max_price_idr": 10629.0
+  },
+  {
+    "month": "2011-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12932.0,
+    "avg_price_usd": 1.52,
+    "min_price_idr": 12932.0,
+    "max_price_idr": 12932.0
+  },
+  {
+    "month": "2011-08-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7155.0,
+    "avg_price_usd": 0.84,
+    "min_price_idr": 7155.0,
+    "max_price_idr": 7155.0
+  },
+  {
+    "month": "2011-08-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 9504.0,
+    "avg_price_usd": 1.11,
+    "min_price_idr": 9504.0,
+    "max_price_idr": 9504.0
+  },
+  {
+    "month": "2011-08-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10701.0,
+    "avg_price_usd": 1.25,
+    "min_price_idr": 10701.0,
+    "max_price_idr": 10701.0
+  },
+  {
+    "month": "2011-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12989.0,
+    "avg_price_usd": 1.48,
+    "min_price_idr": 12989.0,
+    "max_price_idr": 12989.0
+  },
+  {
+    "month": "2011-09-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7362.0,
+    "avg_price_usd": 0.84,
+    "min_price_idr": 7362.0,
+    "max_price_idr": 7362.0
+  },
+  {
+    "month": "2011-09-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 9644.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 9644.0,
+    "max_price_idr": 9644.0
+  },
+  {
+    "month": "2011-09-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10732.0,
+    "avg_price_usd": 1.23,
+    "min_price_idr": 10732.0,
+    "max_price_idr": 10732.0
+  },
+  {
+    "month": "2011-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12863.0,
+    "avg_price_usd": 1.46,
+    "min_price_idr": 12863.0,
+    "max_price_idr": 12863.0
+  },
+  {
+    "month": "2011-10-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7375.0,
+    "avg_price_usd": 0.83,
+    "min_price_idr": 7375.0,
+    "max_price_idr": 7375.0
+  },
+  {
+    "month": "2011-10-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 9768.0,
+    "avg_price_usd": 1.11,
+    "min_price_idr": 9768.0,
+    "max_price_idr": 9768.0
+  },
+  {
+    "month": "2011-10-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10715.0,
+    "avg_price_usd": 1.21,
+    "min_price_idr": 10715.0,
+    "max_price_idr": 10715.0
+  },
+  {
+    "month": "2011-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12841.0,
+    "avg_price_usd": 1.43,
+    "min_price_idr": 12841.0,
+    "max_price_idr": 12841.0
+  },
+  {
+    "month": "2011-11-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7366.0,
+    "avg_price_usd": 0.82,
+    "min_price_idr": 7366.0,
+    "max_price_idr": 7366.0
+  },
+  {
+    "month": "2011-11-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 9781.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 9781.0,
+    "max_price_idr": 9781.0
+  },
+  {
+    "month": "2011-11-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10728.0,
+    "avg_price_usd": 1.19,
+    "min_price_idr": 10728.0,
+    "max_price_idr": 10728.0
+  },
+  {
+    "month": "2011-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12833.0,
+    "avg_price_usd": 1.41,
+    "min_price_idr": 12833.0,
+    "max_price_idr": 12833.0
+  },
+  {
+    "month": "2011-12-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7361.0,
+    "avg_price_usd": 0.81,
+    "min_price_idr": 7361.0,
+    "max_price_idr": 7361.0
+  },
+  {
+    "month": "2011-12-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10100.0,
+    "avg_price_usd": 1.11,
+    "min_price_idr": 10100.0,
+    "max_price_idr": 10100.0
+  },
+  {
+    "month": "2011-12-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10734.0,
+    "avg_price_usd": 1.18,
+    "min_price_idr": 10734.0,
+    "max_price_idr": 10734.0
+  },
+  {
+    "month": "2012-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13141.0,
+    "avg_price_usd": 1.44,
+    "min_price_idr": 13141.0,
+    "max_price_idr": 13141.0
+  },
+  {
+    "month": "2012-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7391.0,
+    "avg_price_usd": 0.81,
+    "min_price_idr": 7391.0,
+    "max_price_idr": 7391.0
+  },
+  {
+    "month": "2012-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10439.0,
+    "avg_price_usd": 1.15,
+    "min_price_idr": 10439.0,
+    "max_price_idr": 10439.0
+  },
+  {
+    "month": "2012-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10861.0,
+    "avg_price_usd": 1.19,
+    "min_price_idr": 10861.0,
+    "max_price_idr": 10861.0
+  },
+  {
+    "month": "2012-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13142.0,
+    "avg_price_usd": 1.47,
+    "min_price_idr": 13142.0,
+    "max_price_idr": 13142.0
+  },
+  {
+    "month": "2012-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7387.0,
+    "avg_price_usd": 0.83,
+    "min_price_idr": 7387.0,
+    "max_price_idr": 7387.0
+  },
+  {
+    "month": "2012-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10520.0,
+    "avg_price_usd": 1.18,
+    "min_price_idr": 10520.0,
+    "max_price_idr": 10520.0
+  },
+  {
+    "month": "2012-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 10941.0,
+    "avg_price_usd": 1.22,
+    "min_price_idr": 10941.0,
+    "max_price_idr": 10941.0
+  },
+  {
+    "month": "2012-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13211.0,
+    "avg_price_usd": 1.44,
+    "min_price_idr": 13211.0,
+    "max_price_idr": 13211.0
+  },
+  {
+    "month": "2012-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7381.0,
+    "avg_price_usd": 0.81,
+    "min_price_idr": 7381.0,
+    "max_price_idr": 7381.0
+  },
+  {
+    "month": "2012-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10406.0,
+    "avg_price_usd": 1.14,
+    "min_price_idr": 10406.0,
+    "max_price_idr": 10406.0
+  },
+  {
+    "month": "2012-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11076.0,
+    "avg_price_usd": 1.21,
+    "min_price_idr": 11076.0,
+    "max_price_idr": 11076.0
+  },
+  {
+    "month": "2012-04-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13371.0,
+    "avg_price_usd": 1.46,
+    "min_price_idr": 13371.0,
+    "max_price_idr": 13371.0
+  },
+  {
+    "month": "2012-04-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7378.0,
+    "avg_price_usd": 0.81,
+    "min_price_idr": 7378.0,
+    "max_price_idr": 7378.0
+  },
+  {
+    "month": "2012-04-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10339.0,
+    "avg_price_usd": 1.13,
+    "min_price_idr": 10339.0,
+    "max_price_idr": 10339.0
+  },
+  {
+    "month": "2012-04-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11405.0,
+    "avg_price_usd": 1.25,
+    "min_price_idr": 11405.0,
+    "max_price_idr": 11405.0
+  },
+  {
+    "month": "2012-05-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13250.0,
+    "avg_price_usd": 1.43,
+    "min_price_idr": 13250.0,
+    "max_price_idr": 13250.0
+  },
+  {
+    "month": "2012-05-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7365.0,
+    "avg_price_usd": 0.8,
+    "min_price_idr": 7365.0,
+    "max_price_idr": 7365.0
+  },
+  {
+    "month": "2012-05-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10286.0,
+    "avg_price_usd": 1.11,
+    "min_price_idr": 10286.0,
+    "max_price_idr": 10286.0
+  },
+  {
+    "month": "2012-05-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11535.0,
+    "avg_price_usd": 1.25,
+    "min_price_idr": 11535.0,
+    "max_price_idr": 11535.0
+  },
+  {
+    "month": "2012-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13091.0,
+    "avg_price_usd": 1.4,
+    "min_price_idr": 13091.0,
+    "max_price_idr": 13091.0
+  },
+  {
+    "month": "2012-06-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7354.0,
+    "avg_price_usd": 0.78,
+    "min_price_idr": 7354.0,
+    "max_price_idr": 7354.0
+  },
+  {
+    "month": "2012-06-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10309.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 10309.0,
+    "max_price_idr": 10309.0
+  },
+  {
+    "month": "2012-06-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11986.0,
+    "avg_price_usd": 1.28,
+    "min_price_idr": 11986.0,
+    "max_price_idr": 11986.0
+  },
+  {
+    "month": "2012-07-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13166.0,
+    "avg_price_usd": 1.39,
+    "min_price_idr": 13166.0,
+    "max_price_idr": 13166.0
+  },
+  {
+    "month": "2012-07-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7361.0,
+    "avg_price_usd": 0.78,
+    "min_price_idr": 7361.0,
+    "max_price_idr": 7361.0
+  },
+  {
+    "month": "2012-07-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10385.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 10385.0,
+    "max_price_idr": 10385.0
+  },
+  {
+    "month": "2012-07-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12607.0,
+    "avg_price_usd": 1.34,
+    "min_price_idr": 12607.0,
+    "max_price_idr": 12607.0
+  },
+  {
+    "month": "2012-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13249.0,
+    "avg_price_usd": 1.4,
+    "min_price_idr": 13249.0,
+    "max_price_idr": 13249.0
+  },
+  {
+    "month": "2012-08-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7354.0,
+    "avg_price_usd": 0.77,
+    "min_price_idr": 7354.0,
+    "max_price_idr": 7354.0
+  },
+  {
+    "month": "2012-08-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10391.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 10391.0,
+    "max_price_idr": 10391.0
+  },
+  {
+    "month": "2012-08-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12710.0,
+    "avg_price_usd": 1.34,
+    "min_price_idr": 12710.0,
+    "max_price_idr": 12710.0
+  },
+  {
+    "month": "2012-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13229.0,
+    "avg_price_usd": 1.39,
+    "min_price_idr": 13229.0,
+    "max_price_idr": 13229.0
+  },
+  {
+    "month": "2012-09-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7379.0,
+    "avg_price_usd": 0.78,
+    "min_price_idr": 7379.0,
+    "max_price_idr": 7379.0
+  },
+  {
+    "month": "2012-09-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10414.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 10414.0,
+    "max_price_idr": 10414.0
+  },
+  {
+    "month": "2012-09-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12655.0,
+    "avg_price_usd": 1.33,
+    "min_price_idr": 12655.0,
+    "max_price_idr": 12655.0
+  },
+  {
+    "month": "2012-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13020.0,
+    "avg_price_usd": 1.36,
+    "min_price_idr": 13020.0,
+    "max_price_idr": 13020.0
+  },
+  {
+    "month": "2012-10-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7371.0,
+    "avg_price_usd": 0.77,
+    "min_price_idr": 7371.0,
+    "max_price_idr": 7371.0
+  },
+  {
+    "month": "2012-10-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10421.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 10421.0,
+    "max_price_idr": 10421.0
+  },
+  {
+    "month": "2012-10-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12577.0,
+    "avg_price_usd": 1.31,
+    "min_price_idr": 12577.0,
+    "max_price_idr": 12577.0
+  },
+  {
+    "month": "2012-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12853.0,
+    "avg_price_usd": 1.34,
+    "min_price_idr": 12853.0,
+    "max_price_idr": 12853.0
+  },
+  {
+    "month": "2012-11-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7364.0,
+    "avg_price_usd": 0.77,
+    "min_price_idr": 7364.0,
+    "max_price_idr": 7364.0
+  },
+  {
+    "month": "2012-11-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10482.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 10482.0,
+    "max_price_idr": 10482.0
+  },
+  {
+    "month": "2012-11-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12600.0,
+    "avg_price_usd": 1.31,
+    "min_price_idr": 12600.0,
+    "max_price_idr": 12600.0
+  },
+  {
+    "month": "2012-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12711.0,
+    "avg_price_usd": 1.32,
+    "min_price_idr": 12711.0,
+    "max_price_idr": 12711.0
+  },
+  {
+    "month": "2012-12-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7382.0,
+    "avg_price_usd": 0.77,
+    "min_price_idr": 7382.0,
+    "max_price_idr": 7382.0
+  },
+  {
+    "month": "2012-12-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10718.0,
+    "avg_price_usd": 1.11,
+    "min_price_idr": 10718.0,
+    "max_price_idr": 10718.0
+  },
+  {
+    "month": "2012-12-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12584.0,
+    "avg_price_usd": 1.31,
+    "min_price_idr": 12584.0,
+    "max_price_idr": 12584.0
+  },
+  {
+    "month": "2013-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12664.0,
+    "avg_price_usd": 1.31,
+    "min_price_idr": 12664.0,
+    "max_price_idr": 12664.0
+  },
+  {
+    "month": "2013-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7395.0,
+    "avg_price_usd": 0.77,
+    "min_price_idr": 7395.0,
+    "max_price_idr": 7395.0
+  },
+  {
+    "month": "2013-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10821.0,
+    "avg_price_usd": 1.12,
+    "min_price_idr": 10821.0,
+    "max_price_idr": 10821.0
+  },
+  {
+    "month": "2013-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12557.0,
+    "avg_price_usd": 1.3,
+    "min_price_idr": 12557.0,
+    "max_price_idr": 12557.0
+  },
+  {
+    "month": "2013-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12607.0,
+    "avg_price_usd": 1.3,
+    "min_price_idr": 12607.0,
+    "max_price_idr": 12607.0
+  },
+  {
+    "month": "2013-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7390.0,
+    "avg_price_usd": 0.76,
+    "min_price_idr": 7390.0,
+    "max_price_idr": 7390.0
+  },
+  {
+    "month": "2013-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10819.0,
+    "avg_price_usd": 1.12,
+    "min_price_idr": 10819.0,
+    "max_price_idr": 10819.0
+  },
+  {
+    "month": "2013-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12554.0,
+    "avg_price_usd": 1.3,
+    "min_price_idr": 12554.0,
+    "max_price_idr": 12554.0
+  },
+  {
+    "month": "2013-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12554.0,
+    "avg_price_usd": 1.29,
+    "min_price_idr": 12554.0,
+    "max_price_idr": 12554.0
+  },
+  {
+    "month": "2013-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7364.0,
+    "avg_price_usd": 0.76,
+    "min_price_idr": 7364.0,
+    "max_price_idr": 7364.0
+  },
+  {
+    "month": "2013-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10748.0,
+    "avg_price_usd": 1.11,
+    "min_price_idr": 10748.0,
+    "max_price_idr": 10748.0
+  },
+  {
+    "month": "2013-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12579.0,
+    "avg_price_usd": 1.3,
+    "min_price_idr": 12579.0,
+    "max_price_idr": 12579.0
+  },
+  {
+    "month": "2013-04-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12531.0,
+    "avg_price_usd": 1.29,
+    "min_price_idr": 12531.0,
+    "max_price_idr": 12531.0
+  },
+  {
+    "month": "2013-04-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7361.0,
+    "avg_price_usd": 0.76,
+    "min_price_idr": 7361.0,
+    "max_price_idr": 7361.0
+  },
+  {
+    "month": "2013-04-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10646.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 10646.0,
+    "max_price_idr": 10646.0
+  },
+  {
+    "month": "2013-04-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12609.0,
+    "avg_price_usd": 1.3,
+    "min_price_idr": 12609.0,
+    "max_price_idr": 12609.0
+  },
+  {
+    "month": "2013-05-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12441.0,
+    "avg_price_usd": 1.28,
+    "min_price_idr": 12441.0,
+    "max_price_idr": 12441.0
+  },
+  {
+    "month": "2013-05-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7350.0,
+    "avg_price_usd": 0.75,
+    "min_price_idr": 7350.0,
+    "max_price_idr": 7350.0
+  },
+  {
+    "month": "2013-05-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10646.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 10646.0,
+    "max_price_idr": 10646.0
+  },
+  {
+    "month": "2013-05-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12601.0,
+    "avg_price_usd": 1.29,
+    "min_price_idr": 12601.0,
+    "max_price_idr": 12601.0
+  },
+  {
+    "month": "2013-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12461.0,
+    "avg_price_usd": 1.26,
+    "min_price_idr": 12461.0,
+    "max_price_idr": 12461.0
+  },
+  {
+    "month": "2013-06-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7356.0,
+    "avg_price_usd": 0.74,
+    "min_price_idr": 7356.0,
+    "max_price_idr": 7356.0
+  },
+  {
+    "month": "2013-06-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10718.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 10718.0,
+    "max_price_idr": 10718.0
+  },
+  {
+    "month": "2013-06-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12600.0,
+    "avg_price_usd": 1.28,
+    "min_price_idr": 12600.0,
+    "max_price_idr": 12600.0
+  },
+  {
+    "month": "2013-07-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12502.0,
+    "avg_price_usd": 1.25,
+    "min_price_idr": 12502.0,
+    "max_price_idr": 12502.0
+  },
+  {
+    "month": "2013-07-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7388.0,
+    "avg_price_usd": 0.74,
+    "min_price_idr": 7388.0,
+    "max_price_idr": 7388.0
+  },
+  {
+    "month": "2013-07-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10874.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 10874.0,
+    "max_price_idr": 10874.0
+  },
+  {
+    "month": "2013-07-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12601.0,
+    "avg_price_usd": 1.26,
+    "min_price_idr": 12601.0,
+    "max_price_idr": 12601.0
+  },
+  {
+    "month": "2013-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12464.0,
+    "avg_price_usd": 1.2,
+    "min_price_idr": 12464.0,
+    "max_price_idr": 12464.0
+  },
+  {
+    "month": "2013-08-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7438.0,
+    "avg_price_usd": 0.72,
+    "min_price_idr": 7438.0,
+    "max_price_idr": 7438.0
+  },
+  {
+    "month": "2013-08-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10938.0,
+    "avg_price_usd": 1.06,
+    "min_price_idr": 10938.0,
+    "max_price_idr": 10938.0
+  },
+  {
+    "month": "2013-08-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12597.0,
+    "avg_price_usd": 1.22,
+    "min_price_idr": 12597.0,
+    "max_price_idr": 12597.0
+  },
+  {
+    "month": "2013-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12651.0,
+    "avg_price_usd": 1.11,
+    "min_price_idr": 12651.0,
+    "max_price_idr": 12651.0
+  },
+  {
+    "month": "2013-09-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7471.0,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 7471.0,
+    "max_price_idr": 7471.0
+  },
+  {
+    "month": "2013-09-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10969.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 10969.0,
+    "max_price_idr": 10969.0
+  },
+  {
+    "month": "2013-09-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12562.0,
+    "avg_price_usd": 1.11,
+    "min_price_idr": 12562.0,
+    "max_price_idr": 12562.0
+  },
+  {
+    "month": "2013-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12684.0,
+    "avg_price_usd": 1.12,
+    "min_price_idr": 12684.0,
+    "max_price_idr": 12684.0
+  },
+  {
+    "month": "2013-10-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7511.0,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 7511.0,
+    "max_price_idr": 7511.0
+  },
+  {
+    "month": "2013-10-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 10987.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 10987.0,
+    "max_price_idr": 10987.0
+  },
+  {
+    "month": "2013-10-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12523.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 12523.0,
+    "max_price_idr": 12523.0
+  },
+  {
+    "month": "2013-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12807.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 12807.0,
+    "max_price_idr": 12807.0
+  },
+  {
+    "month": "2013-11-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7583.0,
+    "avg_price_usd": 0.65,
+    "min_price_idr": 7583.0,
+    "max_price_idr": 7583.0
+  },
+  {
+    "month": "2013-11-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 11011.0,
+    "avg_price_usd": 0.95,
+    "min_price_idr": 11011.0,
+    "max_price_idr": 11011.0
+  },
+  {
+    "month": "2013-11-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12442.0,
+    "avg_price_usd": 1.07,
+    "min_price_idr": 12442.0,
+    "max_price_idr": 12442.0
+  },
+  {
+    "month": "2013-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 12958.0,
+    "avg_price_usd": 1.07,
+    "min_price_idr": 12958.0,
+    "max_price_idr": 12958.0
+  },
+  {
+    "month": "2013-12-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7694.0,
+    "avg_price_usd": 0.64,
+    "min_price_idr": 7694.0,
+    "max_price_idr": 7694.0
+  },
+  {
+    "month": "2013-12-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 11073.0,
+    "avg_price_usd": 0.92,
+    "min_price_idr": 11073.0,
+    "max_price_idr": 11073.0
+  },
+  {
+    "month": "2013-12-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12267.0,
+    "avg_price_usd": 1.01,
+    "min_price_idr": 12267.0,
+    "max_price_idr": 12267.0
+  },
+  {
+    "month": "2014-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13077.0,
+    "avg_price_usd": 1.08,
+    "min_price_idr": 13077.0,
+    "max_price_idr": 13077.0
+  },
+  {
+    "month": "2014-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7759.0,
+    "avg_price_usd": 0.64,
+    "min_price_idr": 7759.0,
+    "max_price_idr": 7759.0
+  },
+  {
+    "month": "2014-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 11224.0,
+    "avg_price_usd": 0.93,
+    "min_price_idr": 11224.0,
+    "max_price_idr": 11224.0
+  },
+  {
+    "month": "2014-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12188.0,
+    "avg_price_usd": 1.01,
+    "min_price_idr": 12188.0,
+    "max_price_idr": 12188.0
+  },
+  {
+    "month": "2014-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13188.0,
+    "avg_price_usd": 1.12,
+    "min_price_idr": 13188.0,
+    "max_price_idr": 13188.0
+  },
+  {
+    "month": "2014-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7754.0,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 7754.0,
+    "max_price_idr": 7754.0
+  },
+  {
+    "month": "2014-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 11389.0,
+    "avg_price_usd": 0.96,
+    "min_price_idr": 11389.0,
+    "max_price_idr": 11389.0
+  },
+  {
+    "month": "2014-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12131.0,
+    "avg_price_usd": 1.03,
+    "min_price_idr": 12131.0,
+    "max_price_idr": 12131.0
+  },
+  {
+    "month": "2014-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13468.0,
+    "avg_price_usd": 1.19,
+    "min_price_idr": 13468.0,
+    "max_price_idr": 13468.0
+  },
+  {
+    "month": "2014-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7766.0,
+    "avg_price_usd": 0.69,
+    "min_price_idr": 7766.0,
+    "max_price_idr": 7766.0
+  },
+  {
+    "month": "2014-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 11564.0,
+    "avg_price_usd": 1.02,
+    "min_price_idr": 11564.0,
+    "max_price_idr": 11564.0
+  },
+  {
+    "month": "2014-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11922.0,
+    "avg_price_usd": 1.05,
+    "min_price_idr": 11922.0,
+    "max_price_idr": 11922.0
+  },
+  {
+    "month": "2014-04-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13735.0,
+    "avg_price_usd": 1.2,
+    "min_price_idr": 13735.0,
+    "max_price_idr": 13735.0
+  },
+  {
+    "month": "2014-04-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7758.0,
+    "avg_price_usd": 0.68,
+    "min_price_idr": 7758.0,
+    "max_price_idr": 7758.0
+  },
+  {
+    "month": "2014-04-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 11313.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 11313.0,
+    "max_price_idr": 11313.0
+  },
+  {
+    "month": "2014-04-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11806.0,
+    "avg_price_usd": 1.03,
+    "min_price_idr": 11806.0,
+    "max_price_idr": 11806.0
+  },
+  {
+    "month": "2014-05-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13817.0,
+    "avg_price_usd": 1.21,
+    "min_price_idr": 13817.0,
+    "max_price_idr": 13817.0
+  },
+  {
+    "month": "2014-05-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7750.0,
+    "avg_price_usd": 0.68,
+    "min_price_idr": 7750.0,
+    "max_price_idr": 7750.0
+  },
+  {
+    "month": "2014-05-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 11219.0,
+    "avg_price_usd": 0.98,
+    "min_price_idr": 11219.0,
+    "max_price_idr": 11219.0
+  },
+  {
+    "month": "2014-05-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11738.0,
+    "avg_price_usd": 1.03,
+    "min_price_idr": 11738.0,
+    "max_price_idr": 11738.0
+  },
+  {
+    "month": "2014-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13853.0,
+    "avg_price_usd": 1.17,
+    "min_price_idr": 13853.0,
+    "max_price_idr": 13853.0
+  },
+  {
+    "month": "2014-06-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7773.0,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 7773.0,
+    "max_price_idr": 7773.0
+  },
+  {
+    "month": "2014-06-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 11259.0,
+    "avg_price_usd": 0.95,
+    "min_price_idr": 11259.0,
+    "max_price_idr": 11259.0
+  },
+  {
+    "month": "2014-06-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11738.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 11738.0,
+    "max_price_idr": 11738.0
+  },
+  {
+    "month": "2014-07-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13925.0,
+    "avg_price_usd": 1.19,
+    "min_price_idr": 13925.0,
+    "max_price_idr": 13925.0
+  },
+  {
+    "month": "2014-07-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7790.0,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 7790.0,
+    "max_price_idr": 7790.0
+  },
+  {
+    "month": "2014-07-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 11321.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 11321.0,
+    "max_price_idr": 11321.0
+  },
+  {
+    "month": "2014-07-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11731.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 11731.0,
+    "max_price_idr": 11731.0
+  },
+  {
+    "month": "2014-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13947.0,
+    "avg_price_usd": 1.2,
+    "min_price_idr": 13947.0,
+    "max_price_idr": 13947.0
+  },
+  {
+    "month": "2014-08-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7792.0,
+    "avg_price_usd": 0.67,
+    "min_price_idr": 7792.0,
+    "max_price_idr": 7792.0
+  },
+  {
+    "month": "2014-08-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 11390.0,
+    "avg_price_usd": 0.98,
+    "min_price_idr": 11390.0,
+    "max_price_idr": 11390.0
+  },
+  {
+    "month": "2014-08-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11667.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 11667.0,
+    "max_price_idr": 11667.0
+  },
+  {
+    "month": "2014-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13915.0,
+    "avg_price_usd": 1.17,
+    "min_price_idr": 13915.0,
+    "max_price_idr": 13915.0
+  },
+  {
+    "month": "2014-09-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7831.0,
+    "avg_price_usd": 0.66,
+    "min_price_idr": 7831.0,
+    "max_price_idr": 7831.0
+  },
+  {
+    "month": "2014-09-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 11433.0,
+    "avg_price_usd": 0.96,
+    "min_price_idr": 11433.0,
+    "max_price_idr": 11433.0
+  },
+  {
+    "month": "2014-09-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11608.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 11608.0,
+    "max_price_idr": 11608.0
+  },
+  {
+    "month": "2014-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13879.0,
+    "avg_price_usd": 1.14,
+    "min_price_idr": 13879.0,
+    "max_price_idr": 13879.0
+  },
+  {
+    "month": "2014-10-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7803.0,
+    "avg_price_usd": 0.64,
+    "min_price_idr": 7803.0,
+    "max_price_idr": 7803.0
+  },
+  {
+    "month": "2014-10-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 11522.0,
+    "avg_price_usd": 0.94,
+    "min_price_idr": 11522.0,
+    "max_price_idr": 11522.0
+  },
+  {
+    "month": "2014-10-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11595.0,
+    "avg_price_usd": 0.95,
+    "min_price_idr": 11595.0,
+    "max_price_idr": 11595.0
+  },
+  {
+    "month": "2014-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13911.0,
+    "avg_price_usd": 1.14,
+    "min_price_idr": 13911.0,
+    "max_price_idr": 13911.0
+  },
+  {
+    "month": "2014-11-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7794.0,
+    "avg_price_usd": 0.64,
+    "min_price_idr": 7794.0,
+    "max_price_idr": 7794.0
+  },
+  {
+    "month": "2014-11-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 11691.0,
+    "avg_price_usd": 0.96,
+    "min_price_idr": 11691.0,
+    "max_price_idr": 11691.0
+  },
+  {
+    "month": "2014-11-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11630.0,
+    "avg_price_usd": 0.95,
+    "min_price_idr": 11630.0,
+    "max_price_idr": 11630.0
+  },
+  {
+    "month": "2014-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13950.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 13950.0,
+    "max_price_idr": 13950.0
+  },
+  {
+    "month": "2014-12-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7800.0,
+    "avg_price_usd": 0.61,
+    "min_price_idr": 7800.0,
+    "max_price_idr": 7800.0
+  },
+  {
+    "month": "2014-12-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 12210.0,
+    "avg_price_usd": 0.96,
+    "min_price_idr": 12210.0,
+    "max_price_idr": 12210.0
+  },
+  {
+    "month": "2014-12-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11637.0,
+    "avg_price_usd": 0.92,
+    "min_price_idr": 11637.0,
+    "max_price_idr": 11637.0
+  },
+  {
+    "month": "2015-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13919.0,
+    "avg_price_usd": 1.11,
+    "min_price_idr": 13919.0,
+    "max_price_idr": 13919.0
+  },
+  {
+    "month": "2015-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7850.0,
+    "avg_price_usd": 0.63,
+    "min_price_idr": 7850.0,
+    "max_price_idr": 7850.0
+  },
+  {
+    "month": "2015-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 12444.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 12444.0,
+    "max_price_idr": 12444.0
+  },
+  {
+    "month": "2015-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11632.0,
+    "avg_price_usd": 0.93,
+    "min_price_idr": 11632.0,
+    "max_price_idr": 11632.0
+  },
+  {
+    "month": "2015-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13895.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 13895.0,
+    "max_price_idr": 13895.0
+  },
+  {
+    "month": "2015-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7850.0,
+    "avg_price_usd": 0.62,
+    "min_price_idr": 7850.0,
+    "max_price_idr": 7850.0
+  },
+  {
+    "month": "2015-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 12802.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 12802.0,
+    "max_price_idr": 12802.0
+  },
+  {
+    "month": "2015-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11722.0,
+    "avg_price_usd": 0.92,
+    "min_price_idr": 11722.0,
+    "max_price_idr": 11722.0
+  },
+  {
+    "month": "2015-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13910.0,
+    "avg_price_usd": 1.05,
+    "min_price_idr": 13910.0,
+    "max_price_idr": 13910.0
+  },
+  {
+    "month": "2015-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7852.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 7852.0,
+    "max_price_idr": 7852.0
+  },
+  {
+    "month": "2015-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13089.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13089.0,
+    "max_price_idr": 13089.0
+  },
+  {
+    "month": "2015-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 11831.0,
+    "avg_price_usd": 0.89,
+    "min_price_idr": 11831.0,
+    "max_price_idr": 11831.0
+  },
+  {
+    "month": "2015-04-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13820.0,
+    "avg_price_usd": 1.07,
+    "min_price_idr": 13820.0,
+    "max_price_idr": 13820.0
+  },
+  {
+    "month": "2015-04-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7854.0,
+    "avg_price_usd": 0.61,
+    "min_price_idr": 7854.0,
+    "max_price_idr": 7854.0
+  },
+  {
+    "month": "2015-04-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 12458.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 12458.0,
+    "max_price_idr": 12458.0
+  },
+  {
+    "month": "2015-04-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12188.0,
+    "avg_price_usd": 0.95,
+    "min_price_idr": 12188.0,
+    "max_price_idr": 12188.0
+  },
+  {
+    "month": "2015-05-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13743.0,
+    "avg_price_usd": 1.05,
+    "min_price_idr": 13743.0,
+    "max_price_idr": 13743.0
+  },
+  {
+    "month": "2015-05-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7826.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 7826.0,
+    "max_price_idr": 7826.0
+  },
+  {
+    "month": "2015-05-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 12348.0,
+    "avg_price_usd": 0.94,
+    "min_price_idr": 12348.0,
+    "max_price_idr": 12348.0
+  },
+  {
+    "month": "2015-05-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12509.0,
+    "avg_price_usd": 0.96,
+    "min_price_idr": 12509.0,
+    "max_price_idr": 12509.0
+  },
+  {
+    "month": "2015-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13824.0,
+    "avg_price_usd": 1.04,
+    "min_price_idr": 13824.0,
+    "max_price_idr": 13824.0
+  },
+  {
+    "month": "2015-06-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7834.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 7834.0,
+    "max_price_idr": 7834.0
+  },
+  {
+    "month": "2015-06-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 12425.0,
+    "avg_price_usd": 0.93,
+    "min_price_idr": 12425.0,
+    "max_price_idr": 12425.0
+  },
+  {
+    "month": "2015-06-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12941.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 12941.0,
+    "max_price_idr": 12941.0
+  },
+  {
+    "month": "2015-07-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13838.0,
+    "avg_price_usd": 1.04,
+    "min_price_idr": 13838.0,
+    "max_price_idr": 13838.0
+  },
+  {
+    "month": "2015-07-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7927.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 7927.0,
+    "max_price_idr": 7927.0
+  },
+  {
+    "month": "2015-07-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 12509.0,
+    "avg_price_usd": 0.94,
+    "min_price_idr": 12509.0,
+    "max_price_idr": 12509.0
+  },
+  {
+    "month": "2015-07-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13065.0,
+    "avg_price_usd": 0.98,
+    "min_price_idr": 13065.0,
+    "max_price_idr": 13065.0
+  },
+  {
+    "month": "2015-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13790.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 13790.0,
+    "max_price_idr": 13790.0
+  },
+  {
+    "month": "2015-08-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7953.0,
+    "avg_price_usd": 0.58,
+    "min_price_idr": 7953.0,
+    "max_price_idr": 7953.0
+  },
+  {
+    "month": "2015-08-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 12709.0,
+    "avg_price_usd": 0.92,
+    "min_price_idr": 12709.0,
+    "max_price_idr": 12709.0
+  },
+  {
+    "month": "2015-08-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13013.0,
+    "avg_price_usd": 0.94,
+    "min_price_idr": 13013.0,
+    "max_price_idr": 13013.0
+  },
+  {
+    "month": "2015-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13521.0,
+    "avg_price_usd": 0.94,
+    "min_price_idr": 13521.0,
+    "max_price_idr": 13521.0
+  },
+  {
+    "month": "2015-09-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7951.0,
+    "avg_price_usd": 0.55,
+    "min_price_idr": 7951.0,
+    "max_price_idr": 7951.0
+  },
+  {
+    "month": "2015-09-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 12968.0,
+    "avg_price_usd": 0.9,
+    "min_price_idr": 12968.0,
+    "max_price_idr": 12968.0
+  },
+  {
+    "month": "2015-09-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12906.0,
+    "avg_price_usd": 0.9,
+    "min_price_idr": 12906.0,
+    "max_price_idr": 12906.0
+  },
+  {
+    "month": "2015-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13436.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 13436.0,
+    "max_price_idr": 13436.0
+  },
+  {
+    "month": "2015-10-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7955.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 7955.0,
+    "max_price_idr": 7955.0
+  },
+  {
+    "month": "2015-10-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13067.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 13067.0,
+    "max_price_idr": 13067.0
+  },
+  {
+    "month": "2015-10-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12918.0,
+    "avg_price_usd": 0.96,
+    "min_price_idr": 12918.0,
+    "max_price_idr": 12918.0
+  },
+  {
+    "month": "2015-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13302.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 13302.0,
+    "max_price_idr": 13302.0
+  },
+  {
+    "month": "2015-11-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7938.0,
+    "avg_price_usd": 0.58,
+    "min_price_idr": 7938.0,
+    "max_price_idr": 7938.0
+  },
+  {
+    "month": "2015-11-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13139.0,
+    "avg_price_usd": 0.96,
+    "min_price_idr": 13139.0,
+    "max_price_idr": 13139.0
+  },
+  {
+    "month": "2015-11-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13308.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 13308.0,
+    "max_price_idr": 13308.0
+  },
+  {
+    "month": "2015-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13310.0,
+    "avg_price_usd": 0.95,
+    "min_price_idr": 13310.0,
+    "max_price_idr": 13310.0
+  },
+  {
+    "month": "2015-12-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7961.0,
+    "avg_price_usd": 0.57,
+    "min_price_idr": 7961.0,
+    "max_price_idr": 7961.0
+  },
+  {
+    "month": "2015-12-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13217.0,
+    "avg_price_usd": 0.94,
+    "min_price_idr": 13217.0,
+    "max_price_idr": 13217.0
+  },
+  {
+    "month": "2015-12-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13116.0,
+    "avg_price_usd": 0.93,
+    "min_price_idr": 13116.0,
+    "max_price_idr": 13116.0
+  },
+  {
+    "month": "2016-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13277.0,
+    "avg_price_usd": 0.96,
+    "min_price_idr": 13277.0,
+    "max_price_idr": 13277.0
+  },
+  {
+    "month": "2016-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7986.0,
+    "avg_price_usd": 0.57,
+    "min_price_idr": 7986.0,
+    "max_price_idr": 7986.0
+  },
+  {
+    "month": "2016-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13319.0,
+    "avg_price_usd": 0.96,
+    "min_price_idr": 13319.0,
+    "max_price_idr": 13319.0
+  },
+  {
+    "month": "2016-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13208.0,
+    "avg_price_usd": 0.95,
+    "min_price_idr": 13208.0,
+    "max_price_idr": 13208.0
+  },
+  {
+    "month": "2016-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13313.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 13313.0,
+    "max_price_idr": 13313.0
+  },
+  {
+    "month": "2016-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7980.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 7980.0,
+    "max_price_idr": 7980.0
+  },
+  {
+    "month": "2016-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13376.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 13376.0,
+    "max_price_idr": 13376.0
+  },
+  {
+    "month": "2016-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13310.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 13310.0,
+    "max_price_idr": 13310.0
+  },
+  {
+    "month": "2016-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13466.0,
+    "avg_price_usd": 1.02,
+    "min_price_idr": 13466.0,
+    "max_price_idr": 13466.0
+  },
+  {
+    "month": "2016-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7985.0,
+    "avg_price_usd": 0.61,
+    "min_price_idr": 7985.0,
+    "max_price_idr": 7985.0
+  },
+  {
+    "month": "2016-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13301.0,
+    "avg_price_usd": 1.01,
+    "min_price_idr": 13301.0,
+    "max_price_idr": 13301.0
+  },
+  {
+    "month": "2016-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13415.0,
+    "avg_price_usd": 1.02,
+    "min_price_idr": 13415.0,
+    "max_price_idr": 13415.0
+  },
+  {
+    "month": "2016-04-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13649.0,
+    "avg_price_usd": 1.04,
+    "min_price_idr": 13649.0,
+    "max_price_idr": 13649.0
+  },
+  {
+    "month": "2016-04-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8007.0,
+    "avg_price_usd": 0.61,
+    "min_price_idr": 8007.0,
+    "max_price_idr": 8007.0
+  },
+  {
+    "month": "2016-04-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13105.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 13105.0,
+    "max_price_idr": 13105.0
+  },
+  {
+    "month": "2016-04-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13463.0,
+    "avg_price_usd": 1.02,
+    "min_price_idr": 13463.0,
+    "max_price_idr": 13463.0
+  },
+  {
+    "month": "2016-05-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13885.0,
+    "avg_price_usd": 1.04,
+    "min_price_idr": 13885.0,
+    "max_price_idr": 13885.0
+  },
+  {
+    "month": "2016-05-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7990.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 7990.0,
+    "max_price_idr": 7990.0
+  },
+  {
+    "month": "2016-05-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13039.0,
+    "avg_price_usd": 0.98,
+    "min_price_idr": 13039.0,
+    "max_price_idr": 13039.0
+  },
+  {
+    "month": "2016-05-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 14459.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 14459.0,
+    "max_price_idr": 14459.0
+  },
+  {
+    "month": "2016-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13941.0,
+    "avg_price_usd": 1.04,
+    "min_price_idr": 13941.0,
+    "max_price_idr": 13941.0
+  },
+  {
+    "month": "2016-06-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8019.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 8019.0,
+    "max_price_idr": 8019.0
+  },
+  {
+    "month": "2016-06-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13115.0,
+    "avg_price_usd": 0.98,
+    "min_price_idr": 13115.0,
+    "max_price_idr": 13115.0
+  },
+  {
+    "month": "2016-06-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 15327.0,
+    "avg_price_usd": 1.15,
+    "min_price_idr": 15327.0,
+    "max_price_idr": 15327.0
+  },
+  {
+    "month": "2016-07-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13919.0,
+    "avg_price_usd": 1.06,
+    "min_price_idr": 13919.0,
+    "max_price_idr": 13919.0
+  },
+  {
+    "month": "2016-07-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8042.0,
+    "avg_price_usd": 0.61,
+    "min_price_idr": 8042.0,
+    "max_price_idr": 8042.0
+  },
+  {
+    "month": "2016-07-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13181.0,
+    "avg_price_usd": 1.01,
+    "min_price_idr": 13181.0,
+    "max_price_idr": 13181.0
+  },
+  {
+    "month": "2016-07-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 15745.0,
+    "avg_price_usd": 1.2,
+    "min_price_idr": 15745.0,
+    "max_price_idr": 15745.0
+  },
+  {
+    "month": "2016-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14041.0,
+    "avg_price_usd": 1.07,
+    "min_price_idr": 14041.0,
+    "max_price_idr": 14041.0
+  },
+  {
+    "month": "2016-08-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8064.0,
+    "avg_price_usd": 0.62,
+    "min_price_idr": 8064.0,
+    "max_price_idr": 8064.0
+  },
+  {
+    "month": "2016-08-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13157.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 13157.0,
+    "max_price_idr": 13157.0
+  },
+  {
+    "month": "2016-08-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 15490.0,
+    "avg_price_usd": 1.18,
+    "min_price_idr": 15490.0,
+    "max_price_idr": 15490.0
+  },
+  {
+    "month": "2016-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14222.0,
+    "avg_price_usd": 1.08,
+    "min_price_idr": 14222.0,
+    "max_price_idr": 14222.0
+  },
+  {
+    "month": "2016-09-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8054.0,
+    "avg_price_usd": 0.61,
+    "min_price_idr": 8054.0,
+    "max_price_idr": 8054.0
+  },
+  {
+    "month": "2016-09-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13140.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 13140.0,
+    "max_price_idr": 13140.0
+  },
+  {
+    "month": "2016-09-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 15211.0,
+    "avg_price_usd": 1.15,
+    "min_price_idr": 15211.0,
+    "max_price_idr": 15211.0
+  },
+  {
+    "month": "2016-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14198.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 14198.0,
+    "max_price_idr": 14198.0
+  },
+  {
+    "month": "2016-10-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8048.0,
+    "avg_price_usd": 0.62,
+    "min_price_idr": 8048.0,
+    "max_price_idr": 8048.0
+  },
+  {
+    "month": "2016-10-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13153.0,
+    "avg_price_usd": 1.01,
+    "min_price_idr": 13153.0,
+    "max_price_idr": 13153.0
+  },
+  {
+    "month": "2016-10-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 15039.0,
+    "avg_price_usd": 1.15,
+    "min_price_idr": 15039.0,
+    "max_price_idr": 15039.0
+  },
+  {
+    "month": "2016-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14164.0,
+    "avg_price_usd": 1.06,
+    "min_price_idr": 14164.0,
+    "max_price_idr": 14164.0
+  },
+  {
+    "month": "2016-11-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8006.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 8006.0,
+    "max_price_idr": 8006.0
+  },
+  {
+    "month": "2016-11-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13185.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13185.0,
+    "max_price_idr": 13185.0
+  },
+  {
+    "month": "2016-11-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 14822.0,
+    "avg_price_usd": 1.11,
+    "min_price_idr": 14822.0,
+    "max_price_idr": 14822.0
+  },
+  {
+    "month": "2016-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14232.0,
+    "avg_price_usd": 1.06,
+    "min_price_idr": 14232.0,
+    "max_price_idr": 14232.0
+  },
+  {
+    "month": "2016-12-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8014.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 8014.0,
+    "max_price_idr": 8014.0
+  },
+  {
+    "month": "2016-12-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13201.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13201.0,
+    "max_price_idr": 13201.0
+  },
+  {
+    "month": "2016-12-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 14709.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 14709.0,
+    "max_price_idr": 14709.0
+  },
+  {
+    "month": "2017-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14349.0,
+    "avg_price_usd": 1.07,
+    "min_price_idr": 14349.0,
+    "max_price_idr": 14349.0
+  },
+  {
+    "month": "2017-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8030.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 8030.0,
+    "max_price_idr": 8030.0
+  },
+  {
+    "month": "2017-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13222.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13222.0,
+    "max_price_idr": 13222.0
+  },
+  {
+    "month": "2017-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 14628.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 14628.0,
+    "max_price_idr": 14628.0
+  },
+  {
+    "month": "2017-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14567.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 14567.0,
+    "max_price_idr": 14567.0
+  },
+  {
+    "month": "2017-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8020.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 8020.0,
+    "max_price_idr": 8020.0
+  },
+  {
+    "month": "2017-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13202.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13202.0,
+    "max_price_idr": 13202.0
+  },
+  {
+    "month": "2017-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 14546.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 14546.0,
+    "max_price_idr": 14546.0
+  },
+  {
+    "month": "2017-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14730.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 14730.0,
+    "max_price_idr": 14730.0
+  },
+  {
+    "month": "2017-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7998.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 7998.0,
+    "max_price_idr": 7998.0
+  },
+  {
+    "month": "2017-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13125.0,
+    "avg_price_usd": 0.98,
+    "min_price_idr": 13125.0,
+    "max_price_idr": 13125.0
+  },
+  {
+    "month": "2017-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 14441.0,
+    "avg_price_usd": 1.08,
+    "min_price_idr": 14441.0,
+    "max_price_idr": 14441.0
+  },
+  {
+    "month": "2017-04-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14546.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 14546.0,
+    "max_price_idr": 14546.0
+  },
+  {
+    "month": "2017-04-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7922.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 7922.0,
+    "max_price_idr": 7922.0
+  },
+  {
+    "month": "2017-04-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13074.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13074.0,
+    "max_price_idr": 13074.0
+  },
+  {
+    "month": "2017-04-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13791.0,
+    "avg_price_usd": 1.04,
+    "min_price_idr": 13791.0,
+    "max_price_idr": 13791.0
+  },
+  {
+    "month": "2017-05-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14610.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 14610.0,
+    "max_price_idr": 14610.0
+  },
+  {
+    "month": "2017-05-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7895.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 7895.0,
+    "max_price_idr": 7895.0
+  },
+  {
+    "month": "2017-05-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13096.0,
+    "avg_price_usd": 0.98,
+    "min_price_idr": 13096.0,
+    "max_price_idr": 13096.0
+  },
+  {
+    "month": "2017-05-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13402.0,
+    "avg_price_usd": 1.01,
+    "min_price_idr": 13402.0,
+    "max_price_idr": 13402.0
+  },
+  {
+    "month": "2017-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14629.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 14629.0,
+    "max_price_idr": 14629.0
+  },
+  {
+    "month": "2017-06-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 7929.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 7929.0,
+    "max_price_idr": 7929.0
+  },
+  {
+    "month": "2017-06-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13125.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13125.0,
+    "max_price_idr": 13125.0
+  },
+  {
+    "month": "2017-06-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13306.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 13306.0,
+    "max_price_idr": 13306.0
+  },
+  {
+    "month": "2017-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14575.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 14575.0,
+    "max_price_idr": 14575.0
+  },
+  {
+    "month": "2017-08-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8005.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 8005.0,
+    "max_price_idr": 8005.0
+  },
+  {
+    "month": "2017-08-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13095.0,
+    "avg_price_usd": 0.98,
+    "min_price_idr": 13095.0,
+    "max_price_idr": 13095.0
+  },
+  {
+    "month": "2017-08-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13160.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13160.0,
+    "max_price_idr": 13160.0
+  },
+  {
+    "month": "2017-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14588.0,
+    "avg_price_usd": 1.1,
+    "min_price_idr": 14588.0,
+    "max_price_idr": 14588.0
+  },
+  {
+    "month": "2017-09-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8159.0,
+    "avg_price_usd": 0.62,
+    "min_price_idr": 8159.0,
+    "max_price_idr": 8159.0
+  },
+  {
+    "month": "2017-09-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13215.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 13215.0,
+    "max_price_idr": 13215.0
+  },
+  {
+    "month": "2017-09-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13034.0,
+    "avg_price_usd": 0.98,
+    "min_price_idr": 13034.0,
+    "max_price_idr": 13034.0
+  },
+  {
+    "month": "2017-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14595.0,
+    "avg_price_usd": 1.08,
+    "min_price_idr": 14595.0,
+    "max_price_idr": 14595.0
+  },
+  {
+    "month": "2017-10-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8244.0,
+    "avg_price_usd": 0.61,
+    "min_price_idr": 8244.0,
+    "max_price_idr": 8244.0
+  },
+  {
+    "month": "2017-10-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13346.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13346.0,
+    "max_price_idr": 13346.0
+  },
+  {
+    "month": "2017-10-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12910.0,
+    "avg_price_usd": 0.96,
+    "min_price_idr": 12910.0,
+    "max_price_idr": 12910.0
+  },
+  {
+    "month": "2017-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14542.0,
+    "avg_price_usd": 1.07,
+    "min_price_idr": 14542.0,
+    "max_price_idr": 14542.0
+  },
+  {
+    "month": "2017-11-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8258.0,
+    "avg_price_usd": 0.61,
+    "min_price_idr": 8258.0,
+    "max_price_idr": 8258.0
+  },
+  {
+    "month": "2017-11-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13429.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13429.0,
+    "max_price_idr": 13429.0
+  },
+  {
+    "month": "2017-11-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12814.0,
+    "avg_price_usd": 0.95,
+    "min_price_idr": 12814.0,
+    "max_price_idr": 12814.0
+  },
+  {
+    "month": "2017-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14522.0,
+    "avg_price_usd": 1.07,
+    "min_price_idr": 14522.0,
+    "max_price_idr": 14522.0
+  },
+  {
+    "month": "2017-12-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8296.0,
+    "avg_price_usd": 0.61,
+    "min_price_idr": 8296.0,
+    "max_price_idr": 8296.0
+  },
+  {
+    "month": "2017-12-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13676.0,
+    "avg_price_usd": 1.01,
+    "min_price_idr": 13676.0,
+    "max_price_idr": 13676.0
+  },
+  {
+    "month": "2017-12-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12729.0,
+    "avg_price_usd": 0.94,
+    "min_price_idr": 12729.0,
+    "max_price_idr": 12729.0
+  },
+  {
+    "month": "2018-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14518.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 14518.0,
+    "max_price_idr": 14518.0
+  },
+  {
+    "month": "2018-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8303.0,
+    "avg_price_usd": 0.62,
+    "min_price_idr": 8303.0,
+    "max_price_idr": 8303.0
+  },
+  {
+    "month": "2018-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14531.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 14531.0,
+    "max_price_idr": 14531.0
+  },
+  {
+    "month": "2018-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12618.0,
+    "avg_price_usd": 0.95,
+    "min_price_idr": 12618.0,
+    "max_price_idr": 12618.0
+  },
+  {
+    "month": "2018-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14486.0,
+    "avg_price_usd": 1.07,
+    "min_price_idr": 14486.0,
+    "max_price_idr": 14486.0
+  },
+  {
+    "month": "2018-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8352.0,
+    "avg_price_usd": 0.62,
+    "min_price_idr": 8352.0,
+    "max_price_idr": 8352.0
+  },
+  {
+    "month": "2018-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14697.0,
+    "avg_price_usd": 1.08,
+    "min_price_idr": 14697.0,
+    "max_price_idr": 14697.0
+  },
+  {
+    "month": "2018-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12542.0,
+    "avg_price_usd": 0.93,
+    "min_price_idr": 12542.0,
+    "max_price_idr": 12542.0
+  },
+  {
+    "month": "2018-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14500.0,
+    "avg_price_usd": 1.05,
+    "min_price_idr": 14500.0,
+    "max_price_idr": 14500.0
+  },
+  {
+    "month": "2018-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8375.0,
+    "avg_price_usd": 0.61,
+    "min_price_idr": 8375.0,
+    "max_price_idr": 8375.0
+  },
+  {
+    "month": "2018-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14347.0,
+    "avg_price_usd": 1.04,
+    "min_price_idr": 14347.0,
+    "max_price_idr": 14347.0
+  },
+  {
+    "month": "2018-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12488.0,
+    "avg_price_usd": 0.91,
+    "min_price_idr": 12488.0,
+    "max_price_idr": 12488.0
+  },
+  {
+    "month": "2018-04-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14483.0,
+    "avg_price_usd": 1.05,
+    "min_price_idr": 14483.0,
+    "max_price_idr": 14483.0
+  },
+  {
+    "month": "2018-04-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8337.0,
+    "avg_price_usd": 0.61,
+    "min_price_idr": 8337.0,
+    "max_price_idr": 8337.0
+  },
+  {
+    "month": "2018-04-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14056.0,
+    "avg_price_usd": 1.02,
+    "min_price_idr": 14056.0,
+    "max_price_idr": 14056.0
+  },
+  {
+    "month": "2018-04-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12483.0,
+    "avg_price_usd": 0.91,
+    "min_price_idr": 12483.0,
+    "max_price_idr": 12483.0
+  },
+  {
+    "month": "2018-05-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14428.0,
+    "avg_price_usd": 1.03,
+    "min_price_idr": 14428.0,
+    "max_price_idr": 14428.0
+  },
+  {
+    "month": "2018-05-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8219.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 8219.0,
+    "max_price_idr": 8219.0
+  },
+  {
+    "month": "2018-05-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13900.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13900.0,
+    "max_price_idr": 13900.0
+  },
+  {
+    "month": "2018-05-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12454.0,
+    "avg_price_usd": 0.89,
+    "min_price_idr": 12454.0,
+    "max_price_idr": 12454.0
+  },
+  {
+    "month": "2018-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14422.0,
+    "avg_price_usd": 1.04,
+    "min_price_idr": 14422.0,
+    "max_price_idr": 14422.0
+  },
+  {
+    "month": "2018-06-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8170.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 8170.0,
+    "max_price_idr": 8170.0
+  },
+  {
+    "month": "2018-06-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13835.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13835.0,
+    "max_price_idr": 13835.0
+  },
+  {
+    "month": "2018-06-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12442.0,
+    "avg_price_usd": 0.89,
+    "min_price_idr": 12442.0,
+    "max_price_idr": 12442.0
+  },
+  {
+    "month": "2018-07-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14449.0,
+    "avg_price_usd": 1.01,
+    "min_price_idr": 14449.0,
+    "max_price_idr": 14449.0
+  },
+  {
+    "month": "2018-07-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8185.0,
+    "avg_price_usd": 0.57,
+    "min_price_idr": 8185.0,
+    "max_price_idr": 8185.0
+  },
+  {
+    "month": "2018-07-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13838.0,
+    "avg_price_usd": 0.96,
+    "min_price_idr": 13838.0,
+    "max_price_idr": 13838.0
+  },
+  {
+    "month": "2018-07-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12452.0,
+    "avg_price_usd": 0.87,
+    "min_price_idr": 12452.0,
+    "max_price_idr": 12452.0
+  },
+  {
+    "month": "2018-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14430.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 14430.0,
+    "max_price_idr": 14430.0
+  },
+  {
+    "month": "2018-08-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8180.0,
+    "avg_price_usd": 0.56,
+    "min_price_idr": 8180.0,
+    "max_price_idr": 8180.0
+  },
+  {
+    "month": "2018-08-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13837.0,
+    "avg_price_usd": 0.95,
+    "min_price_idr": 13837.0,
+    "max_price_idr": 13837.0
+  },
+  {
+    "month": "2018-08-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12386.0,
+    "avg_price_usd": 0.85,
+    "min_price_idr": 12386.0,
+    "max_price_idr": 12386.0
+  },
+  {
+    "month": "2018-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14367.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 14367.0,
+    "max_price_idr": 14367.0
+  },
+  {
+    "month": "2018-09-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8196.0,
+    "avg_price_usd": 0.55,
+    "min_price_idr": 8196.0,
+    "max_price_idr": 8196.0
+  },
+  {
+    "month": "2018-09-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13877.0,
+    "avg_price_usd": 0.94,
+    "min_price_idr": 13877.0,
+    "max_price_idr": 13877.0
+  },
+  {
+    "month": "2018-09-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12303.0,
+    "avg_price_usd": 0.83,
+    "min_price_idr": 12303.0,
+    "max_price_idr": 12303.0
+  },
+  {
+    "month": "2018-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14272.0,
+    "avg_price_usd": 0.94,
+    "min_price_idr": 14272.0,
+    "max_price_idr": 14272.0
+  },
+  {
+    "month": "2018-10-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8230.0,
+    "avg_price_usd": 0.54,
+    "min_price_idr": 8230.0,
+    "max_price_idr": 8230.0
+  },
+  {
+    "month": "2018-10-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13910.0,
+    "avg_price_usd": 0.92,
+    "min_price_idr": 13910.0,
+    "max_price_idr": 13910.0
+  },
+  {
+    "month": "2018-10-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12238.0,
+    "avg_price_usd": 0.81,
+    "min_price_idr": 12238.0,
+    "max_price_idr": 12238.0
+  },
+  {
+    "month": "2018-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14178.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 14178.0,
+    "max_price_idr": 14178.0
+  },
+  {
+    "month": "2018-11-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8274.0,
+    "avg_price_usd": 0.56,
+    "min_price_idr": 8274.0,
+    "max_price_idr": 8274.0
+  },
+  {
+    "month": "2018-11-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14007.0,
+    "avg_price_usd": 0.95,
+    "min_price_idr": 14007.0,
+    "max_price_idr": 14007.0
+  },
+  {
+    "month": "2018-11-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12163.0,
+    "avg_price_usd": 0.83,
+    "min_price_idr": 12163.0,
+    "max_price_idr": 12163.0
+  },
+  {
+    "month": "2018-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14134.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 14134.0,
+    "max_price_idr": 14134.0
+  },
+  {
+    "month": "2018-12-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8304.0,
+    "avg_price_usd": 0.57,
+    "min_price_idr": 8304.0,
+    "max_price_idr": 8304.0
+  },
+  {
+    "month": "2018-12-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14119.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 14119.0,
+    "max_price_idr": 14119.0
+  },
+  {
+    "month": "2018-12-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12142.0,
+    "avg_price_usd": 0.83,
+    "min_price_idr": 12142.0,
+    "max_price_idr": 12142.0
+  },
+  {
+    "month": "2019-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14145.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 14145.0,
+    "max_price_idr": 14145.0
+  },
+  {
+    "month": "2019-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8316.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 8316.0,
+    "max_price_idr": 8316.0
+  },
+  {
+    "month": "2019-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14274.0,
+    "avg_price_usd": 1.01,
+    "min_price_idr": 14274.0,
+    "max_price_idr": 14274.0
+  },
+  {
+    "month": "2019-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12130.0,
+    "avg_price_usd": 0.86,
+    "min_price_idr": 12130.0,
+    "max_price_idr": 12130.0
+  },
+  {
+    "month": "2019-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14070.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 14070.0,
+    "max_price_idr": 14070.0
+  },
+  {
+    "month": "2019-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8338.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 8338.0,
+    "max_price_idr": 8338.0
+  },
+  {
+    "month": "2019-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14313.0,
+    "avg_price_usd": 1.01,
+    "min_price_idr": 14313.0,
+    "max_price_idr": 14313.0
+  },
+  {
+    "month": "2019-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12071.0,
+    "avg_price_usd": 0.85,
+    "min_price_idr": 12071.0,
+    "max_price_idr": 12071.0
+  },
+  {
+    "month": "2019-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14062.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 14062.0,
+    "max_price_idr": 14062.0
+  },
+  {
+    "month": "2019-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8370.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 8370.0,
+    "max_price_idr": 8370.0
+  },
+  {
+    "month": "2019-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14211.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 14211.0,
+    "max_price_idr": 14211.0
+  },
+  {
+    "month": "2019-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12153.0,
+    "avg_price_usd": 0.85,
+    "min_price_idr": 12153.0,
+    "max_price_idr": 12153.0
+  },
+  {
+    "month": "2019-04-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14037.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 14037.0,
+    "max_price_idr": 14037.0
+  },
+  {
+    "month": "2019-04-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8388.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 8388.0,
+    "max_price_idr": 8388.0
+  },
+  {
+    "month": "2019-04-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14021.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 14021.0,
+    "max_price_idr": 14021.0
+  },
+  {
+    "month": "2019-04-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12233.0,
+    "avg_price_usd": 0.87,
+    "min_price_idr": 12233.0,
+    "max_price_idr": 12233.0
+  },
+  {
+    "month": "2019-05-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14031.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 14031.0,
+    "max_price_idr": 14031.0
+  },
+  {
+    "month": "2019-05-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8370.0,
+    "avg_price_usd": 0.58,
+    "min_price_idr": 8370.0,
+    "max_price_idr": 8370.0
+  },
+  {
+    "month": "2019-05-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13958.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 13958.0,
+    "max_price_idr": 13958.0
+  },
+  {
+    "month": "2019-05-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12495.0,
+    "avg_price_usd": 0.86,
+    "min_price_idr": 12495.0,
+    "max_price_idr": 12495.0
+  },
+  {
+    "month": "2019-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13961.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 13961.0,
+    "max_price_idr": 13961.0
+  },
+  {
+    "month": "2019-06-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8385.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 8385.0,
+    "max_price_idr": 8385.0
+  },
+  {
+    "month": "2019-06-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13951.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 13951.0,
+    "max_price_idr": 13951.0
+  },
+  {
+    "month": "2019-06-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12610.0,
+    "avg_price_usd": 0.88,
+    "min_price_idr": 12610.0,
+    "max_price_idr": 12610.0
+  },
+  {
+    "month": "2019-07-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13855.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 13855.0,
+    "max_price_idr": 13855.0
+  },
+  {
+    "month": "2019-07-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8401.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 8401.0,
+    "max_price_idr": 8401.0
+  },
+  {
+    "month": "2019-07-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13957.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 13957.0,
+    "max_price_idr": 13957.0
+  },
+  {
+    "month": "2019-07-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12585.0,
+    "avg_price_usd": 0.9,
+    "min_price_idr": 12585.0,
+    "max_price_idr": 12585.0
+  },
+  {
+    "month": "2019-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13795.0,
+    "avg_price_usd": 0.97,
+    "min_price_idr": 13795.0,
+    "max_price_idr": 13795.0
+  },
+  {
+    "month": "2019-08-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8405.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 8405.0,
+    "max_price_idr": 8405.0
+  },
+  {
+    "month": "2019-08-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13944.0,
+    "avg_price_usd": 0.98,
+    "min_price_idr": 13944.0,
+    "max_price_idr": 13944.0
+  },
+  {
+    "month": "2019-08-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12541.0,
+    "avg_price_usd": 0.88,
+    "min_price_idr": 12541.0,
+    "max_price_idr": 12541.0
+  },
+  {
+    "month": "2019-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13838.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13838.0,
+    "max_price_idr": 13838.0
+  },
+  {
+    "month": "2019-09-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8406.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 8406.0,
+    "max_price_idr": 8406.0
+  },
+  {
+    "month": "2019-09-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13961.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 13961.0,
+    "max_price_idr": 13961.0
+  },
+  {
+    "month": "2019-09-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12510.0,
+    "avg_price_usd": 0.89,
+    "min_price_idr": 12510.0,
+    "max_price_idr": 12510.0
+  },
+  {
+    "month": "2019-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13846.0,
+    "avg_price_usd": 0.98,
+    "min_price_idr": 13846.0,
+    "max_price_idr": 13846.0
+  },
+  {
+    "month": "2019-10-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8424.0,
+    "avg_price_usd": 0.59,
+    "min_price_idr": 8424.0,
+    "max_price_idr": 8424.0
+  },
+  {
+    "month": "2019-10-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13978.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13978.0,
+    "max_price_idr": 13978.0
+  },
+  {
+    "month": "2019-10-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12504.0,
+    "avg_price_usd": 0.88,
+    "min_price_idr": 12504.0,
+    "max_price_idr": 12504.0
+  },
+  {
+    "month": "2019-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 13850.0,
+    "avg_price_usd": 0.98,
+    "min_price_idr": 13850.0,
+    "max_price_idr": 13850.0
+  },
+  {
+    "month": "2019-11-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8432.0,
+    "avg_price_usd": 0.6,
+    "min_price_idr": 8432.0,
+    "max_price_idr": 8432.0
+  },
+  {
+    "month": "2019-11-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 13995.0,
+    "avg_price_usd": 0.99,
+    "min_price_idr": 13995.0,
+    "max_price_idr": 13995.0
+  },
+  {
+    "month": "2019-11-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12562.0,
+    "avg_price_usd": 0.89,
+    "min_price_idr": 12562.0,
+    "max_price_idr": 12562.0
+  },
+  {
+    "month": "2019-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14056.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 14056.0,
+    "max_price_idr": 14056.0
+  },
+  {
+    "month": "2019-12-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8478.0,
+    "avg_price_usd": 0.61,
+    "min_price_idr": 8478.0,
+    "max_price_idr": 8478.0
+  },
+  {
+    "month": "2019-12-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14019.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 14019.0,
+    "max_price_idr": 14019.0
+  },
+  {
+    "month": "2019-12-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12619.0,
+    "avg_price_usd": 0.9,
+    "min_price_idr": 12619.0,
+    "max_price_idr": 12619.0
+  },
+  {
+    "month": "2020-01-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14738.0,
+    "avg_price_usd": 1.08,
+    "min_price_idr": 14738.0,
+    "max_price_idr": 14738.0
+  },
+  {
+    "month": "2020-01-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8503.0,
+    "avg_price_usd": 0.62,
+    "min_price_idr": 8503.0,
+    "max_price_idr": 8503.0
+  },
+  {
+    "month": "2020-01-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14139.0,
+    "avg_price_usd": 1.04,
+    "min_price_idr": 14139.0,
+    "max_price_idr": 14139.0
+  },
+  {
+    "month": "2020-01-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 12809.0,
+    "avg_price_usd": 0.94,
+    "min_price_idr": 12809.0,
+    "max_price_idr": 12809.0
+  },
+  {
+    "month": "2020-02-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14916.0,
+    "avg_price_usd": 1.09,
+    "min_price_idr": 14916.0,
+    "max_price_idr": 14916.0
+  },
+  {
+    "month": "2020-02-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8481.0,
+    "avg_price_usd": 0.62,
+    "min_price_idr": 8481.0,
+    "max_price_idr": 8481.0
+  },
+  {
+    "month": "2020-02-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14188.0,
+    "avg_price_usd": 1.04,
+    "min_price_idr": 14188.0,
+    "max_price_idr": 14188.0
+  },
+  {
+    "month": "2020-02-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 13008.0,
+    "avg_price_usd": 0.95,
+    "min_price_idr": 13008.0,
+    "max_price_idr": 13008.0
+  },
+  {
+    "month": "2020-03-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 1,
+    "avg_price_idr": 14815.0,
+    "avg_price_usd": 1.0,
+    "min_price_idr": 14815.0,
+    "max_price_idr": 14815.0
+  },
+  {
+    "month": "2020-03-01",
+    "commodity_consolidated": "Flour",
+    "market_count": 1,
+    "avg_price_idr": 8478.0,
+    "avg_price_usd": 0.57,
+    "min_price_idr": 8478.0,
+    "max_price_idr": 8478.0
+  },
+  {
+    "month": "2020-03-01",
+    "commodity_consolidated": "Rice",
+    "market_count": 1,
+    "avg_price_idr": 14209.0,
+    "avg_price_usd": 0.96,
+    "min_price_idr": 14209.0,
+    "max_price_idr": 14209.0
+  },
+  {
+    "month": "2020-03-01",
+    "commodity_consolidated": "Sugar",
+    "market_count": 1,
+    "avg_price_idr": 14180.0,
+    "avg_price_usd": 0.96,
+    "min_price_idr": 14180.0,
+    "max_price_idr": 14180.0
+  },
+  {
+    "month": "2024-06-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 211,
+    "avg_price_idr": 20342.18009478673,
+    "avg_price_usd": 1.2324644549763033,
+    "min_price_idr": 16500.0,
+    "max_price_idr": 30000.0
+  },
+  {
+    "month": "2024-07-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 213,
+    "avg_price_idr": 20344.835680751174,
+    "avg_price_usd": 1.2552112676056337,
+    "min_price_idr": 16500.0,
+    "max_price_idr": 30000.0
+  },
+  {
+    "month": "2024-08-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 212,
+    "avg_price_idr": 20391.037735849055,
+    "avg_price_usd": 1.2924528301886793,
+    "min_price_idr": 17000.0,
+    "max_price_idr": 30000.0
+  },
+  {
+    "month": "2024-09-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 213,
+    "avg_price_idr": 20404.10798122066,
+    "avg_price_usd": 1.3251643192488263,
+    "min_price_idr": 17000.0,
+    "max_price_idr": 30000.0
+  },
+  {
+    "month": "2024-10-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 213,
+    "avg_price_idr": 20425.704225352114,
+    "avg_price_usd": 1.310093896713615,
+    "min_price_idr": 17000.0,
+    "max_price_idr": 30000.0
+  },
+  {
+    "month": "2024-11-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 213,
+    "avg_price_idr": 20693.309859154928,
+    "avg_price_usd": 1.301455399061033,
+    "min_price_idr": 17000.0,
+    "max_price_idr": 30000.0
+  },
+  {
+    "month": "2024-12-01",
+    "commodity_consolidated": "Cooking Oil",
+    "market_count": 209,
+    "avg_price_idr": 21031.937799043062,
+    "avg_price_usd": 1.3128229665071771,
+    "min_price_idr": 17000.0,
+    "max_price_idr": 31000.0
+  }
+]
