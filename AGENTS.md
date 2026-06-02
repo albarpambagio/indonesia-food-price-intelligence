@@ -67,8 +67,8 @@ uv run python forecast/run_forecast.py   # DONE — Phase 3e (7 bugfixes) + Phas
 ### Export + Dashboard
 ```bash
 uv run python export/export_json.py   # DONE — 5 mart JSONs via verify_export() + forecast.json
-uv run python dashboard/app.py        # Development server (http://localhost:8050)
-# Production: same script, served via Hugging Face Spaces Docker (port 8050)
+uv run python dashboard/app.py        # Development server (http://localhost:7860)
+# Production: same script, served via Hugging Face Spaces Docker (port 7860)
 ```
 
 ---
@@ -471,7 +471,7 @@ uv run python forecast/run_forecast.py
 ### Verify Dashboard
 ```bash
 uv run python -c "from dashboard.app import app; print(f'Pages: {len(app.layout.children)}')"
-uv run python dashboard/app.py    # Smoke test: must start on http://localhost:8050
+uv run python dashboard/app.py    # Smoke test: must start on http://localhost:7860
 ```
 
 ---

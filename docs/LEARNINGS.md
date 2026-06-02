@@ -78,6 +78,12 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 78 | [Pipeline Reuse Beats LOC Savings — Don't Trade Built Data Layer for Faster Framework](#78-pipeline-reuse-beats-loc-savings--dont-trade-built-data-layer-for-faster-framework) |
 | 79 | [LEARNINGS.md Patterns Are Stack-Specific — Switching Means Losing the Knowledge Base](#79-learningsmd-patterns-are-stack-specific--switching-means-losing-the-knowledge-base) |
 | 80 | [Chart Engine Parity Between EDA and Dashboard Saves Migration Cost](#80-chart-engine-parity-between-eda-and-dashboard-saves-migration-cost) |
+| 81 | [Dash Pages Routing: `dash.register_page` + `use_pages=True`](#81-dash-pages-routing-dashregister_page--use_pagestrue) |
+| 82 | [DuckDB Read-Only Connections + `@functools.lru_cache` for Dashboard Data Access](#82-duckdb-read-only-connections--functoolslru_cache-for-dashboard-data-access) |
+| 83 | [`dcc.Store` for Cross-Page Filter State (Alternative: Query String)](#83-dccstore-for-cross-page-filter-state-alternative-query-string) |
+| 84 | [HF Spaces Docker Packaging: Port 7860, `gunicorn`, Layer Optimization](#84-hf-spaces-docker-packaging-port-7860-gunicorn-layer-optimization) |
+| 85 | [Callback Output Declaration: All Outputs Must Be Declared in Signature](#85-callback-output-declaration-all-outputs-must-be-declared-in-signature) |
+| 86 | [Plotly Figure Specs Port Verbatim from Marimo EDA to Dash `dcc.Graph`](#86-plotly-figure-specs-port-verbatim-from-marimo-eda-to-dash-dccgraph) |
 
 ---
 
@@ -3040,6 +3046,299 @@ When choosing a dashboard framework, check the chart engine against the EDA note
 
 ---
 
+## 81. Dash Pages Routing: `dash.register_page` + `use_pages=True`
+
+### The Problem
+
+Multi-page Dash apps historically required manual URL routing via `app.layout` callbacks and `dcc.Location` triggers. Each page needed explicit `Input("url", "pathname")` callbacks to conditionally render content. This produces verbose boilerplate and makes adding pages a multi-file operation.
+
+### Solution: Dash Pages Plugin
+
+Dash 3.x provides a built-in multi-page pattern via `use_pages=True`:
+
+```python
+# app.py
+app = dash.Dash(__name__, use_pages=True, ...)
+app.layout = dbc.Container([
+    dbc.NavbarSimple(children=[
+        dbc.NavItem(dbc.NavLink("Page 1", href="/")),
+        dbc.NavItem(dbc.NavLink("Page 2", href="/page2")),
+    ]),
+    dash.page_container,  # Auto-renders the matched page
+])
+```
+
+Each page file self-registers:
+```python
+# pages/price_trends.py
+dash.register_page(__name__, path="/", name="Price Trends")
+
+def layout():
+    return dbc.Container([...])
+```
+
+### Key Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| `layout()` as function, not module-level | Allows dynamic layout per request; required for filter-dependent content |
+| `suppress_callback_exceptions=True` | Pages load lazily — callbacks reference IDs not yet in DOM during initial load |
+| One callback per page in the page module | Keeps callbacks co-located with the layout they update |
+| `dash.page_container` in app.layout | Single insertion point — all page content renders inside this wrapper |
+
+### Files Affected
+
+- `dashboard/app.py` — `use_pages=True`, `page_container`
+- `dashboard/pages/price_trends.py` — `register_page`, `layout()`, callbacks
+- `dashboard/pages/seasonal_patterns.py` — same pattern
+- `dashboard/pages/geographic_disparity.py` — same pattern
+- `dashboard/pages/commodity_signals.py` — same pattern
+
+### Rule
+
+Use `dash.register_page(__name__, path=..., name=...)` at the top of each page file. Keep `layout()` as a function (not a variable). Place one callback per page in the same file. The app layout only needs `dash.page_container` — no manual URL routing.
+
+---
+
+## 82. DuckDB Read-Only Connections + `@functools.lru_cache` for Dashboard Data Access
+
+### The Problem
+
+Dash callbacks fire on every filter change. Without caching, each callback execution opens a new DuckDB connection, runs the query, and closes it. With 4 pages × 3 filters each, this produces dozens of short-lived connections per user session.
+
+### Solution: Centralized Data Access with `lru_cache`
+
+```python
+# dashboard/data_access.py
+import functools
+
+@functools.lru_cache(maxsize=32)
+def load_mart(name: str, **filters: str) -> pd.DataFrame:
+    conn = duckdb.connect(DB_PATH, read_only=True)
+    try:
+        df = conn.execute(query, values).fetchdf()
+    finally:
+        conn.close()
+    return df
+```
+
+Key design choices:
+
+| Decision | Rationale |
+|----------|-----------|
+| `read_only=True` | Prevents accidental writes from dashboard; avoids DuckDB file locks between dashboard + pipeline |
+| `@functools.lru_cache(maxsize=32)` | In-process cache — same query with same filters returns cached DataFrame; 32 entries covers all filter combos across 4 pages |
+| `try/finally: conn.close()` | Guarantees connection cleanup even on query failure |
+| Centralized module | Pages import `load_mart` — never open their own DuckDB connections |
+
+### Cache Invalidation
+
+`lru_cache` persists for the process lifetime. For dashboard use (read-only analytics), this is correct — data only changes when the pipeline re-runs. For development with live data changes, call `load_mart.cache_clear()` in a debug callback.
+
+### Files Affected
+
+- `dashboard/data_access.py` — `load_mart()`, `load_forecast_data()`, `load_forecast_metadata()`
+
+### Rule
+
+All DuckDB queries for the dashboard go through a single `data_access.py` module with `@functools.lru_cache`. Never open DuckDB connections directly in page callbacks. Use `read_only=True` to prevent accidental writes and file-lock conflicts with the pipeline.
+
+---
+
+## 83. `dcc.Store` for Cross-Page Filter State (Alternative: Query String)
+
+### The Problem
+
+Global filters (commodity, island group, year range) need to be shared across all 4 pages. When the user changes a filter on Page 1, navigating to Page 2 should reflect the same filter state.
+
+### Two Approaches
+
+| Approach | Mechanism | Pros | Cons |
+|----------|-----------|------|------|
+| `dcc.Store` | Client-side JSON state in browser memory | Fast, no URL pollution | State lost on page reload; not shareable via URL |
+| `dcc.Location` query string | Filters encoded in `?commodity=Rice&island=Java` | Shareable URLs, survives reload | More verbose callback wiring |
+
+### Chosen: `dcc.Store` (per §6.6.6 plan)
+
+```python
+# components/filters.py
+dcc.Store(id="filters-store")  # Shared state
+
+# In callbacks, read from Store:
+Input("global-commodity", "value"),
+Input("global-island", "value"),
+Input("global-year-range", "value"),
+```
+
+Since Dash Pages with `use_pages=True` shares the same layout, filter IDs are global — callbacks on any page can read `Input("global-commodity", "value")` directly without an intermediate Store. The Store becomes necessary only if filter state needs to persist across full page reloads.
+
+### Files Affected
+
+- `dashboard/components/filters.py` — filter bar with global IDs
+- All 4 page callbacks — `Input("global-commodity", "value")` etc.
+
+### Rule
+
+For Dash Pages apps, prefer global filter IDs (same ID across all pages) over `dcc.Store` for filter state. The `dcc.Store` pattern is needed when state must survive page reloads or be shared between non-parent components. Always declare all callback `Output`/`Input` IDs in the signature — missing outputs raise `InvalidCallback` at startup.
+
+---
+
+## 84. HF Spaces Docker Packaging: Port 7860, `gunicorn`, Layer Optimization
+
+### The Problem
+
+HF Spaces free tier expects a Dockerfile that exposes port 7860 (not 8050 or 5000). The Docker image must be lean enough to fit within free-tier memory limits (~2 GB). Cold starts must be fast (< 30s).
+
+### Solution: Three-Layer Dockerfile
+
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+
+# Layer 1: deps (cached unless pyproject.toml changes)
+COPY pyproject.toml uv.lock ./
+RUN pip install uv && uv sync --frozen --no-dev
+
+# Layer 2: dashboard code
+COPY dashboard/app.py dashboard/
+COPY dashboard/pages/ dashboard/pages/
+COPY dashboard/components/ dashboard/components/
+COPY dashboard/data_access.py dashboard/
+
+# Layer 3: runtime data
+COPY data/wfp.duckdb data/wfp.duckdb
+
+EXPOSE 7860
+CMD ["gunicorn", "app:server", "--bind", "0.0.0.0:7860", "--workers", "2", "--timeout", "120"]
+```
+
+### Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Port 7860 | HF Spaces standard — changing it requires Space config changes |
+| `gunicorn` with 2 workers | Free tier CPU limit; 2 workers handle concurrent requests without OOM |
+| `--timeout 120` | Cold-start DuckDB connection + first query may take 15-30s |
+| Layer order: deps → code → data | `pyproject.toml` changes rarely; data changes per pipeline run. Docker layer caching means only changed layers rebuild. |
+| `--frozen --no-dev` | Reproducible installs; no dev tools (ruff) in production |
+
+### Local vs Production
+
+| Aspect | Local | HF Spaces |
+|--------|-------|-----------|
+| Port | 7860 (configured) | 7860 (HF default) |
+| Server | Flask dev (1 worker) | gunicorn (2 workers) |
+| Cold start | Instant | 15-30s (first request after sleep) |
+| Hot reload | Auto (debug=True) | `hf spaces hot-reload` |
+
+### Files Affected
+
+- `dashboard/Dockerfile` — created per above spec
+- `dashboard/.dockerignore` — excludes `.venv/`, `__pycache__/`, `analysis/`, `transform/`, `forecast/`, `logs/`, `docs/`, `.git/`, `data/raw/`
+- `dashboard/README_HF.md` — HF Spaces metadata header (YAML)
+
+### Rule
+
+HF Spaces expects port 7860, gunicorn, and a Dockerfile at the Space root. Order Docker layers by change frequency: deps (rare) → code (medium) → data (frequent). Use `--timeout 120` for cold-start tolerance. Always test locally with `uv run python dashboard/app.py` before pushing.
+
+---
+
+## 85. Callback Output Declaration: All Outputs Must Be Declared in Signature
+
+### The Problem
+
+Dash 3.x raises `InvalidCallback` at startup if a callback's `Output` references an ID that isn't declared in the function signature. Unlike Dash 2.x (which silently ignored missing outputs), Dash 3.x enforces strict declaration:
+
+```python
+# BUG — Dash 3.x raises InvalidCallback
+@callback(
+    Output("chart-1", "figure"),
+    Input("filter", "value"),
+)
+def update(filter_val):
+    return fig  # Missing output for "chart-2"
+```
+
+### Solution
+
+Declare all outputs in the `@callback` decorator, even if some are conditionally returned:
+
+```python
+@callback(
+    Output("chart-1", "figure"),
+    Output("chart-2", "figure"),
+    Output("table-1", "children"),
+    Input("filter", "value"),
+)
+def update(filter_val):
+    if not data:
+        empty = go.Figure()
+        return empty, empty, []
+    return fig1, fig2, table_children
+```
+
+### Key Difference from Dash 2.x
+
+| Behavior | Dash 2.x | Dash 3.x |
+|----------|----------|----------|
+| Missing output in callback | Silently ignored | `InvalidCallback` at startup |
+| `prevent_initial_call` | Optional | Required on heavy callbacks to avoid render-on-load |
+| Multi-output return | Tuple/list | Must match `Output` count exactly |
+
+### Files Affected
+
+- All 4 page callbacks — all outputs declared in `@callback` decorator
+
+### Rule
+
+Dash 3.x requires all callback outputs to be declared in the `@callback` decorator. Every `Output()` must have a corresponding return value. Use `prevent_initial_call=True` on heavy callbacks (DuckDB queries + chart rendering) to avoid unnecessary initial renders. Return empty `go.Figure()` or `[]` for no-data states instead of `None`.
+
+---
+
+## 86. Plotly Figure Specs Port Verbatim from Marimo EDA to Dash `dcc.Graph`
+
+### The Problem
+
+The original plan (Next.js + Recharts) would have required translating every Plotly chart spec from `analysis/eda.py` into Recharts JSX components — different API, different event model, different tooltip configuration. For 15+ analytical charts with `add_vline`, `add_vrect`, `make_subplots`, CI shaded areas, and `px.imshow` heatmaps, the translation cost was estimated at 2-3 days.
+
+### Solution: Plotly EDA → Dash Parity
+
+With Dash using Plotly natively, chart specs drop into `dcc.Graph(figure=fig)` verbatim:
+
+```python
+# EDA notebook (analysis/eda.py)
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=sub["month"], y=sub["avg_price_idr"], name=commodity))
+fig.add_vline(x="2022-01-15", line_dash="dash", annotation_text="Cooking oil export ban")
+fig.add_vrect(x0="2022-01-01", x1="2022-12-31", fillcolor="red", opacity=0.1)
+
+# Dashboard page (pages/price_trends.py) — same code, zero translation
+dcc.Graph(figure=fig)
+```
+
+### What Ports Verbatim
+
+| EDA Feature | Dash Equivalent | LOC Saved |
+|------------|-----------------|-----------|
+| `go.Figure()` + `add_trace()` | Same | 0 (verbatim) |
+| `add_vline(x=..., line_dash="dash")` | Same | ~5 per annotation |
+| `add_vrect(fillcolor=..., opacity=...)` | Same | ~3 per band |
+| `make_subplots(rows=2, cols=2)` | Same | ~10 |
+| `px.imshow(matrix, color_continuous_scale=...)` | Same | ~8 |
+| `go.Scatter(fill="toself")` for CI area | Same | ~15 per CI overlay |
+
+### Files Affected
+
+- `dashboard/pages/price_trends.py` — forecast CI overlay from EDA Q1
+- `dashboard/pages/seasonal_patterns.py` — heatmap from EDA A3
+- `dashboard/pages/commodity_signals.py` — correlation heatmap from EDA A5b
+
+### Rule
+
+When the EDA notebook and dashboard use the same chart library (Plotly), chart specs are copy-paste portable. The only adaptation needed is wrapping in `dcc.Graph(figure=fig)` and ensuring the figure is built inside a callback (not at module level). This parity is the single largest time-saver in the Phase 5g→6 transition.
+
+---
+
 ## Updated Decision Log
 
 | Decision | Rationale |
@@ -3054,3 +3353,8 @@ When choosing a dashboard framework, check the chart engine against the EDA note
 | Pipeline reuse scored at 10+ in framework comparison | Switching from Next.js (consumes 5 static JSONs) to a Python server framework (queries DuckDB) discards the export pipeline. For a 4-page dashboard, 500 LOC of UI is one week of work — rebuilding the data layer is two weeks minimum and adds a new failure mode. |
 | LEARNINGS.md sections as stack-specific sunk cost | 35+ sections of this file are Next.js+Shadboard specific and don't transfer to a new framework. Switching means re-discovering every bug (route groups, hooks order, dynamic imports, filter composition) and re-documenting each fix. Cost is invisible in feature charts but real in delivery timelines. |
 | Chart engine parity between EDA and dashboard | Plotly EDA → Recharts dashboard requires translating every chart spec. Plotly EDA → Dash/Streamlit/Vizro/Panel dashboard = verbatim copy. For a portfolio project where analytical depth is the selling point and chart richness is the centerpiece, Plotly parity saves real translation cost. |
+| Dash Pages over manual URL routing | `use_pages=True` + `dash.register_page` eliminates per-page URL callback boilerplate. One `page_container` in app layout replaces manual `dcc.Location` + pathname matching. |
+| `lru_cache` over per-callback DuckDB connections | 4 pages × 3 filters = 12+ connections per user session. `lru_cache(maxsize=32)` serves repeated queries from in-process memory; `read_only=True` prevents accidental writes. |
+| Global filter IDs over `dcc.Store` for filter state | Dash Pages shares the same layout across pages — global filter IDs work without intermediate Store. `dcc.Store` only needed for cross-reload persistence. |
+| Port 7860 for HF Spaces | HF Spaces standard port; changing requires Space config update. Local dev matches production port for parity. |
+| Dash 3.x strict output declaration | Dash 3.x raises `InvalidCallback` for undeclared outputs (Dash 2.x silently ignored). All `@callback` outputs must be declared and returned. |
