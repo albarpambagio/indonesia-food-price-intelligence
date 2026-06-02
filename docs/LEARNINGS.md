@@ -72,6 +72,12 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 72 | [Hardcoded Reference Dates: Compute from Data, Not Calendar](#72-hardcoded-reference-dates-compute-from-data-not-calendar) |
 | 73 | [Unified Pipeline `run_id` Across Subprocesses](#73-unified-pipeline-run_id-across-subprocesses) |
 | 74 | [DRY: Importable Pipeline Helpers Over Duplicated DDL](#74-dry-importable-pipeline-helpers-over-duplicated-ddl) |
+| 75 | [Cloudflare Pages Constraint Hard-Blocks All Python Server Frameworks](#75-cloudflare-pages-constraint-hard-blocks-all-python-server-frameworks) |
+| 76 | [Weighted Decision Matrix Prevents Vibes-Based Stack Choices](#76-weighted-decision-matrix-prevents-vibes-based-stack-choices) |
+| 77 | [Framework Maturity Is a Hidden Tax, Not Just a Number](#77-framework-maturity-is-a-hidden-tax-not-just-a-number) |
+| 78 | [Pipeline Reuse Beats LOC Savings — Don't Trade Built Data Layer for Faster Framework](#78-pipeline-reuse-beats-loc-savings--dont-trade-built-data-layer-for-faster-framework) |
+| 79 | [LEARNINGS.md Patterns Are Stack-Specific — Switching Means Losing the Knowledge Base](#79-learningsmd-patterns-are-stack-specific--switching-means-losing-the-knowledge-base) |
+| 80 | [Chart Engine Parity Between EDA and Dashboard Saves Migration Cost](#80-chart-engine-parity-between-eda-and-dashboard-saves-migration-cost) |
 
 ---
 
@@ -2770,6 +2776,268 @@ ensure_lineage_table(conn)  # Single call replaces 59 lines
 
 ---
 
+## 75. Cloudflare Pages Constraint Hard-Blocks All Python Server Frameworks
+
+### The Problem
+
+When evaluating Vizro (McKinsey's low-code Python dashboard toolkit) as a replacement for the planned Next.js + Shadboard stack, the initial framing was "low-code velocity vs. full-code control." The actual binding constraint turned out to be the **deployment target**: Cloudflare Pages is a static-site host. Vizro is a Dash server. The two are not directly compatible.
+
+### Investigation
+
+Surveyed the "high maturity + low code" Python dashboard landscape:
+
+| Framework | Stars | Backing | Deployment | Cloudflare Pages fit |
+|-----------|------:|---------|-----------|---------------------|
+| Streamlit | 44.7k | Snowflake | Streamlit Community Cloud, Render, Fly.io | None (server only) |
+| Dash 3/4 | 24.2k | Plotly | gunicorn + Render/Fly.io, Dash Enterprise | None (Flask server) |
+| Panel | 5.6k | Anaconda / HoloViz | Tornado/Flask, **Pyodide static export** | **Only Python option that can** (Pyodide, ~1MB initial payload) |
+| Gradio | 42.7k | Hugging Face | HF Spaces, Docker | None (server only) |
+| Vizro | 3.7k | McKinsey | Dash server, Render, Fly.io | None (server only) |
+| Reflex | ~21k | Pynecone | FastAPI server | None (server only) |
+
+**Cloudflare Workers** does support Python via Pyodide, but does not support Flask/Dash WSGI apps. Running a Dash or Streamlit app on Cloudflare Pages requires either (a) swapping the host to Render/Fly/HF Spaces, or (b) a Workers-specific rewrite that drops the framework entirely.
+
+### Why This Matters More Than It Looks
+
+The "trade framework for low code" framing assumed deployment was a separate concern from framework choice. It is not. **The deployment target is a load-bearing constraint** — forking the framework choice before considering hosting produces dead-on-arrival evaluations. For every Python option except Panel, switching frameworks forces a hosting migration as a side effect. The 5-JSON static export already in `dashboard/public/data/` is purpose-built for Cloudflare Pages; replacing the framework that consumes it without a hosting plan leaves a half-built deliverable.
+
+### Solution
+
+1. Make the deployment target the **first filter** in any framework evaluation. State it explicitly: "Cloudflare Pages static" / "Render server" / "HF Spaces free tier" / etc.
+2. Cross-reference against the framework's deployment story before reading any "low code" marketing.
+3. Score frameworks against deployment fit at the **highest weight** in the decision matrix (12/100 in this project's matrix). A framework that doesn't deploy to the target is disqualified.
+
+### Rule
+
+When evaluating a framework, ask "how does it deploy to my target host?" first. If the answer is "it doesn't, you have to change the host too," the framework is a much worse fit than its feature set suggests. The hosting cost — both the migration and the recurring ops — is rarely captured in framework comparison charts.
+
+---
+
+## 76. Weighted Decision Matrix Prevents Vibes-Based Stack Choices
+
+### The Problem
+
+Comparing "Vizro vs. Next.js + Shadboard" is a structural mismatch — different runtimes, different deployment models, different LOC profiles, different community sizes. Without an explicit scoring method, the comparison collapses to "Vizro is low-code" vs. "Next.js is more familiar" — both of which are vibes, not decisions. The same trap applies to any framework choice: Streamlit vs. Dash, PostgreSQL vs. DuckDB, dbt vs. SQLMesh.
+
+### Solution
+
+A weighted decision matrix forces explicit values onto what would otherwise be implicit preferences:
+
+| Step | Action |
+|------|--------|
+| 1 | List 12–15 evaluation criteria specific to **this** project (not generic) |
+| 2 | Assign weights that sum to 100, calibrated to the project's actual stakes |
+| 3 | Score each option 1–10 against each criterion |
+| 4 | Multiply, sum, normalize |
+| 5 | The lowest-scored option is not automatically wrong — but any decision to override the score requires articulating which weight is miscalibrated |
+
+Example weights used for the dashboard stack evaluation:
+
+| Criterion | Weight | Why this weight |
+|-----------|-------:|-----------------|
+| Pipeline artifact reuse (5 JSONs already exported) | 12 | Switching costs the entire data layer |
+| Deployment fit (Cloudflare Pages) | 12 | Hard-block on every Python server option |
+| LOC / build effort for 4 pages | 10 | This is the headline trade-off |
+| Filter behavior correctness | 10 | 35+ LEARNINGS.md sections cover this for current stack |
+| Time-series viz quality | 8 | Forecast CI overlay is the analytical centerpiece |
+| Hiring / portfolio signal | 8 | Reviewers recognize Next.js, not Vizro |
+
+### Key Insight
+
+The matrix does not produce truth — it produces **defensible preferences**. When the score says "Next.js wins 8.02 vs. 6.75," the decision to keep the current plan is justified by the 12-weight on deployment fit and 12-weight on pipeline reuse, not by "feels more familiar." If a future re-evaluation wants to switch to Vizro, the burden is to argue that deployment fit or pipeline reuse should be weighted lower — not to assert that Vizro is "better."
+
+### Files Affected
+
+- `docs/LEARNINGS.md` — §75 (this section), and 4 follow-on sections documenting the matrix outcomes
+
+### Rule
+
+For any framework or tool choice with 3+ viable candidates, build a weighted matrix before committing. The discipline matters more than the specific numbers — the act of writing down weights forces articulation of what the project actually values. A 6-line matrix that gets the weights right beats a 50-page comparison that doesn't.
+
+---
+
+## 77. Framework Maturity Is a Hidden Tax, Not Just a Number
+
+### The Problem
+
+GitHub stars and version numbers are visible metrics, but they don't fully capture the **hidden cost of choosing an immature framework**. When Vizro was first proposed as an alternative, the "low code" pitch was front and center. The maturity comparison was an afterthought — and a telling one: Vizro (3.7k stars, v0.1.56, 3 years old) is the **least mature option** on any reasonable Python dashboard list.
+
+### What "Maturity" Actually Means
+
+| Dimension | Measurement | Vizro | Streamlit | Dash 3/4 | Next.js |
+|-----------|-------------|------:|----------:|---------:|--------:|
+| Stars | GitHub | 3.7k | 44.7k | 24.2k | 130k+ |
+| Age | First release | 2023 (3y) | 2019 (7y) | 2017 (9y) | 2016 (10y) |
+| Version | Current | 0.1.x | 1.55.x | 4.x | 15.x |
+| Corporate backing | Who pays the bills | McKinsey | Snowflake | Plotly | Vercel |
+| Production users | Public references | Few | 90% F50 | Many | Most SaaS |
+
+Version 0.1.x is the strongest signal: the project has not yet hit 1.0, which means breaking API changes are still expected. Documentation may have gaps. Edge cases may produce unhandled errors. Community answers on Stack Overflow are scarce. The "low code" velocity gain is paid for with a smaller corpus of solved problems.
+
+### Why This Matters for Solo Portfolio Projects
+
+A solo developer with no team to absorb surprise migration costs cannot easily absorb "Vizro 0.1 → 0.2 breaks your dashboard" or "this feature only works in Dash 2, not Dash 3." A mature framework has:
+
+- **Documentation that matches current behavior** (Vizro's docs are still settling at 0.1.x)
+- **Stack Overflow coverage** for the common errors (Vizro: ~50 questions; Streamlit: thousands)
+- **Battle-tested callback patterns** (Dash has 9 years of them; Vizro's agent skills are 6 months old)
+- **Predictable deprecation cycles** (Next.js 13 → 14 → 15 is a known cadence; Vizro 0.1 → 0.2 might break everything)
+
+### Solution
+
+When comparing frameworks, look beyond the marketing. Check:
+
+1. **Version number** — 0.x is a yellow flag; 1.x or higher is preferred for production
+2. **Release cadence** — monthly/biweekly is good; irregular or 6+ month gaps is bad
+3. **Documentation completeness** — read 3 how-to pages; are the code examples current?
+4. **Stack Overflow / GitHub Issues** — how many open vs. closed in the last 6 months?
+5. **Corporate backing** — single-author or company-employed maintainers? Solo projects die.
+
+### Rule
+
+Star count and version number are the cheapest maturity proxy. Before committing to a "low-code" framework, verify it has hit 1.0 and has at least 2 years of stable releases. Otherwise, the time saved on initial development is spent on migration, debugging, and reinventing patterns that mature frameworks document out of the box.
+
+---
+
+## 78. Pipeline Reuse Beats LOC Savings — Don't Trade Built Data Layer for Faster Framework
+
+### The Problem
+
+The Phase 6 dashboard plan (Next.js + Shadboard) was designed against a specific data contract: 5 JSON files in `dashboard/public/data/` (one per mart model) + `forecast.json` (819 records). All five files are already produced by `export/export_json.py` with `verify_export()` row-count validation. Switching to Vizro, Streamlit, Dash, etc. would discard this data layer in favor of "the framework queries DuckDB directly."
+
+The trade-off seemed favorable on its face: "we save 5 JSON files of static output and the framework fetches fresh data." But it conceals three real costs.
+
+### Three Hidden Costs of "Fresh Data > Static JSON"
+
+| Cost | Detail |
+|------|--------|
+| 1. **Export script becomes dead code** | `export_json.py`, `verify_export()`, the 5-JSON row-count reconciliation in `pipeline.lineage` — all bypassed |
+| 2. **Data layer refactor** | Vizro/Dash/Streamlit need Python DataFrames from DuckDB. The mart models are the same, but the consumption path is rewritten |
+| 3. **Reconciliation logic in Python** | `verify_export()` checks `mart_X rows == X.json records`. The equivalent for a Python-side dashboard is checking `len(df) == expected_count` per page, with the same logic moved to wherever the framework reads data |
+
+Net result: the framework saves ~500 LOC of TSX/JSON UI code, but costs ~300 LOC of export + verification logic that's already battle-tested.
+
+### Solution
+
+Score "pipeline reuse" at the highest weight in any framework comparison. In this project's matrix it was 12/100 — only "deployment fit" was tied at the same weight. A framework that requires re-doing already-built data layers needs to save 2x+ in LOC to break even.
+
+For a 4-page dashboard, 500 LOC of UI is one week of work. Rebuilding the data layer is two weeks minimum, and adds a new failure mode (framework's data fetcher breaks instead of `export_json.py`). The calculus almost never favors the switch.
+
+### When "Fresh Data" Actually Wins
+
+The case for a Python-server framework is real when:
+
+- **Data updates multiple times per day** — static JSON is genuinely stale
+- **Filter combinations aren't known in advance** — pre-aggregating every combination is infeasible
+- **The user is internal/data-team** — they don't need a static URL, they need a live tool
+- **Data volume makes export expensive** — gigabytes don't fit in a static JSON
+
+For this project (17-year archive, 5 marts, 238 rows in `mart_price_trends`), none of these apply. The static JSON is the right contract.
+
+### Rule
+
+Before evaluating a new framework, list the artifacts already built that the current framework consumes. Score "reuse" at 10+ in the decision matrix. A framework that forces rebuilding finished work needs to save 2x in other dimensions to be worth considering.
+
+---
+
+## 79. LEARNINGS.md Patterns Are Stack-Specific — Switching Means Losing the Knowledge Base
+
+### The Problem
+
+This LEARNINGS.md file has 74 sections, of which 35+ are specific to the Next.js + Shadboard stack (sections §1–§34 plus downstream references). These document real bugs, real fixes, and real patterns earned through implementation. Switching to Vizro (or any other dashboard framework) does not just cost implementation time — it costs **the entire knowledge base**, because the patterns don't transfer:
+
+| LEARNINGS.md section | Applies to Next.js? | Applies to Vizro? |
+|---------------------|--------------------:|------------------:|
+| §5 — Sidebar Disappearance (route group) | Yes | No (Vizro uses `pages/` config) |
+| §6 — React Hooks Before Early Return | Yes | No (Vizro is callback-based) |
+| §11 — DataProvider for Centralized Loading | Yes | No (Vizro has built-in `data_manager`) |
+| §19 — Filter Composition (No Mutation) | Yes | Partial (different bug, same concept) |
+| §21 — Dynamic Imports (`next/dynamic`) | Yes | No (Vizro bundles differently) |
+| §22 — sessionStorage Cache | Yes | No (Vizro server-side state) |
+| §25 — `connectNulls` Avoidance | Yes | Partial (Vizro uses Plotly; same chart, different API) |
+| §26 — Charts Must Respect Filters | Yes | No (Vizro has built-in cross-filter) |
+| §34 — Strip Shadboard Boilerplate | Yes | No (Vizro has its own boilerplate) |
+| §35 — Cross-Tabulated Data for Filters | Yes | Yes (universal concept) |
+
+About **70% of the dashboard-stack-specific sections become inapplicable** on a switch. The remaining 30% are about the data pipeline (dbt, DuckDB, forecast) and transfer to any framework.
+
+### The Real Cost
+
+Switching to a new dashboard framework doesn't just mean writing new framework code. It means:
+
+1. **Re-discovering every bug** — `connectNulls` issue, filter composition bug, hooks order, dynamic imports, etc., will recur in the new framework with new symptoms
+2. **Re-documenting every fix** — sections §5, §6, §11, §19, §21, §22, §25, §26, §34 all need to be re-earned
+3. **Carrying dead knowledge** — the old sections stay in LEARNINGS.md as historical record, but the patterns don't help anyone building on the new stack
+
+For a solo project, the cost of a framework switch includes **2-4 weeks of equivalent bug-hunting and LEARNINGS.md work** that doesn't show up in any feature comparison chart.
+
+### Solution
+
+Treat LEARNINGS.md sections specific to a stack as **sunk cost in that stack's favor**. When a new framework is proposed, count:
+
+- **Stack-specific sections in LEARNINGS.md** that don't transfer → switching cost
+- **Stack-specific community knowledge** not yet captured in this file → additional risk
+- **Estimated re-discovery time** for the 10-15 most expensive bugs → 2-4 weeks
+
+Add this to the framework comparison matrix as a row. For a 30+ section knowledge base, this row should be weighted 8-10 — higher than most "feature" rows.
+
+### Rule
+
+A LEARNINGS.md file is a stack-specific asset. Switching frameworks means abandoning most of the existing entries and re-earning them in the new framework. The cost of a switch is **the cumulative implementation experience**, not just the next 2 weeks of work. This cost is invisible in feature comparisons but very real in delivery timelines.
+
+---
+
+## 80. Chart Engine Parity Between EDA and Dashboard Saves Migration Cost
+
+### The Problem
+
+This project has two visualization layers:
+
+1. **EDA / Marimo notebook** (`analysis/eda.py`, 1670+ lines) — uses **Plotly** for all charts
+2. **Dashboard** (Phase 6, Next.js + Shadboard) — uses **Recharts** (SVG-based React lib)
+
+The chart engine mismatch means every chart spec must be **translated** from Plotly to Recharts when promoting EDA findings to dashboard pages. Translation is not free — Plotly's `add_vline`, `make_subplots`, `add_annotation` API has no direct Recharts equivalent, so charts get simplified or rewritten from scratch.
+
+### Why This Matters for Framework Choice
+
+If the dashboard used **Plotly** (via Dash, Streamlit's `st.plotly_chart`, Panel, or Vizro), the EDA notebook's chart code is **directly portable** to the dashboard. Example: a `go.Figure()` with `add_vline(x="2022-01-15", line_dash="dash", annotation_text="Cooking oil shock")` works in both `eda.py` and a Dash `dcc.Graph(figure=fig)`. The same chart in Recharts requires a `<ReferenceLine x="2022-01-15" strokeDasharray="..." label="..." />` JSX component, with different prop names and a different event API.
+
+### The Migration Cost Matrix
+
+| EDA Library | Dashboard Library | Port Cost |
+|------------|-------------------|----------:|
+| Plotly | Recharts (current plan) | **High** — translate every chart spec |
+| Plotly | Plotly (via Dash) | **None** — copy chart code verbatim |
+| Plotly | Plotly (via Streamlit) | **None** — `st.plotly_chart(fig)` |
+| Plotly | Plotly (via Vizro) | **None** — Vizro uses Plotly natively |
+| Plotly | Plotly (via Panel) | **None** — Panel wraps Plotly |
+| Matplotlib | Recharts | High — translate |
+| Matplotlib | Plotly | Medium — different API |
+
+### Hidden Benefit Beyond Migration Cost
+
+Beyond the literal "translate less code" benefit, Plotly parity enables:
+
+- **Chart spec reuse** — the `for fig in figs: mo.mpl.interactive(fig)` patterns in marimo can drop into Dash `dcc.Graph`
+- **Consistent visual identity** — same color palette, same font, same `tickformat="~s"` patterns work everywhere
+- **Same documentation lookup** — one Plotly reference, not Plotly + Recharts
+- **Same bug fix** — `connectNulls` discussion in LEARNINGS.md §25 transfers directly to a Plotly dashboard
+
+### The Trade-off
+
+Recharts is genuinely better in some cases:
+- Smaller bundle (SVG vs. canvas)
+- Native React integration
+- Tighter TypeScript types
+
+But for a portfolio project where the **analytical depth** is the selling point and the **chart richness** is the centerpiece (forecast CI, lag heatmap, Ramadan overlay), Plotly's expressive API matters more than Recharts' bundle size. Cloudflare Pages CDN neutralizes the bundle-size concern.
+
+### Rule
+
+When choosing a dashboard framework, check the chart engine against the EDA notebook's chart library. If they match, chart specs are portable; if they don't, every chart in the dashboard must be re-implemented. The translation cost is proportional to the number of unique chart types in the EDA — count them before deciding.
+
+---
+
 ## Updated Decision Log
 
 | Decision | Rationale |
@@ -2778,3 +3046,9 @@ ensure_lineage_table(conn)  # Single call replaces 59 lines
 | Computed `forecast_start` over hardcoded `"2024-06-01"` | Per-commodity end dates differ (Flour: 2020-03, Rice: 2024-05). A single hardcoded date is wrong for all but one commodity. |
 | CLI-passed `run_id` over per-script auto-generation | Forecast and export must share the pipeline's `run_id` for end-to-end auditability. Auto-generated IDs create orphan lineage rows with no parent pipeline link. |
 | Importable `ensure_lineage_table()` over duplicated DDL | 59-line schema DDL duplicated in 2 scripts guaranteed drift on schema changes. A single importable function eliminates the copy-paste risk. |
+| Deployment target as the first framework filter | Cloudflare Pages static hosting disqualifies every Python server framework (Vizro, Streamlit, Dash, Gradio, Reflex) on first principles. Only Panel can attempt a static export (via Pyodide). A framework that doesn't deploy to the target host is a much worse fit than its feature set suggests. |
+| Weighted decision matrix over vibes-based framework choice | "Vizro is low code" vs. "Next.js is familiar" are vibes, not decisions. A 12-15 criterion weighted matrix forces articulation of what the project actually values (deployment fit, pipeline reuse, LOC, etc.) and produces defensible preferences with explicit weights. |
+| Framework version ≥1.0 for production | 0.x versions signal breaking API changes are still expected. Vizro at 0.1.56 (3 years old) is the least mature option on any reasonable Python dashboard list. Mature frameworks (Next.js 15, Dash 4, Streamlit 1.55) hit 1.0+ years ago and have stable, documented patterns. |
+| Pipeline reuse scored at 10+ in framework comparison | Switching from Next.js (consumes 5 static JSONs) to a Python server framework (queries DuckDB) discards the export pipeline. For a 4-page dashboard, 500 LOC of UI is one week of work — rebuilding the data layer is two weeks minimum and adds a new failure mode. |
+| LEARNINGS.md sections as stack-specific sunk cost | 35+ sections of this file are Next.js+Shadboard specific and don't transfer to a new framework. Switching means re-discovering every bug (route groups, hooks order, dynamic imports, filter composition) and re-documenting each fix. Cost is invisible in feature charts but real in delivery timelines. |
+| Chart engine parity between EDA and dashboard | Plotly EDA → Recharts dashboard requires translating every chart spec. Plotly EDA → Dash/Streamlit/Vizro/Panel dashboard = verbatim copy. For a portfolio project where analytical depth is the selling point and chart richness is the centerpiece, Plotly parity saves real translation cost. |

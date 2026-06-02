@@ -9,7 +9,7 @@
 | **Source** | World Food Programme via Humanitarian Data Exchange |
 | **Volume** | 325,240 price records + 224 markets |
 | **Date Range** | January 2007 – May 2024 (~17 years) |
-| **Stack** | Python → DuckDB → dbt → statsforecast → Static JSON → Next.js (Shadboard) → Cloudflare Pages |
+| **Stack** | Python → DuckDB → dbt → statsforecast → Static JSON → Plotly Dash + dash-bootstrap-components → Hugging Face Spaces |
 | **Portfolio Goal** | Demonstrate upgraded ETL pipeline (DuckDB + dbt), time-series forecasting, and multi-dimensional procurement analytics on real Indonesian data |
 
 ### Business Scenario
@@ -88,7 +88,7 @@
 - [ ] Install dependencies via `uv sync`
 - [ ] Create `pyproject.toml` (uv-native dependency management)
 - [ ] Initialise dbt project inside `/transform`
-- [ ] Initialise Next.js app using Shadboard starter-kit inside `/dashboard`
+- [ ] Initialise Plotly Dash app structure inside `/dashboard` (post-stack-change, Phase 6 deferred)
 
 ### Data Validation Checkpoint
 
@@ -145,7 +145,7 @@ indonesia-food-price-intelligence/
 │   ├── data_validation.py      # Phase 0 validation checkpoint
 │   ├── eda.py                  # Phase 4 SCAN EDA + Phase 5 North Star deep dives
 │   └── forecast_experimentation.py  # Phase 3 optional model comparison
-├── dashboard/                  # Next.js + Shadboard app
+├── dashboard/                  # Plotly Dash + dbc app (Hugging Face Spaces)
 │   ├── public/
 │   │   └── data/               # Static JSON files
 │   │       ├── price_trends.json
@@ -505,11 +505,11 @@ Each of the 4 deep dives is a marimo section in `analysis/eda.py` (merged with P
 
 ---
 
-## Phase 6 — Dashboard (Shadboard + Next.js, DASH Framework)
+## Phase 6 — Dashboard (Plotly Dash + dbc, DASH Framework)
 
-**Goal:** Four-page procurement intelligence dashboard. Live public URL on Cloudflare Pages.
+**Goal:** Four-page procurement intelligence dashboard. Live public URL on Hugging Face Spaces.
 
-**Tech:** Next.js 15 + Shadboard + Recharts + TanStack Table. All data from static JSON files generated in Phase 3 export step.
+**Tech:** Plotly Dash + dash-bootstrap-components. All data from static JSON files generated in Phase 3 export step.
 
 ### D — Decision Each Page Enables
 
@@ -533,7 +533,7 @@ Each of the 4 deep dives is a marimo section in `analysis/eda.py` (merged with P
 
 **Page 1 — Price Trends & Forecast** (reads from `price_trends.json` + `forecast.json`)
 - KPI cards: Current price per commodity (IDR/KG or IDR/L) + YoY change % + trend direction arrow
-- Line chart: 17-year price history per commodity (Recharts LineChart, commodity selector toggle)
+- Line chart: 17-year price history per commodity (Plotly `go.Scatter`, commodity selector toggle)
 - Forecast extension: Dotted line continuation with shaded 95% confidence band (Jun–Nov 2024)
 - Procurement action zone: Highlighted region when forecast lower bound > current price (buy signal)
 - Model label: Small annotation showing which model was selected per commodity
@@ -545,7 +545,7 @@ Each of the 4 deep dives is a marimo section in `analysis/eda.py` (merged with P
 - Lead time callout: "Average X weeks before Eid — stock up by [date]" — updated dynamically
 
 **Page 3 — Geographic Disparity** (reads from `geographic_disparity.json`)
-- Indonesia map: Choropleth by island group, color intensity = price premium vs Java baseline (Recharts + GeoJSON)
+- Indonesia map: Choropleth by island group, color intensity = price premium vs Java baseline (Plotly `go.Choropleth` + GeoJSON)
 - Island group comparison bar chart: Price index per commodity per island group
 - Province drill-down table: For selected island group, show province-level detail where coverage sufficient
 - Year slider: Animate disparity change from 2007 to 2024
@@ -575,13 +575,13 @@ Each of the 4 deep dives is a marimo section in `analysis/eda.py` (merged with P
 
 | Step | Detail |
 |------|--------|
-| Build | `next build` with `output: 'export'` |
-| Host | Cloudflare Pages — connect GitHub repo |
+| Build | Docker image via HF Spaces `Dockerfile` (port 8050) |
+| Host | Hugging Face Spaces — push to Space repo |
 | Free tier | Unlimited bandwidth, global CDN, automatic HTTPS |
 | Live URL | Pinned in README and GitHub repo description |
 
 ### Key Deliverable
-Live Cloudflare Pages URL. Four pages fully functional. Screenshot previews in README.
+Live Hugging Face Spaces URL. Four pages fully functional. Screenshot previews in README.
 
 ---
 
@@ -634,12 +634,12 @@ Live Cloudflare Pages URL. Four pages fully functional. Screenshot previews in R
 
 ```
 1. Project Title & One-line Description
-2. Live Dashboard URL (Cloudflare Pages — top of README, prominent)
+2. Live Dashboard URL (Hugging Face Spaces — top of README, prominent)
 3. Business Scenario (3–4 sentences)
 4. Exec-Driven Questions (4 bullets)
 5. Pipeline Architecture (flowchart diagram)
    Raw CSV → DuckDB (staging) → dbt (transform) → statsforecast → 
-   export_json.py → Next.js Shadboard → Cloudflare Pages
+   export_json.py → Plotly Dash → Hugging Face Spaces
 6. dbt Lineage Graph (screenshot from dbt docs)
 7. Key Findings (4–6 bullets, quantified)
 8. Dashboard Preview (4 screenshots, one per page)
@@ -694,7 +694,7 @@ _trends      _patterns      _disparity _elation
 
 | Interview Question | Answer From This Project |
 |-------------------|--------------------------|
-| "Walk me through your data pipeline." | Raw WFP CSV → DuckDB staging → dbt transform (staging → intermediate → mart) → statsforecast → static JSON → Shadboard dashboard. Each layer has a clear responsibility. Here's the lineage graph. |
+| "Walk me through your data pipeline." | Raw WFP CSV → DuckDB staging → dbt transform (staging → intermediate → mart) → statsforecast → static JSON → Plotly Dash dashboard. Each layer has a clear responsibility. Here's the lineage graph. |
 | "Have you worked with dbt before?" | Yes — built a three-layer dbt project with staging, intermediate, and mart models. Wrote schema tests for null checks, accepted values, and positive price validation. Generated lineage documentation. |
 | "Tell me about a time you had to make a data cleaning decision." | The commodity normalisation problem — cooking oil appeared as three separate commodity names. I documented the consolidation decision in dbt with explicit rationale and added a dbt test to ensure no unexpected commodity names reached the mart layer. |
 | "Have you done any forecasting work?" | Yes — used statsforecast AutoARIMA and AutoETS on 17 years of Indonesian commodity price data. Selected model per commodity via cross-validation on a 12-month holdout. Documented limitations explicitly — the model cannot anticipate government price controls or import policy shocks. |
@@ -738,7 +738,7 @@ _trends      _patterns      _disparity _elation
 
 This project is done when a hiring manager can:
 
-1. Click the live Cloudflare Pages URL and find a procurement-relevant answer on every page within 60 seconds
+1. Click the live Hugging Face Spaces URL and find a procurement-relevant answer on every page within 60 seconds
 2. Ask "walk me through your pipeline" and receive a confident answer covering all five layers: ingest, dbt staging, dbt transform, forecasting, and JSON export
 3. Ask "how did you handle the commodity naming inconsistency?" and receive a specific answer about the dbt consolidation model and its tests
 4. Ask "how reliable is your forecast?" and receive a nuanced answer covering model selection, confidence intervals, and explicit limitations

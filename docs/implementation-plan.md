@@ -8,8 +8,8 @@
 | **Data First Accessed** | 2026-05-22 |
 | **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
 | **Target Completion** | ~16–20 working days |
-| **Status** | Phase 3 ✅ Complete (7 bugfixes Phase 3e). Phase 0/1 engineering fixes applied. Phase 5f: DuckDB path fix, deps, dirs. **Phase 3f** ✅ (11 pipeline gaps closed): Ramadan cross-year bug, hardcoded forecast dates, unified run_id, dbt log routing, function split, doc gaps, PEP 723 pins, lineage DDL dedup. Phase 6 deferred. |
-| **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Next.js (Shadboard) → Cloudflare Pages |
+| **Status** | Phase 3 ✅ Complete (7 bugfixes Phase 3e). Phase 0/1 engineering fixes applied. Phase 5f: DuckDB path fix, deps, dirs. **Phase 3f** ✅ (11 pipeline gaps closed): Ramadan cross-year bug, hardcoded forecast dates, unified run_id, dbt log routing, function split, doc gaps, PEP 723 pins, lineage DDL dedup. **Phase 5g** planned 2026-06-02: 13 pre-dashboard gaps across data (G1-G4), docs (G5-G8), and pipeline cleanup (G9-G13). Plan written, execution deferred. **Phase 6 stack change** planned 2026-06-02: Next.js + Shadboard + Cloudflare Pages → **Plotly Dash + dash-bootstrap-components + Hugging Face Spaces**. Plan written, execution deferred. |
+| **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → DuckDB-direct queries (Dash) + static JSON for forecast → **Plotly Dash (dash-bootstrap-components + Dash Pages plugin)** → **Hugging Face Spaces** |
 
 ### Parallelization Opportunities
 | Phase | Can Start After | Runs Parallel With | Saves |
@@ -19,7 +19,7 @@
 | §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
 
 **Sequential chain** (must wait): Phase 0 → 1 → 2 → 2.5 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
-> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (7 bugfixes) → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ (path, deps, dirs) → **Phase 3f ✅ (11 pipeline gaps)**. Phase 6 deferred.
+> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (7 bugfixes) → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ (path, deps, dirs) → **Phase 3f ✅ (11 pipeline gaps)** → **Phase 5g planned 2026-06-02** (13 pre-dashboard gaps: 4 data + 4 docs + 5 pipeline cleanup; execution deferred). **Phase 6 stack change planned 2026-06-02** (Next.js+Shadboard+CF Pages → Plotly Dash+dbc+HF Spaces); execution deferred at user request.
 
 ---
 
@@ -30,7 +30,7 @@
 | 0.1 | Create folder structure | ✅ | `data/raw/`, `ingest/`, `transform/`, `forecast/`, `export/`, `analysis/`, `logs/`, `dashboard/public/data/` |
 | 0.2 | Create `pyproject.toml` + `uv sync` | ✅ | uv-native: duckdb, dbt-duckdb, statsforecast, marimo, pandas, plotly |
 | 0.3 | Init dbt project in `/transform` | ✅ | `dbt init`, configure profiles.yml for DuckDB |
-| 0.4 | Init Next.js from Shadboard starter-kit in `/dashboard` | ⬜ | **DEFERRED** to Phase 6.6 |
+| 0.4 | Init Dash app skeleton in `/dashboard` (`app.py`, `pages/`, `components/`, `data_access.py`, `_data/snapshot.py`, `Dockerfile`, `README_HF.md`, `.dockerignore`) | ⬜ | **DEFERRED** to Phase 6 — plan documented 2026-06-02 (see Phase 6 Stack Change section) |
 | 0.5 | Create **`analysis/data_validation.py`** (marimo notebook) | ✅ | Interactive validation: commodity coverage, provincial coverage, priceflag distribution, unit consistency, sugar split, oil split, FX enrichment decision |
 | 0.6 | Write `docs/data_validation.md` from notebook findings | ✅ | Document all 7 validation checks, scoping decisions confirmed |
 | 0.7 | Load raw CSVs into `data/raw/` | ✅ | `wfp_food_prices_idn.csv` (325,240 rows), `wfp_markets_idn.csv` (224 markets) |
@@ -279,65 +279,191 @@
 
 ---
 
-## Phase 6 — Dashboard (Shadboard + Next.js) (3–4 days) [DEFERRED]
-> **⚠ Deferred to after Phase 3 — Dashboard init and all 4 pages postponed. Export step (3.6–3.8) runs during Phase 3 to produce static JSONs so dashboard has data when development starts.**
-> **Sequential (pages)** — chart implementation depends on Phase 2 (mart data) + Phase 3 (forecast) exported JSON. §6.6 init is independent.
+### Phase 5g — Pre-Dashboard Gap Closing (post-stack-change, 2026-06-02)
+> **Sequential** — gap analysis run 2026-06-02 against `implementation-plan.md` (Phases 0–5, 7, 8), `LEARNINGS.md`, `AGENTS.md`, and current filesystem state. 13 gaps found across 3 tiers. Tier 1 = data gaps blocking dashboard pages. Tier 2 = stale docs reflecting pre-stack-change reality. Tier 3 = pipeline cleanup. Tier 4 (Phase 6 init) deferred with Phase 6. **Execution deferred at user request (2026-06-02) — plan written, will run when user gives go-ahead.**
+
+#### Tier 1 — Data Gaps Blocking Dashboard Pages
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 5g.1 | **G1: Add `mart_price_trends_national.sql`** — new mart for national avg × commodity × month, all 4 commodities, no `island_group` filter | ⬜ | Decision: option (a) per user. Cleanest; parallels existing mart pattern. Needed for Page 1 KPI cards (4 commodities) + multi-commodity trend chart. Add to `_marts__models.yml` with `not_null` + `accepted_values` tests. Add export entry to `export_json.py`. |
+| 5g.2 | **G2: Vendor Indonesia provinces GeoJSON** — ~1 MB file at `dashboard/assets/indonesia_provinces.geojson` | ⬜ | Source: `github.com/superpikar/indonesia-geojson` (public domain). Needed for Page 3 choropleth map. Add to `.dockerignore` keep-list to ship with HF Spaces image. |
+| 5g.3 | **G3: Add pre/post-2022 correlation columns** — `pearson_r_pre_2022` + `pearson_r_post_2022` to `mart_correlation_summary` | ⬜ | Decision: option (a) per user. Splits full-period Pearson r at `2022-01-01` boundary. Needed for Page 4 scatter (§6.4.3) and rolling chart (§6.4.4). Update `_marts__models.yml` column docs + add `not_null` tests. |
+| 5g.4 | **G4: Document Cooking Oil dual-forecast behavior** — clarify which forecast is primary; secondary is `post2022_robustness` trace | ⬜ | User decision: show both. Primary = full-history AutoARIMA (default Page 1 trace). Secondary = `post2022_robustness` AutoARIMA (toggled via Page 1 checkbox). Update `forecast.json` `metadata` block + §6.1.2 wireframe. |
+
+#### Tier 2 — Stale Documentation (Stack Change)
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 5g.5 | **G5: AGENTS.md stack sweep** — replace "Next.js + Shadboard + Cloudflare Pages" with "Plotly Dash + dash-bootstrap-components + HF Spaces" | ⬜ | 6 sections: L13 (Project Overview table), L70-73 (Export + Dashboard commands), L93 (Phase Pipeline), L338 (Shared Learnings subsection), L388 (Recharts/TanStack refs), L495 (Verify Dashboard). Drop "Shared Learnings" subsection per plan §318. |
+| 5g.6 | **G6: LEARNINGS.md §75 SUPERSEDED banner** — mark section as overridden; do NOT draft §81–§85 stubs (deferred to Phase 6) | ⬜ | User decision: defer §81-§85 (Dash-specific learnings earned during implementation). Add banner: `> **SUPERSEDED 2026-06-02** — HF Spaces replaces Cloudflare Pages as deployment target. §80's "Plotly EDA → Plotly dashboard" parity now realized.` |
+| 5g.7 | **G7: README.md + G8: project-plan.md stack sync** — mirror AGENTS.md update in 2 sister docs | ⬜ | README: replace npm commands with `uv run python dashboard/app.py` (Phase 8.10/8.11). `docs/wfp-food-price-intelligence-project-plan.md`: update Stack row, Setup Commands, Phase 6 mention. |
+
+#### Tier 3 — Pipeline Cleanup
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 5g.8 | **G9: Remove dead code** — `current_step_map: dict[str, str] = {}` in `run_pipeline.py:129` | ⬜ | Defined but never read/written. Pure dead state. |
+| 5g.9 | **G10: Move `transform_status="running"`** to before `dbt seed` (not between seed and run) | ⬜ | Currently set at `run_pipeline.py:179`, after `dbt seed` succeeds. If seed fails, lineage shows `transform_status='pending'` not `failed`. Move to immediately after Step 1 ingest completes. |
+| 5g.10 | **G11: Add `dbt source freshness` step** — invoke after `dbt seed` in pipeline | ⬜ | Per LEARNINGS §49. Catches stale raw loads (>72h). Cost: ~2s. `_sources.yml` config already present. |
+| 5g.11 | **G12: Sync `requirements.txt` with `pyproject.toml`** — or delete it | ⬜ | Currently missing `numpy`, `scipy`, `chart-studio`. Plan §322 says "auto-synced" but isn't. Recommend delete + add AGENTS.md note that pyproject is the source of truth (uv-native project). |
+| 5g.12 | **G13: Normalize date format in JSON exports** — add `dt.strftime("%Y-%m-%d")` to `export_json.py:export_table()` | ⬜ | 4 marts export `"2024-06-01 00:00:00"`; forecast exports `"2024-06-01"`. Single 3-line patch in `export_table()` after `fetchdf()`. Prevents dual-parser handling in Dash. |
+
+#### Key Decisions Made (2026-06-02)
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| G1 fix path | New mart `mart_price_trends_national.sql` | Keeps analytical logic in dbt; parallels existing pattern; avoids query-time unpivoting in `data_access.py` |
+| G3 fix path | New columns in `mart_correlation_summary` | Single source of truth; pre/post splits in SQL is cheaper than at query time; rolls into export/JSON naturally |
+| G4 Cooking Oil forecast UX | Show both; primary as default, secondary as toggleable trace | Preserves analytical integrity; lets procurement analyst see structural-break sensitivity |
+| G6 LEARNINGS §81-§85 scope | Defer — write only the SUPERSEDED banner | Dash-specific patterns best earned during implementation; avoids speculative content |
+| Tier 3 cleanup | Bundle into Phase 5g (defer execution but document) | Low effort, high signal; 5 small fixes, ~25 min total |
+
+#### Execution Order (when user gives go-ahead)
+
+| Step | Fix | Files | Effort |
+|------|-----|-------|--------|
+| 1 | 5g.1 (G1) — new national mart | 1 new SQL, 1 YAML, `export_json.py` entry | 20 min |
+| 2 | 5g.2 (G2) — vendor GeoJSON | 1 new file + wireframe note | 10 min |
+| 3 | 5g.3 (G3) — 2 columns in correlation summary | 1 SQL + 1 YAML | 15 min |
+| 4 | 5g.4 (G4) — forecast metadata + wireframe | 1 Python + 1 doc | 10 min |
+| 5 | 5g.5 (G5) — AGENTS.md stack sweep | 6 sections | 20 min |
+| 6 | 5g.6 (G6) — LEARNINGS §75 banner | 1 doc edit | 5 min |
+| 7 | 5g.7 (G7+G8) — README + project-plan sync | 2 docs | 15 min |
+| 8 | 5g.8-10 (G9-G11) — pipeline cleanup | `run_pipeline.py` | 15 min |
+| 9 | 5g.11 (G12) — requirements.txt | 1 file edit or delete | 5 min |
+| 10 | 5g.12 (G13) — date format normalization | `export_json.py` | 5 min |
+
+**Total**: ~2 hours of work to close all 13 gaps. Execution deferred — pipeline orchestrator, exported JSONs, and dbt marts remain in current state until user triggers.
+
+---
+
+## Phase 6 — Dashboard (Plotly Dash + dash-bootstrap-components + Hugging Face Spaces) (3–4 days) [DEFERRED]
+> **⚠ Execution deferred at user request (2026-06-02).** Plan written. Implementation starts when user gives the go-ahead.
+> **Sequential (pages)** — chart implementation depends on Phase 2 (mart data) + Phase 3 (forecast). §6.6 init is independent.
+
+### Stack Change Decision (2026-06-02)
+
+The originally-planned Phase 6 stack (Next.js 15 + Shadboard + Recharts + Cloudflare Pages) has been replaced with **Plotly Dash 3.x + dash-bootstrap-components + Dash Pages plugin + Hugging Face Spaces**.
+
+**Rationale** (supersedes LEARNINGS.md §75's hard-block; the §75 deployment-fit score is now the overridden criterion):
+
+| LEARNINGS.md section | Old conclusion | New outcome |
+|---|---|---|
+| §75 — "Cloudflare Pages hard-blocks Python server frameworks" | Cloudflare Pages static host disqualified Dash/Vizro/Streamlit at 12/100 weight | **Overridden** — HF Spaces replaces CF Pages as deployment target. HF Spaces is a free Python/Docker host that natively runs Dash/Flask. CF Pages is no longer the target. |
+| §78 — "Pipeline reuse beats LOC savings" | The 5-JSON static export was purpose-built for static-site consumption and at 12/100 weight was a "switch kills the data layer" argument | **Preserved** — `export/export_json.py` + `verify_export()` retained as row-count verification artefact, with `pipeline.lineage.export_status` continuing to record pass/fail. Dashboard does **not** consume these JSONs in production; they are a data-quality check, not a data source. |
+| §80 — "Chart engine parity between EDA and dashboard" | The Plotly EDA → Recharts dashboard translation cost was documented as a hidden cost | **Realized** — the EDA notebook's `go.Figure` specs (`add_vline(x="2022-01-15", line_dash="dash", annotation_text="Cooking oil export ban")`, `make_subplots`, `add_vrect` for Ramadan bands, 95% CI shaded areas) drop into Dash `dcc.Graph(figure=fig)` **verbatim**. The forecast CI overlay, the lag heatmap, the Ramadan overlay — all port with zero translation. |
+| §79 — "LEARNINGS.md patterns are stack-specific" | 35+ sections (§1–§34) document Next.js-specific patterns that wouldn't transfer | **Accepted as sunk cost** — those sections are marked superseded; new Dash-specific sections §81–§85 will be added to LEARNINGS.md as the build progresses. |
+
+**Why this stack specifically (vs. Streamlit / Panel / Gradio / Vizro):**
+
+| Criterion | Dash 3.x | Streamlit | Panel | Vizro | Gradio |
+|---|---|---|---|---|---|
+| HF Spaces support | Native (Docker SDK) | Native | Native | Native | Native |
+| Multi-page routing | `dash.register_page()` plugin (mature) | `st.page_link` (newer) | Bokeh templates | YAML config | Single page |
+| Chart engine | **Plotly (parity with EDA)** | Plotly via `st.plotly_chart` | Bokeh/Plotly/HoloViews | Plotly | Plotly |
+| Component library | `dash-bootstrap-components` (mature) | Native + community | Bokeh widgets | None (low-code) | Native + Blocks |
+| Maturity | v3.x (9 years stable, Plotly-backed) | v1.55.x (Snowflake-backed) | v1.x (Anaconda-backed) | **v0.1.56** (still 0.x — disqualifying per §77) | v4.x (HF-backed) |
+| Solves §80 parity | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| Multi-page w/ shared state | ✅ `dcc.Store` | ⚠️ `st.session_state` (quirky) | ⚠️ Bokeh session | ✅ Built-in | ❌ Limited |
+
+Dash wins on the multi-page pattern (Dash Pages plugin is the most mature multi-page routing in Python dashboards) and on `dash-bootstrap-components` (closest functional equivalent to Shadboard's component library). Vizro is ruled out per §77 (still 0.x after 3 years). Gradio is single-page-oriented. Streamlit and Panel are runners-up; Dash chosen for the routing model.
+
+**What changes in the project (other than the dashboard code):**
+
+1. `pyproject.toml` — add `dash>=3.0`, `dash-bootstrap-components>=2.0` to `dependencies` (plotly already present)
+2. `run_pipeline.py` — add Step 7.5 (`dashboard/_data/snapshot.py`) writing `dashboard/_data/*.parquet` snapshots. The 5-JSON export in Step 7 is unchanged.
+3. `AGENTS.md` — Stack row, Phase 6 line, "Setup Commands" section, "Project Structure" section, "Shared Learnings" subsection (drop), "Success Criteria" §1, plus new "Dash Conventions" block
+4. `README.md` — Stack, Mermaid diagram, Prerequisites, "How to Reproduce" §6, Lessons Learned row 3
+5. `docs/LEARNINGS.md` — mark §75 superseded, append §81–§85 (Dash Pages routing, DuckDB read-only caching, HF Spaces Docker packaging, dbc-vs-Shadboard mapping table, callback memoization)
+6. `docs/implementation-plan.md` — this section (this rewrite)
+7. `docs/wfp-food-price-intelligence-project-plan.md` — mirror edits
+8. `requirements.txt` — auto-synced with pyproject
+
+**What does NOT change:** dbt models, mart SQL, forecast logic, lineage table, `run_pipeline.py` orchestration logic, all Marimo notebooks, `docs/data_validation.md`, `docs/forecast_runbook.md`, `docs/insights_log.md`, `docs/issues_log.md`, `docs/model_methodology.md`, the 5 JSON files in `dashboard/public/data/*.json`.
 
 ### Page 1 — Price Trends & Forecast
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.1.1 | KPI cards: current price + YoY% + sparkline per commodity (4 cards) | ⬜ | Wireframe [4] — always visible regardless of filter |
-| 6.1.2 | Main trend + forecast chart (Recharts ComposedChart, line + area for CI) | ⬜ | Wireframe [5] — dashed separator, shaded CI, commodity toggle |
-| 6.1.3 | Procurement action zone (BUY/HOLD/WATCH signals) | ⬜ | Wireframe [6] — forecast lower bound vs current price |
-| 6.1.4 | YoY inflation table (sortable, red/green cells) | ⬜ | Wireframe [7] |
-| 6.1.5 | Model limitations footnote (always visible) | ⬜ | Wireframe [8] |
+| 6.1.1 | KPI cards: current price + YoY% + sparkline per commodity (4 cards) | ⬜ | Wireframe [4] — `dbc.Card` × 4, always visible regardless of filter. `go.Scatter` sparkline + `dcc.Markdown` delta text. Reusable component in `components/kpi_cards.py` |
+| 6.1.2 | Main trend + forecast chart (`go.Figure` + `add_vline` + CI area) | ⬜ | Wireframe [5] — `dcc.Graph(figure=fig)`; solid line for actuals, `add_vrect` for forecast region, `add_vline(x="2022-01-15", line_dash="dash", annotation_text="Cooking oil export ban")`. EDA `eda.py` Q1 chart spec is directly portable (§80 win) |
+| 6.1.3 | Procurement action zone (BUY/HOLD/WATCH signals) | ⬜ | Wireframe [6] — `dbc.Alert` color-coded per signal; signal logic: `BUY = forecast_lower < current_price`, `HOLD = abs(forecast_change) < 1%`, `WATCH = forecast_rising` |
+| 6.1.4 | YoY inflation table (`dash-ag-grid` with cellStyle conditional formatting) | ⬜ | Wireframe [7] — replaces TanStack Table. `dag.AgGrid` with `cellStyle` JS for red/green >10% threshold |
+| 6.1.5 | Model limitations footnote (always visible) | ⬜ | Wireframe [8] — `dcc.Markdown` footer in `components/layout.py`; pulled from `forecast.json` `metadata.data_source_note` |
+| 6.1.6 | Wire page to DuckDB via `data_access.load_mart("mart_price_trends", ...)` | ⬜ | Filtered query through `lru_cache`-decorated function; reads JSON for forecast only |
 
 ### Page 2 — Seasonal Patterns
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.2.1 | Procurement timing callout cards (commodity × driver) | ⬜ | Wireframe [4] — spike magnitude + consistency score |
-| 6.2.2 | Seasonal heatmap: month × commodity, Gregorian calendar | ⬜ | Wireframe [5] — single-hue scale, 48 cells |
-| 6.2.3 | Ramadan overlay chart: price index T-3 to T+1, all years overlaid | ⬜ | Wireframe [6] — thin year lines + bold avg line, 2022 outlier labelled |
-| 6.2.4 | Harvest season chart (rice discount) + year-end chart | ⬜ | Wireframe [7][8] — shown conditionally by driver toggle |
-| 6.2.5 | Seasonal summary table (TanStack, sortable) | ⬜ | Wireframe [9] — lead time column is most actionable |
+| 6.2.1 | Procurement timing callout cards (commodity × driver) | ⬜ | Wireframe [4] — `dbc.Card` × N from `load_mart("mart_seasonal_patterns")` filtered by driver toggle; spike magnitude + consistency score |
+| 6.2.2 | Seasonal heatmap: month × commodity, Gregorian calendar | ⬜ | Wireframe [5] — `px.imshow` (Plotly Express) → `dcc.Graph(figure=fig)`; 12×4 cells, single-hue scale (Blues) |
+| 6.2.3 | Ramadan overlay chart: price index T-3 to T+1, all years overlaid | ⬜ | Wireframe [6] — `go.Figure` with one `go.Scatter` trace per year (thin lines, opacity=0.3) + one bold average trace. EDA `eda.py` Q2 chart spec directly portable (§80 win) |
+| 6.2.4 | Harvest season chart (rice discount) + year-end chart | ⬜ | Wireframe [7][8] — `dcc.Graph` panels toggled by driver dropdown via `dcc.RadioItems` callback |
+| 6.2.5 | Seasonal summary table (`dash-ag-grid`, sortable) | ⬜ | Wireframe [9] — `dag.AgGrid` with `sortable=True`. Lead time column is the most actionable column |
+| 6.2.6 | Page-specific driver toggle (Ramadan / Harvest / Year-End / All) | ⬜ | `dcc.RadioItems` filter wired into `load_mart("mart_seasonal_patterns", driver=...)` |
 
 ### Page 3 — Geographic Disparity
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.3.1 | KPI cards: price index per island group (5 cards) | ⬜ | Wireframe [4] — Java=100, clickable to filter |
-| 6.3.2 | Indonesia choropleth map (GeoJSON + Recharts/D3) with year slider + animate | ⬜ | Wireframe [5] — island group granularity, year animation |
-| 6.3.3 | Island group comparison line chart (5 series, Java baseline) | ⬜ | Wireframe [6] — gap narrowing/widening readability |
-| 6.3.4 | Province drill-down table (TanStack, coverage column) | ⬜ | Wireframe [7] — honesty column for data gaps |
+| 6.3.1 | KPI cards: price index per island group (5 cards) | ⬜ | Wireframe [4] — `dbc.Card` × 5; Java = 100 baseline; clickable to set island filter via `dcc.Store` |
+| 6.3.2 | Indonesia choropleth map (Plotly `choropleth` with island-group granularity) | ⬜ | Wireframe [5] — `px.choropleth` with `geojson=Indonesia_provinces_geojson`; year slider via `dcc.Slider` triggers `go.Frame` animation. **Note**: GeoJSON file (~1 MB) must be vendored or fetched from a stable URL |
+| 6.3.3 | Island group comparison line chart (5 series, Java baseline) | ⬜ | Wireframe [6] — `go.Figure` with 5 `go.Scatter` traces; horizontal `add_hline(y=100, line_dash="dash", annotation_text="Java baseline")` |
+| 6.3.4 | Province drill-down table (`dash-ag-grid`, coverage column) | ⬜ | Wireframe [7] — `dag.AgGrid` with honesty column for data gaps (Rice/Sugar/Flour limited to national agg, see Phase 5.4 finding) |
 
 ### Page 4 — Commodity Signals
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.4.1 | Leading indicator callout cards (top 2 relationships, plain language) | ⬜ | Wireframe [4] — Category Manager audience, no r values |
-| 6.4.2 | Correlation matrix heatmap (4×4, asymmetric, lag selector) | ⬜ | Wireframe [5] — row leads column label |
-| 6.4.3 | Commodity pair scatter chart (pre/post 2022 dot split) | ⬜ | Wireframe [6] |
-| 6.4.4 | Rolling correlation stability chart (3-year window, 2022 marker) | ⬜ | Wireframe [7] — most analytically honest visual |
-| 6.4.5 | Procurement implication card (plain language, post-2022 caveat) | ⬜ | Wireframe [8] — analytical centrepiece of page |
-| 6.4.6 | Full correlation detail table (TanStack, pre/post 2022 columns) | ⬜ | Wireframe [9] — differentiation column |
+| 6.4.1 | Leading indicator callout cards (top 2 relationships, plain language) | ⬜ | Wireframe [4] — `dbc.Card` × 2 from `mart_correlation_summary` filtered to top 2 by `pearson_r`. Category Manager audience, no r values in user-facing copy |
+| 6.4.2 | Correlation matrix heatmap (4×4, asymmetric, lag selector) | ⬜ | Wireframe [5] — `px.imshow` with lag dimension animated via `dcc.Slider`. Row leads column label. EDA `eda.py` Q4 chart spec directly portable |
+| 6.4.3 | Commodity pair scatter chart (pre/post 2022 dot split) | ⬜ | Wireframe [6] — `go.Scatter` with two traces (`mode='markers'`, pre-2022 in one color, post-2022 in another) split at `add_vline(x="2022-01-15")` |
+| 6.4.4 | Rolling correlation stability chart (3-year window, 2022 marker) | ⬜ | Wireframe [7] — `go.Figure` with `go.Scatter(mode='lines')` for rolling r + `add_vrect` for 2022 break region. Most analytically honest visual on the page |
+| 6.4.5 | Procurement implication card (plain language, post-2022 caveat) | ⬜ | Wireframe [8] — `dbc.Card` with `dcc.Markdown` body; analytical centerpiece of page |
+| 6.4.6 | Full correlation detail table (`dash-ag-grid`, pre/post 2022 columns) | ⬜ | Wireframe [9] — `dag.AgGrid` with differentiation column showing `r_pre - r_post` delta |
+| 6.4.7 | Page-specific lag selector (0 / 1 / 2 / 3 months) | ⬜ | `dcc.RadioItems` filter wired into `load_mart("mart_correlation_summary", lag=...)` |
 
-### 6.6 Dashboard Init (moved from Phase 0)
+### 6.6 Dashboard Init
 > **Parallel** — zero data dependency. Can run any time after Phase 0. No need to wait for pipeline phases.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.6.1 | Init Next.js from Shadboard starter-kit in `/dashboard` | ⬜ | `npx shadcn@latest init`, 4-page nav route group |
-| 6.6.2 | Strip Shadboard boilerplate (avatar, command palette, fullscreen, theme switch, etc.) | ⬜ | Per LEARNINGS.md §34 — surgical removal of dead code |
-| 6.6.3 | Configure `next.config.mjs` for static export | ⬜ | `output: 'export'` |
+| 6.6.1 | Update `pyproject.toml` — add `dash>=3.0` + `dash-bootstrap-components>=2.0`; `uv sync` | ⬜ | Plotly already in deps. No new lockfile conflicts expected |
+| 6.6.2 | Create `dashboard/data_access.py` — DuckDB read-only connection + `@functools.lru_cache(maxsize=32)` on `load_mart(mart, **filters)` | ⬜ | Single importable layer; pages never query DuckDB directly. Mirrors `ingest/config.py` pattern |
+| 6.6.3 | Create `dashboard/_data/snapshot.py` — DuckDB → Parquet snapshot writer (5 marts + forecast) | ⬜ | Cold-start optimization; Parquet reads ~10× faster than JSON at runtime |
+| 6.6.4 | Create `dashboard/app.py` — `Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.CERULEAN])` + `dbc.NavbarSimple` with `dash.page_registry` links | ⬜ | ~30 lines. `server = app.server` for gunicorn |
+| 6.6.5 | Create `dashboard/components/filters.py` — `dcc.Dropdown` × 2 + `dcc.RangeSlider` + `dcc.Store(id="filters-store")` | ⬜ | Global filter bar, shared across all 4 pages via the Store |
+| 6.6.6 | Create `dashboard/components/kpi_cards.py` — 4-card row (Rice / Oil / Sugar / Flour) | ⬜ | Reusable across pages 1 and 3 |
+| 6.6.7 | Create `dashboard/components/layout.py` — page header, footer, "forecast limitations" footnote | ⬜ | Loads `forecast.json` `metadata.data_source_note` once, exposes via `dcc.Markdown` |
+| 6.6.8 | Add `run_pipeline.py` Step 7.5 — call `snapshot.py` after Step 7 export | ⬜ | Logs to `logs/snapshot.log`; updates `pipeline.lineage` with snapshot row counts |
 
-### Global Filters + Export + Deploy
+### 6.7 Global Filters + Export + Deploy
+> **Sequential** — depends on §6.6 (components must exist before pages can subscribe to them).
+
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.7.1 | Global filters: Commodity, Island Group, Year Range slider | ⬜ | Persist across all 4 pages |
-| 6.7.2 | `export/export_json.py` — query all 4 mart models + forecast → static JSON | ⬜ | Writes to `dashboard/public/data/` |
-| 6.7.3 | Add `verify_export()` to export_json.py — validates mart row count matches JSON record count per file | ⬜ | Checks: missing columns, row count, nulls in critical fields |
-| 6.7.4 | Log export results to `logs/export.log` + update `pipeline.lineage.export_status` | ⬜ | |
-| 6.7.5 | Build: `npm run build` | ⬜ | |
-| 6.7.6 | Deploy to Cloudflare Pages (connect GitHub repo) | ⬜ | |
-| 6.7.7 | Verify live URL on mobile | ⬜ | |
+| 6.7.1 | Wire global filters (Commodity, Island Group, Year Range) to `dcc.Store(id="filters-store")` | ⬜ | Per-page callbacks read from Store; no per-page filter wiring |
+| 6.7.2 | (Unchanged) `export/export_json.py` — query all 4 mart models + forecast → static JSON | ✅ DONE | Writes to `dashboard/public/data/`. Retained as row-count verification artefact per §78 preservation |
+| 6.7.3 | (Unchanged) `verify_export()` — validates mart row count matches JSON record count per file | ✅ DONE | Continues to log to `logs/export.log` + update `pipeline.lineage.export_status` |
+| 6.7.4 | (Unchanged) Log export results to `logs/export.log` + update `pipeline.lineage.export_status` | ✅ DONE | |
+| 6.7.5 | Create `dashboard/Dockerfile` — `python:3.11-slim` base, copy `app.py` + `pages/` + `components/` + `data_access.py`, copy `data/wfp.duckdb` (12 MB) + `dashboard/public/data/forecast.json` (91 KB), `CMD ["gunicorn", "app:server", "-b", "0.0.0.0:7860", "-w", "2"]` | ⬜ | HF Spaces uses port 7860; `app:server` is the Flask handle exposed via `app.server` |
+| 6.7.6 | Create `dashboard/README_HF.md` (HF metadata) — `title`, `emoji: 🌾`, `colorFrom: green`, `colorTo: yellow`, `sdk: docker`, `app_port: 7860` | ⬜ | HF Spaces renders this as the Space header |
+| 6.7.7 | Create `dashboard/.dockerignore` — exclude `.venv/`, `__pycache__/`, `analysis/`, `transform/`, `forecast/`, `logs/`, `docs/` | ⬜ | Keeps Docker image lean; only runtime files ship |
+| 6.7.8 | Create Hugging Face Space `albarpambagio/wfp-food-price` — SDK = Docker, visibility = Public | ⬜ | One-time manual step in HF UI |
+| 6.7.9 | Push dashboard code to Space — `hf upload albarpambagio/wfp-food-price .` from `dashboard/` | ⬜ | Wait for Docker build (~3–5 min first push); get public URL `https://albarpambagio-wfp-food-price.hf.space` |
+| 6.7.10 | Smoke test: `uv run python -c "from dashboard.app import app; print('OK', len(dash.page_registry))"` | ⬜ | Validates the app object loads without error before deploy |
+| 6.7.11 | Verify live URL — all 4 pages answerable in 60 seconds with cold start | ⬜ | Per AGENTS.md Success Criteria §1 (rewritten for HF Spaces) |
+
+### New Dash Conventions Block (will be added to AGENTS.md "Key Conventions")
+
+- `dash.register_page(__name__, path=..., name=...)` for every page file
+- One file per page in `dashboard/pages/`; layout at module level
+- Callbacks live in the same file as the layout they update
+- Use `dcc.Store(id="filters-store")` for cross-page filter state (alternative: `dcc.Location` query string)
+- Queries go through `dashboard/data_access.py:load_mart()` — never query DuckDB directly from a page
+- `dcc.Graph(figure=go.Figure(...))` for charts; reuse Plotly figure code from `analysis/eda.py`
+- `dbc.NavbarSimple` for top nav, `dbc.Container(fluid=True)` for full-width
+- Cold-start under 3s: data loaded once via `lru_cache`, charts built in callback
+- Run locally: `uv run python dashboard/app.py` (port 7860 to match HF Spaces)
+- Validate: `uv run python -c "from dashboard.app import app; print(app.layout)"` smoke test
 
 ---
 
@@ -363,17 +489,17 @@
 |---|------|--------|-------|
 | 8.1 | README: business scenario (3–4 sentences) | ✅ | |
 | 8.2 | README: exec-driven questions (4 bullets) | ✅ | |
-| 8.3 | README: pipeline architecture (Mermaid diagram) | ✅ | Raw CSV → DuckDB → dbt → statsforecast → export_json.py → Shadboard → CF Pages |
+| 8.3 | README: pipeline architecture (Mermaid diagram) | ✅ | Raw CSV → DuckDB → dbt → statsforecast → export_json.py → **Plotly Dash → HF Spaces** |
 | 8.4 | README: dbt lineage graph screenshot | ⬜ | Deferred to Phase 6 — needs `dbt docs generate` + manual screenshot |
 | 8.5 | README: key findings (4–6 quantified bullets) | ✅ | 6 findings from EDA confirmed |
-| 8.6 | README: dashboard preview (4 screenshots) | ⬜ | Deferred to Phase 6 — dashboard not yet built |
+| 8.6 | README: dashboard preview (4 screenshots) | ⬜ | Deferred to Phase 6 — Dash app not yet built |
 | 8.7 | README: recommendations mapped to stakeholders | ✅ | Procurement Analyst + Category Manager tables |
 | 8.8 | README: data limitations + validation findings | ✅ | Known Limitations + Data Quality Issues sections |
 | 8.9 | README: forecasting methodology summary + link | ✅ | Links to `docs/model_methodology.md` |
-| 8.10 | README: reproduction instructions | ✅ | 7-step setup + verify commands |
-| 8.11 | README: lessons learned | ✅ | 8 lessons cross-ref'd to LEARNINGS.md |
+| 8.10 | README: reproduction instructions | ⬜ | **NEEDS UPDATE** — replace `npm install`/`npm run dev` steps with `uv run python dashboard/app.py` + HF Spaces deploy command |
+| 8.11 | README: lessons learned | ⬜ | **NEEDS UPDATE** — replace React hooks row with Dash callback patterns row |
 | 8.12 | Finalize `docs/insights_log.md` with all 3 insight types: contextual, directional, actionable | ✅ | 13 findings across all 3 types — no edits needed |
-| 8.13 | Live URL pinned in README and GitHub repo description | ⬜ | Deferred to Phase 6 — Cloudflare Pages deploy not done |
+| 8.13 | Live URL pinned in README and GitHub repo description | ⬜ | Deferred to Phase 6 — HF Spaces deploy not done (will be `https://albarpambagio-wfp-food-price.hf.space`) |
 
 ---
 
@@ -431,10 +557,24 @@
 - [x] Phase 8: insights_log.md verified — 13 findings, all 3 insight types
 - [x] Phase 3f: 11 pipeline gaps closed (ramadan cross-year, hardcoded dates, run_id, dbt log, func split, docs, pins, lineage DDL)
 - [x] Full pipeline end-to-end verified: ingest → dbt (66/66) → forecast → export — 59.4s, unified run_id
-- [ ] DEFERRED to Phase 6: All 4 dashboard pages
-- [ ] DEFERRED to Phase 6: Mobile responsive
-- [ ] DEFERRED to Phase 6: Cloudflare Pages deploy
-- [ ] DEFERRED to Phase 6: dbt lineage screenshot + dashboard screenshots + live URL
+- [ ] **DEFERRED to Phase 6** (plan approved 2026-06-02, execution pending): All 4 dashboard pages (Plotly Dash + dash-bootstrap-components)
+- [ ] **DEFERRED to Phase 6**: Dash app skeleton — `app.py`, `pages/`, `components/`, `data_access.py`, `_data/snapshot.py`
+- [ ] **DEFERRED to Phase 6**: Dockerfile + HF Spaces metadata + push to `albarpambagio/wfp-food-price`
+- [ ] **DEFERRED to Phase 6**: HF Spaces live URL (`https://albarpambagio-wfp-food-price.hf.space`)
+- [ ] **DEFERRED to Phase 6**: dbt lineage screenshot + dashboard screenshots
+- [x] **SUPERSEDED 2026-06-02**: Next.js + Shadboard + Recharts + Cloudflare Pages — replaced by Plotly Dash + dash-bootstrap-components + Hugging Face Spaces. See Phase 6 "Stack Change Decision" subsection for rationale.
+- [ ] **DEFERRED to Phase 5g execution** (plan written 2026-06-02): G1 — `mart_price_trends_national.sql` for Page 1 multi-commodity trend
+- [ ] **DEFERRED to Phase 5g execution**: G2 — Indonesia provinces GeoJSON vendored at `dashboard/assets/`
+- [ ] **DEFERRED to Phase 5g execution**: G3 — `pearson_r_pre_2022` + `pearson_r_post_2022` columns in `mart_correlation_summary`
+- [ ] **DEFERRED to Phase 5g execution**: G4 — Cooking Oil dual-forecast (primary + `post2022_robustness` toggle) documented in `forecast.json` metadata + §6.1.2 wireframe
+- [ ] **DEFERRED to Phase 5g execution**: G5 — AGENTS.md stack sweep (6 sections: L13, L70-73, L93, L338, L388, L495)
+- [ ] **DEFERRED to Phase 5g execution**: G6 — LEARNINGS.md §75 SUPERSEDED banner (no §81-§85 stubs)
+- [ ] **DEFERRED to Phase 5g execution**: G7 + G8 — README.md + `wfp-food-price-intelligence-project-plan.md` stack sync
+- [ ] **DEFERRED to Phase 5g execution**: G9 — Remove dead `current_step_map` dict in `run_pipeline.py:129`
+- [ ] **DEFERRED to Phase 5g execution**: G10 — Move `transform_status="running"` to before `dbt seed` in `run_pipeline.py:179`
+- [ ] **DEFERRED to Phase 5g execution**: G11 — Add `dbt source freshness` step to pipeline (per LEARNINGS §49)
+- [ ] **DEFERRED to Phase 5g execution**: G12 — Sync `requirements.txt` with `pyproject.toml` (or delete)
+- [ ] **DEFERRED to Phase 5g execution**: G13 — Normalize JSON export date format to `"%Y-%m-%d"` in `export_json.py:export_table()`
 
 ---
 
@@ -469,12 +609,14 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 5 | `feat: deep dive analysis + merge with eda notebook` | 4 North Star deep dives (forecast overlay, ramadan calendar, geographic disparity, rolling correlations), insights log update, model_methodology cross-ref |
 | Phase 5a | `fix: phase 5 gap-closing — stale deep_dive.py refs, eda robustness, summary alignment` | 3 docs fixed (AGENTS.md, project-plan.md, model_methodology.md), 6 code fixes in `eda.py` (mo.stop guards, Ramadan conn, Eastern Indonesia filter, summary table, unused var, lint), LEARNINGS.md §67 |
 | Phase 5f | `fix: post-phase-5 fixes — DuckDB path, deps, snapshot dir` | Hardcoded DuckDB paths -> PROJECT_DB_PATH (3 notebooks, 11 occurrences), numpy/scipy in pyproject, create snapshots/ dir, update stale checklist |
+| Phase 5g | `fix: pre-dashboard gap closing — national mart, GeoJSON, pre/post correlation, dual forecast, stack docs, pipeline cleanup` | 13 gaps across 3 tiers; deferred execution per user 2026-06-02 |
 | Phase 3d | `docs: forecasting methodology` | `model_methodology.md` |
 | Phase 3e | `fix: phase 3 bugfix — 7 gaps from pipeline audit` | Error handler, lineage DDL, metadata, skips, connection, t_minus_3, status value |
-| Phase 6 | `feat: dashboard (Next.js + Shadboard + export)` | Frontend |
+| Phase 6 | `feat: dashboard (Plotly Dash + dash-bootstrap-components + HF Spaces + export)` | Frontend — supersedes the previously-planned Next.js+Shadboard+CF Pages version (LEARNINGS.md §75 overridden 2026-06-02; chart-engine parity per §80 realized) |
 | Phase 7 | `docs: forecasting methodology` | `model_methodology.md` + `forecast_runbook.md` |
 | Phase 8 | `docs: README, insights, recommendations` | Final packaging — README, insights_log verified |
 | Phase 3f | `fix: 11 pipeline gaps — ramadan cross-year, hardcoded date, unified run_id, dbt log, func split, docs, pep723 pins, lineage dedup` | Cross-phase gap closing post-Phase-5f |
+| Phase 6 plan | `docs: phase 6 stack change — Next.js+Shadboard+CF Pages → Plotly Dash+dbc+HF Spaces` | This document update; LEARNINGS.md §75 marked superseded; rationale in Phase 6 "Stack Change Decision" subsection |
 
 **Rules**:
 - Conventional Commits (`feat:`, `docs:`, `fix:`)
@@ -500,3 +642,5 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 5f | fix: post-phase-5 fixes -- DuckDB path, deps, snapshot dir | Hardcoded DuckDB paths -> PROJECT_DB_PATH (3 notebooks), numpy/scipy in pyproject, create snapshots/ dir, update stale checklist |
 | 2026-05-26 | **Phase 3f gap analysis**: 11 gaps found across all non-dashboard phases — Ramadan cross-year test gap (P1), forecast data source divergence (P1), hardcoded forecast dates (P2), fragmented run_ids (P2), empty transform.log (P2), monolithic fit_and_forecast (P3), undocumented geo filter (P3), undocumented correlation asymmetry (P3), PEP 723 == pins (P3), lineage DDL dedup (P4). | All 11 closed. Full pipeline verified (66/66 dbt tests, 59.4s pipeline time, unified run_id). |
 | 2026-05-26 | **Commit c0a74a9** pushed: `fix: 11 pipeline gaps` to `origin/master`. | 12 files, 124 insertions, 85 deletions. |
+| 2026-06-02 | **Phase 6 stack change — Next.js + Shadboard + Cloudflare Pages → Plotly Dash + dash-bootstrap-components + Hugging Face Spaces**. LEARNINGS.md §75's "Cloudflare Pages hard-blocks Python server frameworks" conclusion is **overridden**: HF Spaces replaces CF Pages as the deployment target, and §80's "Plotly EDA → Plotly dashboard" parity is now realized. The 5-JSON export pipeline (Phase 3.6–3.8) is preserved as a row-count verification artefact, not as the dashboard's data source — the Dash app queries DuckDB directly via `dashboard/data_access.py` with `@functools.lru_cache`. | Full plan written into Phase 6 section of this document (lines 282–end of Phase 6). Execution deferred at user request. Stack change rationale and rejected alternatives table inline in Phase 6 "Stack Change Decision" subsection. |
+| 2026-06-02 | **Phase 5g pre-dashboard gap analysis — 13 gaps found across 3 tiers**. Cross-referenced `implementation-plan.md` (Phases 0–5, 7, 8), `LEARNINGS.md` (80 sections), `AGENTS.md`, and current filesystem state. Tier 1 (data, 4 gaps): `mart_price_trends` lacks national-level data for 3/4 commodities (Page 1 KPI cards); Indonesia provinces GeoJSON not vendored (Page 3 choropleth); `mart_correlation_summary` lacks pre/post-2022 split (Page 4 scatter); Cooking Oil dual-forecast UX not specified (Page 1 chart). Tier 2 (docs, 4 gaps): AGENTS.md, README.md, `wfp-food-price-intelligence-project-plan.md` still reference Next.js+Shadboard+CF Pages; LEARNINGS.md §75 not marked SUPERSEDED. Tier 3 (pipeline, 5 gaps): dead `current_step_map` dict; `transform_status="running"` set after `dbt seed` (not before); no `dbt source freshness` invocation; `requirements.txt` out of sync; inconsistent date format in JSON exports. **User decisions**: G1 + G3 use option (a) — new mart / new columns. G4 shows both forecasts (primary default + secondary toggle). G6 defers §81-§85 stubs (Dash-specific learnings earned during Phase 6). Tier 3 bundled into Phase 5g plan, execution deferred. | Full plan written as "Phase 5g — Pre-Dashboard Gap Closing" subsection of this document. Status note at top of section; all 13 items in 3 tier tables + key decisions table + execution order table. Validation Checklist +13 deferred checkboxes. Commit Strategy +1 row. Execution deferred — pipeline orchestrator, exported JSONs, and dbt marts remain in current state until user triggers. |

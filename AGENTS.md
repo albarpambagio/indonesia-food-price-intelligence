@@ -10,7 +10,7 @@ Indonesia Staple Food Price Intelligence — End-to-end data pipeline + forecast
 | **Source** | World Food Programme via Humanitarian Data Exchange |
 | **Volume** | 325,240 price records + 224 markets |
 | **Date Range** | January 2007 – May 2024 |
-| **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Next.js (Shadboard) → Cloudflare Pages |
+| **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Plotly Dash + dash-bootstrap-components → Hugging Face Spaces |
 | **Phase Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅ (11 pipeline gaps closed), Phase 6 deferred |
 | **Portfolio Goal** | Demonstrate upgraded ETL pipeline (DuckDB + dbt), time-series forecasting, and multi-dimensional procurement analytics |
 
@@ -67,10 +67,8 @@ uv run python forecast/run_forecast.py   # DONE — Phase 3e (7 bugfixes) + Phas
 ### Export + Dashboard
 ```bash
 uv run python export/export_json.py   # DONE — 5 mart JSONs via verify_export() + forecast.json
-cd dashboard
-npm install
-npm run dev          # Development server
-npm run build        # Static export for Cloudflare Pages
+uv run python dashboard/app.py        # Development server (http://localhost:8050)
+# Production: same script, served via Hugging Face Spaces Docker (port 8050)
 ```
 
 ---
@@ -79,7 +77,7 @@ npm run build        # Static export for Cloudflare Pages
 
 ### Phase Pipeline
 ```
-Phase 0: Setup + Data Validation  → Folder structure, marimo validation notebook, dbt/Next.js init
+Phase 0: Setup + Data Validation  → Folder structure, marimo validation notebook, dbt init
 Phase 1: Ingest & Staging         → DuckDB raw load, dbt staging models + tests        ✅ DONE
 Phase 2: Transform                → dbt intermediate + mart models + tests              ✅ DONE
 Phase 2.5: Corrections            → Ramadan flags, YoY delta, correlation summary, lineage fix ✅ DONE
@@ -90,7 +88,7 @@ Phase 4: EDA                      → Marimo notebook (SCAN framework)          
 Phase 4.5: Notebook Improvement   → Formatters, insight callouts, sectioning, mo.lazy    ✅ DONE
 Phase 5: Deep Dive                → Marimo notebook (North Star method, merged into `analysis/eda.py`) ✅ DONE
 Phase 5f: Post-Phase-5 Fixes      → Hardcoded DuckDB paths → PROJECT_DB_PATH, add numpy/scipy to pyproject, create missing snapshots/ dir, update stale checklist ✅ DONE
-Phase 6: Dashboard                → 4 pages in Next.js + Shadboard + Cloudflare Pages
+Phase 6: Dashboard                → 4 pages in Plotly Dash + dbc, deployed to Hugging Face Spaces
 Phase 7: Methodology Doc          → model_methodology.md + forecast_runbook.md      ✅ DONE
 Phase 8: Write-up                 → README, insights log, recommendations            ✅ DONE
 ```
@@ -147,7 +145,7 @@ indonesia-food-price-intelligence/
 │   └── forecast_experimentation.py  # Phase 3 optional model comparison
 ├── seeds/                      # dbt seed data
 │   └── islamic_calendar.csv    # Ramadan/Eid dates 2007–2024
-├── dashboard/                  # Next.js + Shadboard app
+├── dashboard/                  # Plotly Dash + dbc app (Hugging Face Spaces)
 │   ├── public/
 │   │   └── data/               # Static JSON files
 │   └── src/
@@ -333,35 +331,9 @@ Mismatch sets `pipeline.lineage.export_status = 'failed'` and logs detailed coun
 
 ---
 
-## Shared Learnings (from Pharmacy Retail Sales project)
-
-This project shares the same dashboard stack (Next.js + Shadboard + Recharts + TanStack Table + Cloudflare Pages) as the retail_sales project at `D:\PROJECT\data_analyst_porto\retail_sales\`. Key engineering patterns documented in LEARNINGS.md apply directly:
-
-**Must-read sections before Phase 6 (Dashboard):**
-
-| Section | Issue | Why It Matters Here |
-|---------|-------|---------------------|
-| §5 — Sidebar Disappearance | Pages outside route group don't inherit layout | 4 pages × route group — same Shadboard pattern |
-| §6 — React Hooks Before Early Return | Hooks after `return` violate rules of 4 | Every page has loading state + memoized filters |
-| §11 — DataProvider Pattern | Centralized JSON loading with shared cache | 5 JSON files to load across 4 pages |
-| §19 — Filter Composition (No Mutation) | Sequential `if` blocks overwrite each other | 3 global filters × 4 pages = complex filter chain |
-| §20 — Lazy Data Fetching | Don't load all 5 JSONs on every page | Download only what each page needs |
-| §21 — Dynamic Imports | -45% bundle size via `next/dynamic` | Charts are heaviest components |
-| §22 — sessionStorage Cache | Survive page reload without re-fetch | Same static JSON pattern |
-| §25 — `connectNulls` Avoidance | False continuity in line charts | 17-year trend with potential gaps |
-| §26 — Charts Must Respect Filters | Silent filter ignoring confuses users | Every chart must respond to all active filters |
-| §28 — KPI Delta Same Cohort | Comparing different products across months | Filtered data deltas |
-| §32 — Cache-Busting in Dev | Stale JSON in dev sessions | Regenerated JSON during development |
-| §34 — Strip Shadboard Boilerplate | Dead code from starter kit | Same Shadboard cleanup needed |
-| §35 — Cross-Tabulated Filter Data | Single-dimension fields can't compose | Multi-dimension filters need intersection fields |
-
-**Full reference**: `D:\PROJECT\data_analyst_porto\retail_sales\docs\LEARNINGS.md` (35+ documented bugs & solutions)
-
----
-
 ## Key Conventions
 
-- Snake_case for Python/SQL, camelCase for TS/JS
+- Snake_case for Python/SQL throughout (no TypeScript/JS in this stack)
 - dbt: staging = light cleaning, intermediate = business logic, marts = final analytical shape
 - Never mix actual and aggregate price flags in same analysis
 - Java = 100 baseline for island group price index
@@ -381,12 +353,16 @@ This project shares the same dashboard stack (Next.js + Shadboard + Recharts + T
 - Error handling with try/except, log failures
 - dbt models: one transformation per CTE, document rationale
 
-### TypeScript/React
-- camelCase naming
-- React Server Components by default, 'use client' only when needed
-- Shadboard components from `@/components/ui/`
-- Recharts for charts, TanStack Table for tables
-- No `connectNulls` on line charts (see LEARNINGS.md §25)
+### Plotly Dash (Python)
+- Dash callbacks must declare all `@app.callback` outputs in `Output()` signature — missing outputs raise `InvalidCallback` at startup
+- Prefer `dbc.Row` + `dbc.Col` for layout; raw `html.Div` chains get unwieldy past 3 levels
+- `dcc.Store` for client-side state shared between callbacks; `dcc.Location` for URL-driven filters
+- Use `prevent_initial_call=True` on heavy callbacks; surface loading state via `dcc.Loading`
+- Plotly figures: `go.Figure` with `layout.template="plotly_white"` for consistency; never pass `connectgaps=True` on time-series with quality-filtered gaps
+- `dash-ag-grid` for tabular data with sorting/filtering; avoid `dash.dash_table.DataTable` for >1k rows
+- Page pattern: one `pages/<page_name>.py` module exposing a `layout()` function consumed by `app.layout` via `dcc.Location` routing
+- Hugging Face Spaces entry point: `app.py` at project root exposing `app = dash.Dash(__name__)`; multi-page uses `app.serve_layout()` callback
+- Performance: `@functools.lru_cache` on data loaders (JSON reads); `dcc.Loading` wraps long callbacks
 
 ### Marimo Notebooks
 - Save as .py files (marimo's standard format)
@@ -494,15 +470,15 @@ uv run python forecast/run_forecast.py
 
 ### Verify Dashboard
 ```bash
-cd dashboard
-npm run build   # Must pass without errors
+uv run python -c "from dashboard.app import app; print(f'Pages: {len(app.layout.children)}')"
+uv run python dashboard/app.py    # Smoke test: must start on http://localhost:8050
 ```
 
 ---
 
 ## Success Criteria
 
-1. Live Cloudflare Pages URL — every page answerable in 60 seconds
+1. Live Hugging Face Spaces URL — every page answerable in 60 seconds
 2. Pipeline walkthrough covers 5 layers: ingest, dbt staging, dbt transform, forecasting, JSON export
 3. Commodity naming inconsistency handled with specific dbt consolidation answer
 4. Forecast reliability answered with nuance: model selection, CI, explicit limitations

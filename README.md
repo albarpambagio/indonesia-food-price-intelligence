@@ -17,6 +17,7 @@
 - [Recommendations](#recommendations)
 - [Forecasting Methodology](#forecasting-methodology)
 - [How to Reproduce](#how-to-reproduce)
+- [Deployment](#deployment)
 - [Lessons Learned](#lessons-learned)
 - [Data Source & License](#data-source--license)
 - [Author](#author)
@@ -76,8 +77,8 @@ flowchart LR
     G --> H["forecast.json"]
     F --> I["export_json.py"]
     I --> J["Static JSON files<br/>(5 marts + forecast)"]
-    J --> K["Next.js + Shadboard<br/>4 dashboard pages"]
-    K --> L["Cloudflare Pages<br/>Live URL"]
+    J --> K["Plotly Dash + dbc<br/>4 dashboard pages"]
+    K --> L["Hugging Face Spaces<br/>Live URL"]
 ```
 
 ---
@@ -189,7 +190,7 @@ Full methodology: [`docs/model_methodology.md`](./docs/model_methodology.md) (7 
 
 ### Prerequisites
 - Python 3.12+ with `uv`
-- Node.js 18+ with `npm`
+- Docker (for Hugging Face Spaces local testing)
 
 ### Setup
 
@@ -214,9 +215,7 @@ uv run python forecast/run_forecast.py
 uv run python export/export_json.py
 
 # 6. Start dashboard
-cd dashboard
-npm install
-npm run dev          # Development: http://localhost:3000
+uv run python dashboard/app.py   # Development: http://localhost:8050
 
 # 7. Full pipeline (ingest → transform → forecast → export)
 uv run python run_pipeline.py
@@ -240,15 +239,34 @@ dbt docs serve  # View lineage at http://localhost:8080
 
 ---
 
+## Deployment (Hugging Face Spaces)
+
+This dashboard is designed to deploy as a Docker container on [Hugging Face Spaces](https://huggingface.co/spaces).
+
+| Step | Detail |
+|------|--------|
+| **SDK** | Docker (custom container, not Streamlit/Gradio) |
+| **Entrypoint** | `dashboard/app.py` — exposes `app = dash.Dash(__name__)` |
+| **Port** | 8050 (Hugging Face Spaces default for Dash) |
+| **Static assets** | `dashboard/public/data/*.json` bundled in container |
+| **Config** | `pyproject.toml` pinned to compatible Dash + dbc versions |
+| **Push** | `git push` to the HF Space repo (auto-builds and deploys) |
+
+Live URL pattern: `https://huggingface.co/spaces/<username>/wfp-food-price-intel`
+
+> **Note:** Deployment is post-Phase 6. This section documents the intended target environment.
+
+---
+
 ## Lessons Learned
 
 | # | Area | Lesson | Source |
 |---|------|--------|--------|
 | 1 | Pipeline | Row-by-row INSERT is 100× slower than batch insert. Use `DROP TABLE` for idempotent loads, not `INSERT INTO` | LEARNINGS.md §§17, 18, 37 |
 | 2 | dbt | `dbt build` > `dbt run` + `dbt test` — catches test failures in dependency order | LEARNINGS.md §54 |
-| 3 | Dashboard | React hooks must not follow early `return` statements. `connectNulls=false` prevents false chart continuity | LEARNINGS.md §§6, 25 |
+| 3 | Dashboard | Plotly Dash callbacks must declare all `@app.callback` outputs in `Output()` — missing outputs raise `InvalidCallback` at startup. Never pass `connectgaps=True` on time-series with quality-filtered gaps | LEARNINGS.md §25 |
 | 4 | Filters | Multi-dimension filters require cross-tabulated data. Sequential `if` blocks mutate rather than compose | LEARNINGS.md §§19, 35 |
-| 5 | Session | `sessionStorage` cache survives page reload. Lazy fetching + dynamic imports reduces bundle size by ~45% | LEARNINGS.md §§20, 21, 22 |
+| 5 | Caching | `@functools.lru_cache` on data loaders (JSON reads) avoids re-reading static files. `dcc.Store` for client-side state shared between callbacks | LEARNINGS.md §22 |
 | 6 | Marimo | `mo.persistent_cache` on DB queries avoids re-execution. `mo.stop()` prevents raw tracebacks. Avoid `__` module-level vars (filtered from namespace) | LEARNINGS.md §§58, 65, 69 |
 | 7 | KPI Deltas | Delta must compare same cohort over time, not different product sets | LEARNINGS.md §28 |
 | 8 | dbt Config | `vars.start_date` + `packages.yml` + `_exposures.yml` + seed YAML + FK relationships test — all gaps found and closed | AGENTS.md "Gaps Closed" |
