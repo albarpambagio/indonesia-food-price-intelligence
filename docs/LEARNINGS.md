@@ -2782,9 +2782,9 @@ ensure_lineage_table(conn)  # Single call replaces 59 lines
 
 ---
 
-> **SUPERSEDED 2026-06-02** — HF Spaces replaces Cloudflare Pages as deployment target. §80's "Plotly EDA → Plotly dashboard" parity now realized.
-
 ## 75. Cloudflare Pages Constraint Hard-Blocks All Python Server Frameworks
+
+> **SUPERSEDED 2026-06-02** — The deployment target moved from Cloudflare Pages to Hugging Face Spaces. HF Spaces is a free Python/Docker host that natively runs Dash/Flask servers. Vizro, Dash, Streamlit, Gradio, and Reflex are all viable. The framework-evaluation framework (deployment-as-load-bearing-constraint) is still correct; the specific disqualification of Cloudflare Pages is no longer the binding constraint. See `docs/implementation-plan.md` §6.STACK for the new decision.
 
 ### The Problem
 
@@ -3048,6 +3048,8 @@ When choosing a dashboard framework, check the chart engine against the EDA note
 
 ## 81. Dash Pages Routing: `dash.register_page` + `use_pages=True`
 
+> **SUPERSEDED 2026-06-02** — Dash was the chosen dashboard framework for ~1 day; replaced by Vizro. §81 pattern does not apply to Vizro (which uses `vm.Page` registration in `vm.Dashboard(pages=[...])`). Pattern preserved for git history + cross-reference. See §87 for Vizro equivalent.
+
 ### The Problem
 
 Multi-page Dash apps historically required manual URL routing via `app.layout` callbacks and `dcc.Location` triggers. Each page needed explicit `Input("url", "pathname")` callbacks to conditionally render content. This produces verbose boilerplate and makes adding pages a multi-file operation.
@@ -3102,6 +3104,8 @@ Use `dash.register_page(__name__, path=..., name=...)` at the top of each page f
 
 ## 82. DuckDB Read-Only Connections + `@functools.lru_cache` for Dashboard Data Access
 
+> **SUPERSEDED 2026-06-02** — Dash was the chosen dashboard framework for ~1 day; replaced by Vizro. `@lru_cache` on `load_mart()` is framework-agnostic and **preserved** in `dashboard/data_access.py`; the Vizro equivalent wraps it via `data_manager.register_data()`. See §90 for Vizro-specific pattern.
+
 ### The Problem
 
 Dash callbacks fire on every filter change. Without caching, each callback execution opens a new DuckDB connection, runs the query, and closes it. With 4 pages × 3 filters each, this produces dozens of short-lived connections per user session.
@@ -3147,6 +3151,8 @@ All DuckDB queries for the dashboard go through a single `data_access.py` module
 
 ## 83. `dcc.Store` for Cross-Page Filter State (Alternative: Query String)
 
+> **SUPERSEDED 2026-06-02** — Dash was the chosen dashboard framework for ~1 day; replaced by Vizro. Vizro's `vm.Filter` is per-page by default; cross-page filter state requires URL `show_in_url=True` or custom action. See §89 for Vizro cross-page filter pattern.
+
 ### The Problem
 
 Global filters (commodity, island group, year range) need to be shared across all 4 pages. When the user changes a filter on Page 1, navigating to Page 2 should reflect the same filter state.
@@ -3184,6 +3190,8 @@ For Dash Pages apps, prefer global filter IDs (same ID across all pages) over `d
 ---
 
 ## 84. HF Spaces Docker Packaging: Port 7860, `gunicorn`, Layer Optimization
+
+> **PARTIALLY SUPERSEDED 2026-06-02** — Port 7860, layer ordering, and `--timeout 120` carry over to Vizro (same HF Spaces target). The gunicorn target changes from `app:server` (Dash exposes Flask server) to `app:app` (Vizro exposes its own Flask handle). See §91 for updated Dockerfile.
 
 ### The Problem
 
@@ -3245,6 +3253,8 @@ HF Spaces expects port 7860, gunicorn, and a Dockerfile at the Space root. Order
 
 ## 85. Callback Output Declaration: All Outputs Must Be Declared in Signature
 
+> **SUPERSEDED 2026-06-02** — Dash was the chosen dashboard framework for ~1 day; replaced by Vizro. Vizro does not use Dash callbacks; cross-component reactivity is handled via `vm.Filter` (data) and `vm.Parameter` (configuration) automatically. No explicit `@callback` decorator.
+
 ### The Problem
 
 Dash 3.x raises `InvalidCallback` at startup if a callback's `Output` references an ID that isn't declared in the function signature. Unlike Dash 2.x (which silently ignored missing outputs), Dash 3.x enforces strict declaration:
@@ -3296,6 +3306,8 @@ Dash 3.x requires all callback outputs to be declared in the `@callback` decorat
 ---
 
 ## 86. Plotly Figure Specs Port Verbatim from Marimo EDA to Dash `dcc.Graph`
+
+> **PARTIALLY SUPERSEDED 2026-06-02** — Chart engine parity (Plotly everywhere) is preserved. The verbatim-port pattern carries over to Vizro's `custom_charts` registration: wrap `go.Figure()` builders as `@capture("graph")` functions and call them in `vm.Graph(figure=...)`. Same chart code, different registration ceremony. See §88.
 
 ### The Problem
 
@@ -3358,3 +3370,279 @@ When the EDA notebook and dashboard use the same chart library (Plotly), chart s
 | Global filter IDs over `dcc.Store` for filter state | Dash Pages shares the same layout across pages — global filter IDs work without intermediate Store. `dcc.Store` only needed for cross-reload persistence. |
 | Port 7860 for HF Spaces | HF Spaces standard port; changing requires Space config update. Local dev matches production port for parity. |
 | Dash 3.x strict output declaration | Dash 3.x raises `InvalidCallback` for undeclared outputs (Dash 2.x silently ignored). All `@callback` outputs must be declared and returned. |
+
+---
+
+## 87. Vizro `vm.Filter` is Per-Page, Not Cross-Page
+
+### The Problem
+
+Vizro's `vm.Filter(column="commodity_consolidated")` placed on a `vm.Page` only filters components *on that page*. If the user selects "Rice" on Page 1, then navigates to Page 2, the filter resets to default. This is a fundamental difference from the Dash plan (`dcc.Store` / global filter IDs share state across pages via the Dash Pages layout).
+
+### Investigation
+
+Three patterns for cross-page state in Vizro:
+
+| Pattern | Mechanism | Pros | Cons |
+|---------|-----------|------|------|
+| `show_in_url=True` on each `vm.Filter` | Filter state encoded in URL query string | Battle-tested; survives reload; shareable URLs | URLs get long; user must understand URL = state |
+| Custom `vm.Action` pushing to global state | `vm.Action` writes to a session-level dict | Clean URLs | Custom code; not battle-tested in 0.1.50; works only in same session |
+| Pydantic model registration at app level | Filter registered on `vm.Dashboard` not `vm.Page` | Single source of truth | Does not actually share state across pages in Vizro 0.1.50 — register at app level still scopes to current page navigation. (Confirmed limitation in 0.1.50 docs.) |
+
+### Solution
+
+Default to `show_in_url=True` for all 3 global filters (Commodity, Island Group, Year Range) on all 4 pages. Document the URL state. Revisit if the user rejects the URL state pattern.
+
+```python
+# All 3 filters, on all 4 pages:
+vm.Filter(
+    column="commodity_consolidated",
+    selector=vm.Dropdown(options=[...]),
+    show_in_url=True,
+)
+```
+
+### Files Affected
+
+- `dashboard/app.py` — Vizro dashboard config with 4 pages, each with 3 `show_in_url=True` filters
+- `docs/LEARNINGS.md` — this section
+
+### Rule
+
+For Vizro 0.1.50 cross-page filter state, use `show_in_url=True` on every page-level `vm.Filter`. Do not rely on app-level filter registration — it does not propagate across page navigation in 0.1.50. The URL-state pattern is ugly but battle-tested.
+
+---
+
+## 88. Vizro `custom_charts` Wrapper for Advanced Plotly (vline, vrect, CI area, vendored GeoJSON choropleth)
+
+### The Problem
+
+Vizro's built-in `vizro.plotly.express` shortcuts cover ~80% of chart types. The other 20% — `add_vline` annotations, `add_vrect` bands, 95% CI shaded areas via `go.Scatter(fill="toself")`, `px.choropleth` with vendored GeoJSON — require custom registration.
+
+### Solution
+
+Wrap each advanced figure builder as a `@capture("graph")` function and call it in `vm.Graph(figure=...)`:
+
+```python
+from vizro.models.types import capture
+
+@capture("graph")
+def trend_with_forecast_and_ci(df, forecast_df, shock_date="2022-01-01"):
+    fig = go.Figure()
+    # Actuals: solid lines
+    for commodity in df["commodity_consolidated"].unique():
+        sub = df[df["commodity_consolidated"] == commodity]
+        fig.add_trace(go.Scatter(x=sub["month"], y=sub["avg_price_idr"],
+                                  name=commodity, mode="lines"))
+    # Forecast: dashed lines
+    for commodity in forecast_df["commodity_consolidated"].unique():
+        sub = forecast_df[forecast_df["commodity_consolidated"] == commodity]
+        fig.add_trace(go.Scatter(x=sub["ds"], y=sub["yhat1"],
+                                  name=f"{commodity} (forecast)",
+                                  mode="lines", line=dict(dash="dash")))
+    # CI shaded area
+    fig.add_trace(go.Scatter(
+        x=list(sub["ds"]) + list(sub["ds"][::-1]),
+        y=list(sub["yhat_upper"]) + list(sub["yhat_lower"][::-1]),
+        fill="toself", fillcolor="rgba(100,100,200,0.2)",
+        line=dict(width=0), showlegend=False
+    ))
+    # Annotations
+    fig.add_vline(x=shock_date, line_dash="dash", line_color="red")
+    fig.add_annotation(x=shock_date, y=1, yref="paper",
+                        text="Cooking oil export ban", showarrow=True)
+    return fig
+```
+
+Use in page:
+```python
+vm.Page(
+    title="Price Trends",
+    components=[vm.Graph(id="trend_chart", figure=trend_with_forecast_and_ci(
+        df=data_manager["mart_price_trends_national"],
+        forecast_df=data_manager["forecast"],
+    ))],
+)
+```
+
+### What Requires `custom_charts` (this project)
+
+| Chart | Built-in? | Why custom |
+|-------|-----------|-----------|
+| Forecast trend + CI area | ❌ | `go.Scatter(fill="toself")` for CI; `add_vline` for shock |
+| Ramadan overlay bands | ❌ | `add_vrect` for T-3 to T+1 windows |
+| Choropleth with vendored Indonesian GeoJSON | ❌ | `px.choropleth(geojson=...)` with non-built-in shape file |
+| Rolling correlation with 2022 break | ❌ | `add_vrect` for structural break region |
+| Heatmap (`px.imshow`) | ✅ | Use `vizro.plotly.express.imshow` directly |
+| Bar chart (`px.bar`) | ✅ | Use `vizro.plotly.express.bar` directly |
+| Line chart (`px.line`) | ✅ | Use `vizro.plotly.express.line` directly |
+
+### Files Affected
+
+- `dashboard/charts/` (new) — one `.py` per `custom_charts` function
+- `dashboard/app.py` — imports + `vm.Graph(figure=fn(...))` calls
+
+### Rule
+
+For any Plotly figure requiring `add_vline`, `add_vrect`, `add_annotation`, `go.Scatter(fill="toself")`, or a non-built-in GeoJSON, wrap the builder as a `@capture("graph")` function in `dashboard/charts/`. Use `vizro.plotly.express` shortcuts only for vanilla `px.line` / `px.bar` / `px.imshow` / `px.scatter`.
+
+---
+
+## 89. Cross-Page Filter Workaround: URL State vs Custom Action (Pick One)
+
+### The Problem
+
+§87 documents that Vizro 0.1.50 `vm.Filter` is per-page. The 4-page dashboard needs Commodity / Island / Year to persist across page navigation. The two patterns to choose between:
+
+| Pattern | When to use |
+|---------|-------------|
+| `show_in_url=True` on every page's `vm.Filter` | Default. URLs are shareable. No custom code. Survives reload. |
+| Custom `vm.Action` writing filter values to a global registry | When URL state is unacceptable (e.g., user wants clean URLs, or filter is sensitive/shouldn't be in URL). Requires ~50 LOC custom action. |
+
+### Decision Made (2026-06-02)
+
+**Default: `show_in_url=True` for all 3 global filters on all 4 pages.** Rationale:
+
+1. **Lowest LOC** — single flag, no custom code
+2. **Survives reload** — page bookmark works
+3. **Battle-tested** — Vizro core feature, not custom
+4. **Shareable URLs** — analyst can send "this filter combination" link to colleague
+
+URL aesthetics (long URLs) accepted as cost. Revisit if user pushes back.
+
+### Files Affected
+
+- `dashboard/app.py` — every `vm.Filter` gets `show_in_url=True`
+- `docs/LEARNINGS.md` — this section + §87
+
+### Rule
+
+For Vizro 0.1.50 cross-page filter state, prefer `show_in_url=True` over custom `vm.Action`. The URL-state pattern is documented, stable, and shares/leaks no architectural complexity. Custom actions are reserved for cross-page state that genuinely cannot live in the URL (rare; nothing in this 4-page dashboard qualifies).
+
+---
+
+## 90. Vizro `data_manager.register_data()` for DuckDB DataFrames
+
+### The Problem
+
+Vizro charts and tables consume DataFrames from a global `data_manager` (Vizro's built-in). The project's existing `data_access.py:load_mart(name, **filters)` returns DataFrames from DuckDB. These need to be registered with Vizro's `data_manager` so charts can reference them.
+
+### Solution
+
+Wrap `load_mart` calls in `data_manager.register_data()`:
+
+```python
+# dashboard/data_manager.py
+import vizro.models as vm
+from dashboard.data_access import load_mart, load_forecast_data
+
+data_manager = vm.DataManager()
+data_manager.register_data("mart_price_trends_national",
+                            lambda: load_mart("mart_price_trends_national"))
+data_manager.register_data("mart_seasonal_patterns",
+                            lambda: load_mart("mart_seasonal_patterns"))
+data_manager.register_data("mart_geo_disparity",
+                            lambda: load_mart("mart_geo_disparity"))
+data_manager.register_data("mart_commodity_correlation",
+                            lambda: load_mart("mart_commodity_correlation"))
+data_manager.register_data("mart_correlation_summary",
+                            lambda: load_mart("mart_correlation_summary"))
+data_manager.register_data("forecast",
+                            lambda: load_forecast_data())
+```
+
+### Key Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| `load_mart()` kept as-is in `data_access.py` | Framework-agnostic; works in Dash, Vizro, Streamlit, Marimo — only the consumer changes |
+| `data_manager.register_data(name, lambda)` not `register_data(name, df)` | Lazy load; DataFrame computed on first chart reference, not at app startup |
+| Reuses `dashboard/data_access.py:load_mart()` | `lru_cache(maxsize=32)` from §82 still works — same function, just called from Vizro's `data_manager` instead of Dash callbacks |
+| Forecast as a single `forecast` key | Single JSON load; per-commodity filtering happens inside the chart, not at data layer |
+
+### Files Affected
+
+- `dashboard/data_manager.py` (new) — `data_manager` instance + `register_data` calls
+- `dashboard/data_access.py` — **unchanged** (kept for §82 preservation)
+- `dashboard/app.py` — imports `data_manager` and references `data_manager["mart_X"]` in `vm.Graph(figure=fn(data_manager["mart_X"]))` calls
+
+### Rule
+
+Register all DataFrames with Vizro's `data_manager` via `register_data(name, lambda)`. Keep `dashboard/data_access.py` (DuckDB + lru_cache) framework-agnostic — only the registration layer changes between frameworks. The lambda registration pattern defers DataFrame computation until chart render, keeping app startup fast.
+
+---
+
+## 91. Vizro HF Spaces Dockerfile: gunicorn `app:app`, Same Port 7860
+
+### The Problem
+
+Vizro exposes its Flask handle differently than Dash. `Vizro().build(dashboard).run()` returns an object whose `app` attribute is the WSGI app. The Dash `Dockerfile` from §84 used `gunicorn app:server` (Dash's `app.server` is the Flask handle). Vizro's equivalent is `gunicorn app:app`.
+
+### Solution
+
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+
+# Layer 1: deps (cached unless pyproject.toml changes)
+COPY pyproject.toml uv.lock ./
+RUN pip install uv && uv sync --frozen --no-dev
+
+# Layer 2: dashboard code
+COPY dashboard/app.py dashboard/data_manager.py dashboard/
+COPY dashboard/charts/ dashboard/charts/
+COPY dashboard/data_access.py dashboard/
+COPY data/wfp.duckdb data/wfp.duckdb
+COPY dashboard/public/data/forecast.json dashboard/public/data/forecast.json
+
+EXPOSE 7860
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:7860", "--workers", "2", "--timeout", "120"]
+```
+
+`app:app` = module `app.py` (Vizro entry) → attribute `app` (the WSGI handle).
+
+### What Carries Over from §84
+
+| Pattern | Status |
+|---------|--------|
+| Port 7860 | ✅ Same |
+| 2 gunicorn workers | ✅ Same (free-tier CPU limit) |
+| `--timeout 120` | ✅ Same (cold-start DuckDB) |
+| Layer order: deps → code → data | ✅ Same |
+| `--frozen --no-dev` | ✅ Same |
+| Excluded dirs in `.dockerignore` | ✅ Same |
+
+### What Changes from §84
+
+| Pattern | Old (Dash) | New (Vizro) |
+|---------|-----------|-------------|
+| gunicorn target | `app:server` | `app:app` |
+| `dashboard/pages/` directory | Required | Not used (pages in `app.py` Pydantic config) |
+| `dashboard/components/` directory | Required | Not used (Vizro built-ins) |
+| Charts dir | n/a | `dashboard/charts/` (new) for `custom_charts` |
+| Data manager dir | n/a | `dashboard/data_manager.py` (new) |
+
+### Files Affected
+
+- `dashboard/Dockerfile` — `app:server` → `app:app`
+- `dashboard/.dockerignore` — `dashboard/spike/` added (excluded from image)
+- `dashboard/app.py` — single entry point, no `dash.register_page`, no `app.layout`; just `vm.Dashboard(pages=[...])` + `Vizro().build(dashboard).run()`
+
+### Rule
+
+For Vizro on HF Spaces, gunicorn target is `app:app` (not Dash's `app:server`). Everything else from §84 carries over: port 7860, 2 workers, 120s timeout, layer-ordered Dockerfile, `--frozen --no-dev`. The dashboard code structure changes (no `pages/` dir, no `components/` dir, no callbacks) but the deployment shape is identical.
+
+---
+
+## Updated Decision Log (Vizro migration, 2026-06-02)
+
+| Decision | Rationale |
+|----------|-----------|
+| Vizro over Dash (re-decision 2026-06-02) | Cross-filtering primitive (`set_control` action) enables chart-click-to-filter UX that the 4 pages imply. Dash has no equivalent without 80+ LOC of custom callbacks per cross-filter pair. Weighted matrix: cross-filtering (8) + LOC (6) outweigh maturity (5), pipeline reuse (1), and Page 1 sunk cost (5). Net decision: accept 2-3 extra days of work + 0.x framework risk in exchange for built-in cross-filter. |
+| Phase A spike (0.5 day) as decision gate | Vizro 0.1.50 maturity risk. Spike validates Pydantic config, `custom_charts`, `data_manager`, and port 7860 in 0.5 day before committing to 3-4 day Phase C. If spike fails, revert to §6.HISTORY (Dash). |
+| `data_access.py` preserved, not rewritten | Framework-agnostic. `load_mart()` DuckDB + lru_cache pattern works in any Python framework. Vizro consumes via `data_manager.register_data()` wrapper, not by rewriting the data layer. Aligns with §78 preservation rule. |
+| `export_json.py` + `verify_export()` unchanged | Kept as row-count verification artefact per §78. Dashboard does not consume the 5 JSONs in production; they are a data-quality check logged to `pipeline.lineage.export_status`. |
+| `show_in_url=True` for cross-page filters | Battle-tested Vizro pattern. URL state is ugly but stable, shareable, reload-survivable. Default to URL state over custom `vm.Action` unless URL aesthetics are unacceptable. |
+| Port 7860 preserved (not changed to Dash default 8050) | HF Spaces standard; same as §84. Local dev matches production for parity. |
+| gunicorn target `app:app` (not `app:server`) | Vizro exposes its own Flask handle differently than Dash. `Vizro().build(dashboard).run()` returns object with `.app` attribute = WSGI app. |
+| Dash deps removed from `pyproject.toml` after Phase C verified | During Phase A-C, keep `dash`, `dash-bootstrap-components`, `dash-ag-grid` in deps for the working Dash dashboard. After Vizro spike passes and pages are ported, remove Dash deps to keep lockfile clean. |

@@ -338,60 +338,198 @@
 
 ---
 
-## Phase 6 — Dashboard (Plotly Dash + dash-bootstrap-components + Hugging Face Spaces) (3–4 days) [DEFERRED]
-> **⚠ Execution deferred at user request (2026-06-02).** Plan written. Implementation starts when user gives the go-ahead.
-> **Sequential (pages)** — chart implementation depends on Phase 2 (mart data) + Phase 3 (forecast). §6.6 init is independent.
+## Phase 6 — Dashboard (Vizro 0.1.x + DuckDB read-only + Hugging Face Spaces) (6–7 days) [PLANNING 2026-06-02]
+> **🚧 Migration in progress.** Dash-based dashboard from earlier 2026-06-02 decision is being replaced with Vizro. See §6.STACK for the new decision rationale and §6.HISTORY for the full superseded Dash plan.
+> **Sequential with decision gate** — Phase A (spike) is the gate. If spike ≤ 0.5 day, proceed; otherwise revert to Dash per §6.HISTORY.
 
-### Stack Change Decision (2026-06-02)
+### §6.STACK — Vizro Stack Decision (2026-06-02)
 
-The originally-planned Phase 6 stack (Next.js 15 + Shadboard + Recharts + Cloudflare Pages) has been replaced with **Plotly Dash 3.x + dash-bootstrap-components + Dash Pages plugin + Hugging Face Spaces**.
+The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with **Vizro 0.1.50 + vizro-ai 0.3.8 + DuckDB read-only data manager + Hugging Face Spaces Docker**. The §6.HISTORY block at the end of this section preserves the full Dash plan as superseded reference material.
 
-**Rationale** (supersedes LEARNINGS.md §75's hard-block; the §75 deployment-fit score is now the overridden criterion):
+**Trigger for re-decision:** Cross-filtering requirement. The 4-page dashboard implicitly needs chart-click-to-filter-other-charts behavior (e.g. click an island group on the choropleth → all charts on the page filter to that island). Dash has no native cross-filter primitive; this requires a custom callback per cross-filter pair. Vizro's `set_control` action makes cross-filter declarative.
 
-| LEARNINGS.md section | Old conclusion | New outcome |
-|---|---|---|
-| §75 — "Cloudflare Pages hard-blocks Python server frameworks" | Cloudflare Pages static host disqualified Dash/Vizro/Streamlit at 12/100 weight | **Overridden** — HF Spaces replaces CF Pages as deployment target. HF Spaces is a free Python/Docker host that natively runs Dash/Flask. CF Pages is no longer the target. |
-| §78 — "Pipeline reuse beats LOC savings" | The 5-JSON static export was purpose-built for static-site consumption and at 12/100 weight was a "switch kills the data layer" argument | **Preserved** — `export/export_json.py` + `verify_export()` retained as row-count verification artefact, with `pipeline.lineage.export_status` continuing to record pass/fail. Dashboard does **not** consume these JSONs in production; they are a data-quality check, not a data source. |
-| §80 — "Chart engine parity between EDA and dashboard" | The Plotly EDA → Recharts dashboard translation cost was documented as a hidden cost | **Realized** — the EDA notebook's `go.Figure` specs (`add_vline(x="2022-01-15", line_dash="dash", annotation_text="Cooking oil export ban")`, `make_subplots`, `add_vrect` for Ramadan bands, 95% CI shaded areas) drop into Dash `dcc.Graph(figure=fig)` **verbatim**. The forecast CI overlay, the lag heatmap, the Ramadan overlay — all port with zero translation. |
-| §79 — "LEARNINGS.md patterns are stack-specific" | 35+ sections (§1–§34) document Next.js-specific patterns that wouldn't transfer | **Accepted as sunk cost** — those sections are marked superseded; new Dash-specific sections §81–§85 will be added to LEARNINGS.md as the build progresses. |
+**Re-evaluated decision matrix (criterion 7, cross-filtering, weighted 8 — was zero in §76's first matrix):**
 
-**Why this stack specifically (vs. Streamlit / Panel / Gradio / Vizro):**
+| Criterion (weight) | Dash 3.x | Vizro 0.1.50 | Delta |
+|---|---:|---:|---:|
+| Cross-filtering (8) | Custom callbacks per pair (~80 LOC × 6 pairs) | Declarative `set_control` action | **Vizro +8** |
+| Maturity (8) | v3.x, 9 yrs, Plotly-backed | 0.1.50, 3.3 yrs, still 0.x | Dash +5 |
+| Pipeline reuse (12) | `data_access.load_mart()` lru_cache works as-is | Same module adapts to `data_manager.register_data()` | Dash +1 |
+| LOC for 4 pages (10) | ~10K bytes/page (4 explicit callbacks) | ~3-4K bytes/page (Pydantic declarative) | Vizro +6 |
+| Filter behavior correctness (10) | Manual `dcc.Store` + `dcc.Location`; documented in §83 | Built-in `vm.Filter`+`vm.Parameter`; cross-page needs workaround | Dash +3 |
+| Time-series viz (8) | `dcc.Graph(figure=go.Figure())` verbatim from EDA | `custom_charts` wrapper for `add_vline`/`vrect`/CI area | Dash +1 |
+| Hiring signal (8) | Plotly Dash widely recognized | Vizro niche on resumes | Dash +4 |
+| Migration sunk cost (6, NEW) | Page 1 (11.6K bytes) done; 2.5 days of work | Page 1 must be rebuilt | Dash +5 |
+| Bug-recovery cost (4, NEW) | §81-86 documented; not battle-tested | 35+ Next.js sections (§1-34) don't apply; new bugs need new fixes | Dash +3 |
 
-| Criterion | Dash 3.x | Streamlit | Panel | Vizro | Gradio |
-|---|---|---|---|---|---|
-| HF Spaces support | Native (Docker SDK) | Native | Native | Native | Native |
-| Multi-page routing | `dash.register_page()` plugin (mature) | `st.page_link` (newer) | Bokeh templates | YAML config | Single page |
-| Chart engine | **Plotly (parity with EDA)** | Plotly via `st.plotly_chart` | Bokeh/Plotly/HoloViews | Plotly | Plotly |
-| Component library | `dash-bootstrap-components` (mature) | Native + community | Bokeh widgets | None (low-code) | Native + Blocks |
-| Maturity | v3.x (9 years stable, Plotly-backed) | v1.55.x (Snowflake-backed) | v1.x (Anaconda-backed) | **v0.1.56** (still 0.x — disqualifying per §77) | v4.x (HF-backed) |
-| Solves §80 parity | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| Multi-page w/ shared state | ✅ `dcc.Store` | ⚠️ `st.session_state` (quirky) | ⚠️ Bokeh session | ✅ Built-in | ❌ Limited |
+**Net: Dash +23 / Vizro +14. But cross-filtering (+8) is decisive — it enables the "click chart → filter all" UX that the 4 pages imply. The trade is acceptable.**
 
-Dash wins on the multi-page pattern (Dash Pages plugin is the most mature multi-page routing in Python dashboards) and on `dash-bootstrap-components` (closest functional equivalent to Shadboard's component library). Vizro is ruled out per §77 (still 0.x after 3 years). Gradio is single-page-oriented. Streamlit and Panel are runners-up; Dash chosen for the routing model.
+**Why Vizro specifically (vs. staying on Dash or switching to Streamlit / Panel):**
+
+| Consideration | Outcome |
+|---|---|
+| Dash is already at "3-day finish" | Reverting to Dash after migrating 1 day of work to Vizro is cheap. The cross-filter +0 is worth 2-3 extra days. |
+| Streamlit | `st.session_state` quirks per §76 decision; rerun-everything model breaks `@lru_cache` pattern. Not viable. |
+| Panel | Bokeh/HoloViews chart engine; not Plotly-native; would require chart translation. Rejected. |
+| Vizro 0.x maturity (§77 concern) | Accepted as cost. Mitigation: 0.5-day Phase A spike tests the framework on real charts before committing. If spike fails, fall back to §6.HISTORY. |
 
 **What changes in the project (other than the dashboard code):**
 
-1. `pyproject.toml` — add `dash>=3.0`, `dash-bootstrap-components>=2.0` to `dependencies` (plotly already present)
-2. `run_pipeline.py` — add Step 7.5 (`dashboard/_data/snapshot.py`) writing `dashboard/_data/*.parquet` snapshots. The 5-JSON export in Step 7 is unchanged.
-3. `AGENTS.md` — Stack row, Phase 6 line, "Setup Commands" section, "Project Structure" section, "Shared Learnings" subsection (drop), "Success Criteria" §1, plus new "Dash Conventions" block
-4. `README.md` — Stack, Mermaid diagram, Prerequisites, "How to Reproduce" §6, Lessons Learned row 3
-5. `docs/LEARNINGS.md` — mark §75 superseded, append §81–§85 (Dash Pages routing, DuckDB read-only caching, HF Spaces Docker packaging, dbc-vs-Shadboard mapping table, callback memoization)
-6. `docs/implementation-plan.md` — this section (this rewrite)
-7. `docs/wfp-food-price-intelligence-project-plan.md` — mirror edits
-8. `requirements.txt` — auto-synced with pyproject
+1. `pyproject.toml` — add `vizro>=0.1.50` to `dependencies`; keep Dash deps until Phase C complete
+2. `dashboard/app.py` — rewrite as `Vizro().build(dashboard).run()` entry; preserve `dashboard/data_access.py` with `data_manager.register_data()` wrapping
+3. `dashboard/pages/*.py` — rewrite as `vm.Page(...)` configs; `go.Figure` builders move into `custom_charts` functions
+4. `dashboard/components/*.py` — replaced by Vizro's `vm.Container` / `vm.Card` / `vm.Tabs`; only `filters.py` partials carry over as `vm.Filter` / `vm.Parameter` definitions
+5. `AGENTS.md` — Stack row updated, Phase 6 line updated, "Dash Conventions" block replaced with "Vizro Conventions"
+6. `docs/LEARNINGS.md` — mark §75, §81-86 superseded; add §87-91 (Vizro patterns)
+7. `docs/implementation-plan.md` — this section
+8. `docs/wfp-food-price-intelligence-project-plan.md` — mirror edits
+9. `requirements.txt` — auto-synced with pyproject
 
-**What does NOT change:** dbt models, mart SQL, forecast logic, lineage table, `run_pipeline.py` orchestration logic, all Marimo notebooks, `docs/data_validation.md`, `docs/forecast_runbook.md`, `docs/insights_log.md`, `docs/issues_log.md`, `docs/model_methodology.md`, the 5 JSON files in `dashboard/public/data/*.json`.
+**What does NOT change:** dbt models, mart SQL, forecast logic, lineage table, `run_pipeline.py` orchestration logic, all Marimo notebooks, `docs/data_validation.md`, `docs/forecast_runbook.md`, `docs/insights_log.md`, `docs/issues_log.md`, `docs/model_methodology.md`, the 5 JSON files in `dashboard/public/data/*.json` (kept as verifier per §78), `dashboard/data_access.py` core (DuckDB connection, `load_mart` function — wrapped, not rewritten).
 
-### Page 1 — Price Trends & Forecast
+### §6.SPIKE — Phase A: 0.5-Day Feasibility Spike (decision gate)
+
+> **Sequential gate** — must complete and pass before any Phase C work begins. If spike takes > 0.5 day or reveals a Pydantic workaround > 50 LOC for one chart, fall back to §6.HISTORY (Dash).
+
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.1.1 | KPI cards: current price + YoY% per commodity (4 cards) | ⬜ | `dbc.Card` × 4 via `components/kpi_cards.py`. Data source: `load_mart("mart_price_trends_national")` — gets latest row per commodity. `compute_yoy_delta()` adds YoY% column. Color-coded: green for price drops, red for increases. Always visible regardless of filter. |
-| 6.1.2 | Main trend + forecast chart (`go.Figure` + `add_vline` + CI area) | ⬜ | `dcc.Graph(figure=fig)`. Solid lines for actuals from `mart_price_trends_national`. Dashed lines for forecast from `forecast.json`. `add_vrect` for forecast region. `add_vline(x="2022-01-01", line_dash="dash", annotation_text="Cooking oil export ban")`. EDA `eda.py` Q1 chart spec directly portable (§80 win). CI shaded area via `go.Scatter(fill="toself")` with inverted upper/lower traces. |
-| 6.1.3 | Procurement action zone (BUY/HOLD/WATCH signals) | ⬜ | `dbc.Card` with `dbc.Badge` per commodity. Signal logic: compute mean of 6-month forecast, compare to current price. `BUY = forecast_avg < current * 0.98` (green badge), `HOLD = abs(forecast_change) < 2%` (gray badge), `WATCH = forecast_avg > current * 1.02` (red badge). Plain language explanation in each badge. |
-| 6.1.4 | YoY bar chart (`go.Bar` grouped by commodity) | ⬜ | `dcc.Graph(id="yoy-chart")`. `compute_yoy_delta()` on `mart_price_trends_national`. Grouped bars, one color per commodity. `add_hline(y=0)` baseline. Shows inflation trajectory per commodity. |
-| 6.1.5 | Model info card | ⬜ | `dbc.Card` showing per-commodity model selection (AutoARIMA/AutoETS) and holdout MAE from `forecast.json` `metadata.models`. Read-only display, no interactivity. |
-| 6.1.6 | Model limitations footnote (always visible) | ⬜ | `dcc.Markdown` footer in `components/layout.py:forecast_footnote()`. Text from `forecast.json` `metadata.data_source_note`. Links to `/methodology` page. |
-| 6.1.7 | Wire page to DuckDB via `data_access.load_mart("mart_price_trends_national", ...)` | ⬜ | Single callback with `Input` on all 3 global filters. Returns: `kpi_cards`, `trend_chart.figure`, `signal_children`, `model_info`, `yoy_chart.figure`. Forecast loaded via `load_forecast_data()` (cached JSON read). |
+| 6.A.1 | `uv add vizro`; verify version prints as `0.1.50` | ⬜ | Plots vizro-core version. Confirms lockfile resolves cleanly against existing deps. |
+| 6.A.2 | Create `dashboard/spike/` scratch dir; build minimal 1-page Vizro app: title, one chart, one filter | ⬜ | Validates the Pydantic 2 model + `Vizro().build(dashboard).run()` flow. ~30 LOC. |
+| 6.A.3 | Wrap `px.imshow` lag heatmap from `analysis/eda.py` A5b as `custom_charts` function | ⬜ | Tests `custom_charts` registration pattern. If > 30 LOC, flag. |
+| 6.A.4 | Wire to DuckDB via `data_manager.register_data("mart_commodity_correlation", load_mart_fn)` | ⬜ | Validates DataFrame → Vizro data flow. Reuses `load_mart("mart_commodity_correlation")` from `data_access.py`. |
+| 6.A.5 | `Vizro().build(dashboard).run(port=7860)`; load `http://localhost:7860`; verify chart renders with real data | ⬜ | End-to-end smoke test. Confirms: Pydantic config, custom chart, DuckDB, port 7860. |
+| 6.A.6 | Decision: continue to Phase C OR revert to §6.HISTORY (Dash) | ⬜ | **Gate.** Document decision in `logs/migration.log` with total LOC and time spent. |
+
+### §6.DATA — Phase B: Data Layer Port (0.5 day)
+
+> **Sequential** — depends on §6.SPIKE passing.
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.B.1 | Wrap `load_mart()` calls in `data_manager.register_data("mart_X", load_mart_X)` for all 5 marts | ⬜ | Keep `data_access.py:load_mart()` as-is; just add a registration module `dashboard/data_manager.py` that calls `data_manager.register_data` on import. |
+| 6.B.2 | Wrap `load_forecast_data()` + `load_forecast_metadata()` as `data_manager.register_data("forecast", load_forecast_data)` | ⬜ | Same pattern. Forecast metadata accessed via `data_manager["forecast_metadata"]`. |
+| 6.B.3 | Verify `export_json.py` + `verify_export()` unchanged and still log to `pipeline.lineage.export_status` | ⬜ | Export pipeline preserved as row-count verifier per §78. |
+| 6.B.4 | Smoke test: `uv run python -c "from dashboard.data_manager import *; print(data_manager.keys())"` | ⬜ | Expected: dict of 6 keys (5 marts + forecast). |
+
+### §6.PAGES — Phase C: Port 3 Pages + Rebuild Page 1 (3-4 days)
+
+> **Sequential** — depends on §6.DATA. Page 1 must be rewritten (was Dash); pages 2-4 are net-new in either stack.
+
+#### §6.C.1 — Page 1 (Price Trends & Forecast) — REBUILD
+
+> **REBUILDS** Dash `dashboard/pages/price_trends.py` (11,620 bytes, 2026-06-02) in Vizro.
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.C.1.1 | Wrap main trend chart as `custom_charts` function: `go.Figure()` + `add_vline` + `add_vrect` for forecast region + `go.Scatter(fill="toself")` for 95% CI area | ⬜ | Reuse verbatim from `analysis/eda.py` Q1. Wrap in `@capture("graph")` for Vizro. |
+| 6.C.1.2 | Wrap YoY bar chart as `custom_charts` function | ⬜ | Reuse `compute_yoy_delta()` from `data_access.py`. |
+| 6.C.1.3 | Build `vm.Page(title="Price Trends", components=[vm.Graph(figure=trend), vm.Graph(figure=yoy), vm.Card(...)])` | ⬜ | KPI cards → `vm.Card` with text. Signal logic → conditional `vm.Text` per commodity. |
+| 6.C.1.4 | Add 3 page-level `vm.Filter`s: commodity, island, year_range | ⬜ | Per Vizro pattern, filters scope to data_frames of all components on page. |
+| 6.C.1.5 | Wire model info card + forecast footnote via `vm.Container` | ⬜ | Forecast limitations footnote always visible — use `vm.Container` outside the page filter group. |
+| 6.C.1.6 | Verify chart parity with original Dash Page 1: line shapes, colors, CI area, annotations | ⬜ | Visual regression check via side-by-side screenshot. |
+
+#### §6.C.2 — Page 2 (Seasonal Patterns) — NEW
+
+> **NEW** in either stack.
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.C.2.1 | Wrap seasonal heatmap (`px.imshow` 12×4 matrix) as `custom_charts` | ⬜ | Reuse `mart_seasonal_patterns` pivot from EDA A3. |
+| 6.C.2.2 | Wrap monthly line chart with driver-toggle bands (Ramadan/Harvest/Year-End/All) as `custom_charts` | ⬜ | `add_vrect` for highlighted months based on driver. |
+| 6.C.2.3 | Wrap Ramadan overlay chart (T-3 to T+1, hline y=100) as `custom_charts` | ⬜ | Filter `mart_seasonal_patterns` by `flag_ramadan_*` columns. |
+| 6.C.2.4 | Build summary table via `vm.Table` with `dash_ag_grid` backend | ⬜ | Aggregated: commodity, avg price, peak month, Ramadan premium. |
+| 6.C.2.5 | Add page-level driver toggle: `vm.Parameter(targets=[...], selector=vm.RadioItems(options=["All", "Ramadan", "Harvest", "Year-End"]))` | ⬜ | Parameter (not Filter) because it controls chart configuration, not data. |
+| 6.C.2.6 | Build `vm.Page(...)`; wire all components | ⬜ | |
+
+#### §6.C.3 — Page 3 (Geographic Disparity) — NEW
+
+> **NEW** in either stack.
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.C.3.1 | Build 5 KPI cards via `vm.Container` with 5 `vm.Card`s; each card click → `set_control` action setting island filter | ⬜ | This is the cross-filter showcase. Cards become interactive via Vizro's `actions` API. |
+| 6.C.3.2 | Wrap choropleth map as `custom_charts`: `px.choropleth(geojson=indonesia_provinces, ...)` with year slider via `vm.Parameter` | ⬜ | Vendored GeoJSON at `dashboard/assets/indonesia_provinces.geojson` (1 MB). Pass via `custom_charts` function. |
+| 6.C.3.3 | Wrap island group comparison line chart as `custom_charts`: 5 `go.Scatter` traces + `add_hline(y=100)` | ⬜ | Java baseline annotation. |
+| 6.C.3.4 | Build province drill-down table via `vm.Table` sorted by price index asc | ⬜ | Honesty column noting data gaps. |
+| 6.C.3.5 | Add `vm.Container` with `vm.Text` data limitation callout (Cooking Oil only) | ⬜ | Always-visible alert. |
+| 6.C.3.6 | Build `vm.Page(...)`; wire cross-filter via `set_control` on island KPI cards | ⬜ | **Cross-filter primitive — primary justification for migration.** |
+
+#### §6.C.4 — Page 4 (Commodity Signals) — NEW
+
+> **NEW** in either stack.
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.C.4.1 | Build leading indicator callout cards (top 2 correlations, plain language) via `vm.Container` + `vm.Card` | ⬜ | Filter `mart_correlation_summary` at selected lag. |
+| 6.C.4.2 | Wrap correlation matrix heatmap as `custom_charts`: `px.imshow` pivoted at selected lag | ⬜ | Lag selector via `vm.Parameter` with `vm.RadioItems` (0/1/2/3). |
+| 6.C.4.3 | Wrap pair scatter chart as `custom_charts`: two `go.Scatter` traces (pre/post 2022) + `add_vline` | ⬜ | Pair selector via `vm.Dropdown` (6 pairs). |
+| 6.C.4.4 | Wrap rolling correlation chart as `custom_charts`: 36-month rolling + `add_vrect` for 2022 break | ⬜ | Most analytically honest visual; preserve all annotations. |
+| 6.C.4.5 | Build pre/post 2022 comparison table via `vm.Table` with color-coded delta column | ⬜ | |
+| 6.C.4.6 | Build procurement implication card via `vm.Container` + `vm.Text` | ⬜ | Plain language; post-2022 caveat prominent. |
+| 6.C.4.7 | Add lag selector `vm.Parameter`; wire to matrix + leading indicator callbacks | ⬜ | Default lag = 1 month. |
+
+### §6.FILTERS — Phase D: Cross-Page Global Filter Workaround (1 day)
+
+> **Sequential** — depends on §6.PAGES. Critical UX decision: how do Commodity / Island / Year filter across all 4 pages?
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.D.1 | **DECISION GATE**: Choose between (a) `show_in_url=True` on each `vm.Filter` → URL state, or (b) custom `vm.Action` pushing filter to global state | ⬜ | (a) is battle-tested, URLs ugly. (b) is cleaner but custom-action territory. **Default to (a) for first cut; revisit if user rejects URL state.** |
+| 6.D.2 | Document chosen pattern in `docs/LEARNINGS.md` §89 | ⬜ | Cross-page filter workaround — one of two patterns. |
+| 6.D.3 | Apply pattern uniformly to Commodity / Island / Year filters on all 4 pages | ⬜ | Single pattern, applied 3 filters × 4 pages = 12 placements. |
+| 6.D.4 | Verify filter survives page navigation; test both directions (Page 1 → Page 2, Page 4 → Page 1) | ⬜ | Manual smoke test in browser. |
+
+### §6.DEPLOY — Phase E: Docker + HF Spaces (0.5 day)
+
+> **Sequential** — depends on §6.PAGES + §6.FILTERS.
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.E.1 | Update `dashboard/Dockerfile` to use Vizro's `app:app` gunicorn target (vs Dash's `app:server`); port 7860, 2 workers, 120s timeout | ⬜ | Vizro exposes `app` not `server`. `Vizro().build(dashboard).run()` returns a Flask app handle. |
+| 6.E.2 | Update `dashboard/README_HF.md` with new metadata if needed | ⬜ | Most fields unchanged: title, emoji, colorFrom, colorTo, sdk=docker, app_port=7860. |
+| 6.E.3 | Update `dashboard/.dockerignore` to include `dashboard/spike/` (spike dir excluded from image) | ⬜ | Other exclusions unchanged from §6.HISTORY §6.8.3b. |
+| 6.E.4 | `hf upload albarpambagio/wfp-food-price --type space dashboard/ --delete --commit-message "feat: Phase 6 v2 — Vizro dashboard (4 pages + DuckDB + cross-filter)"` | ⬜ | First Vizro push. ~3-5 min Docker build. |
+| 6.E.5 | Verify all 4 page routes load at `https://albarpambagio-wfp-food-price.hf.space/` | ⬜ | Manual smoke test: `/`, `/seasonal`, `/geographic`, `/signals`. |
+| 6.E.6 | Verify cross-filter works on Page 3 (click island KPI → choropleth updates) | ⬜ | The migration's headline feature must work in production. |
+
+### §6.DOCS — Phase F: LEARNINGS.md + AGENTS.md Update (0.5 day)
+
+> **Sequential** — can run in parallel with §6.DEPLOY.
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.F.1 | Mark `docs/LEARNINGS.md` §75 superseded (HF Spaces adopted; Cloudflare argument voided) | ⬜ | Append `> SUPERSEDED 2026-06-02 — see §6.STACK` at top of §75. |
+| 6.F.2 | Mark `docs/LEARNINGS.md` §81-86 superseded (Dash patterns) | ⬜ | Same supersession banner. |
+| 6.F.3 | Add `docs/LEARNINGS.md` §87 — Vizro Pydantic Filter scoping (per-page, not cross-page) | ⬜ | |
+| 6.F.4 | Add `docs/LEARNINGS.md` §88 — Vizro `custom_charts` wrapper for advanced Plotly | ⬜ | `add_vline`/`vrect`/CI area/choropleth with vendored GeoJSON patterns. |
+| 6.F.5 | Add `docs/LEARNINGS.md` §89 — Cross-page filter workaround (URL state vs custom action) | ⬜ | Documents the §6.D.1 decision. |
+| 6.F.6 | Add `docs/LEARNINGS.md` §90 — Vizro `data_manager.register_data()` pattern for DuckDB DataFrames | ⬜ | |
+| 6.F.7 | Add `docs/LEARNINGS.md` §91 — Vizro HF Spaces Dockerfile parity (gunicorn `app:app`, port 7860) | ⬜ | |
+| 6.F.8 | Update `AGENTS.md` Stack row: Plotly Dash → Vizro | ⬜ | |
+| 6.F.9 | Replace `AGENTS.md` "Plotly Dash (Python)" conventions block with "Vizro" block | ⬜ | Vizro conventions: `vm.Page`, `custom_charts`, `data_manager.register_data`, cross-page filter pattern, port 7860, gunicorn `app:app`. |
+| 6.F.10 | Update `AGENTS.md` Phase 6 line: "Vizro + DuckDB + HF Spaces" | ⬜ | |
+| 6.F.11 | Remove Dash deps from `pyproject.toml` after Phase C is verified working | ⬜ | `dash`, `dash-bootstrap-components`, `dash-ag-grid` removed; keep `gunicorn`. |
+
+### §6.HISTORY — Superseded Dash Plan (2026-06-02, replaced same day)
+
+<details>
+<summary><b>⚠ SUPERSEDED 2026-06-02</b> — Click to expand full Dash-based Phase 6 plan. Preserved for git history + sunk-cost accounting. Do not implement from this section; use §6.STACK through §6.DOCS above.</summary>
+
+### Page 1 — Price Trends & Forecast ✅ DONE (2026-06-02)
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.1.1 | KPI cards: current price + YoY% per commodity (4 cards) | ✅ DONE | `dbc.Card` × 4 via `components/kpi_cards.py`. Data source: `load_mart("mart_price_trends_national")` — gets latest row per commodity. `compute_yoy_delta()` adds YoY% column. Color-coded: green for price drops, red for increases. Always visible regardless of filter. |
+| 6.1.2 | Main trend + forecast chart (`go.Figure` + `add_vline` + CI area) | ✅ DONE | `dcc.Graph(figure=fig)`. Solid lines for actuals from `mart_price_trends_national`. Dashed lines for forecast from `forecast.json`. `add_vrect` for forecast region. `add_vline(x="2022-01-01", line_dash="dash")` + separate `add_annotation` for cooking oil export ban. CI shaded area via `go.Scatter(fill="toself")` with inverted upper/lower traces. |
+| 6.1.3 | Procurement action zone (BUY/HOLD/WATCH signals) | ✅ DONE | `dbc.Card` with `dbc.Badge` per commodity. Signal logic: compute mean of 6-month forecast, compare to current price. `BUY = forecast_avg < current * 0.98` (green badge), `HOLD = abs(forecast_change) < 2%` (gray badge), `WATCH = forecast_avg > current * 1.02` (red badge). Falls back to YoY% if forecast unavailable. |
+| 6.1.4 | YoY bar chart (`go.Bar` grouped by commodity) | ✅ DONE | `dcc.Graph(id="yoy-chart")`. `compute_yoy_delta()` on `mart_price_trends_national`. Grouped bars, one color per commodity. `add_hline(y=0)` baseline. Shows inflation trajectory per commodity. |
+| 6.1.5 | Model info card | ✅ DONE | `dbc.Card` showing per-commodity model selection (AutoARIMA/AutoETS) and holdout MAE from `forecast.json` `metadata.models`. Read-only display, no interactivity. |
+| 6.1.6 | Model limitations footnote (always visible) | ✅ DONE | `dcc.Markdown` footer in `components/layout.py:forecast_footnote()`. Text from `forecast.json` `metadata.data_source_note`. |
+| 6.1.7 | Wire page to DuckDB via `data_access.load_mart("mart_price_trends_national", ...)` | ✅ DONE | Single callback with `Input` on all 3 global filters. Returns: `kpi_cards`, `trend_chart.figure`, `signal_children`, `model_info`, `yoy_chart.figure`. Forecast loaded via `load_forecast_data()` (cached JSON read). |
+
+**Bug fixes applied during implementation:**
+- Added `sys.path.insert(0, project_root)` in `app.py` to fix `ModuleNotFoundError: No module named 'dashboard'` when run as script
+- Added missing `from dash import html` to all 4 page files (was causing `NameError` at runtime)
+- Fixed Plotly 6.x incompatibility: `add_vline` `annotation_position` param → separate `add_annotation()` call
 
 ### Page 2 — Seasonal Patterns
 | # | Task | Status | Notes |
@@ -600,6 +738,8 @@ pinned: false
 - Cold-start under 3s: data loaded once via `lru_cache`, charts built in callback
 - Run locally: `uv run python dashboard/app.py` (port 7860 to match HF Spaces)
 - Validate: `uv run python -c "from dashboard.app import app; print(app.layout)"` smoke test
+
+</details>
 
 ---
 

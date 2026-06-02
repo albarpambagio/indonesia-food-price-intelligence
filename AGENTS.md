@@ -10,8 +10,8 @@ Indonesia Staple Food Price Intelligence — End-to-end data pipeline + forecast
 | **Source** | World Food Programme via Humanitarian Data Exchange |
 | **Volume** | 325,240 price records + 224 markets |
 | **Date Range** | January 2007 – May 2024 |
-| **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Plotly Dash + dash-bootstrap-components → Hugging Face Spaces |
-| **Phase Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅ (11 pipeline gaps closed), Phase 6 deferred |
+| **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Vizro 0.1.x → Hugging Face Spaces |
+| **Phase Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅ (11 pipeline gaps closed), Phase 6 PLANNING (Vizro migration 2026-06-02, see implementation-plan.md §6.STACK; Dash code from earlier 2026-06-02 preserved as §6.HISTORY) |
 | **Portfolio Goal** | Demonstrate upgraded ETL pipeline (DuckDB + dbt), time-series forecasting, and multi-dimensional procurement analytics |
 
 ### Business Scenario
@@ -88,7 +88,7 @@ Phase 4: EDA                      → Marimo notebook (SCAN framework)          
 Phase 4.5: Notebook Improvement   → Formatters, insight callouts, sectioning, mo.lazy    ✅ DONE
 Phase 5: Deep Dive                → Marimo notebook (North Star method, merged into `analysis/eda.py`) ✅ DONE
 Phase 5f: Post-Phase-5 Fixes      → Hardcoded DuckDB paths → PROJECT_DB_PATH, add numpy/scipy to pyproject, create missing snapshots/ dir, update stale checklist ✅ DONE
-Phase 6: Dashboard                → 4 pages in Plotly Dash + dbc, deployed to Hugging Face Spaces
+Phase 6: Dashboard                → 4 pages in Vizro, deployed to Hugging Face Spaces (Dash code from earlier 2026-06-02 preserved as §6.HISTORY)
 Phase 7: Methodology Doc          → model_methodology.md + forecast_runbook.md      ✅ DONE
 Phase 8: Write-up                 → README, insights log, recommendations            ✅ DONE
 ```
@@ -145,7 +145,7 @@ indonesia-food-price-intelligence/
 │   └── forecast_experimentation.py  # Phase 3 optional model comparison
 ├── seeds/                      # dbt seed data
 │   └── islamic_calendar.csv    # Ramadan/Eid dates 2007–2024
-├── dashboard/                  # Plotly Dash + dbc app (Hugging Face Spaces)
+├── dashboard/                  # Vizro app (Hugging Face Spaces) — Pydantic config + DuckDB data_manager + custom_charts
 │   ├── public/
 │   │   └── data/               # Static JSON files
 │   └── src/
@@ -353,16 +353,17 @@ Mismatch sets `pipeline.lineage.export_status = 'failed'` and logs detailed coun
 - Error handling with try/except, log failures
 - dbt models: one transformation per CTE, document rationale
 
-### Plotly Dash (Python)
-- Dash callbacks must declare all `@app.callback` outputs in `Output()` signature — missing outputs raise `InvalidCallback` at startup
-- Prefer `dbc.Row` + `dbc.Col` for layout; raw `html.Div` chains get unwieldy past 3 levels
-- `dcc.Store` for client-side state shared between callbacks; `dcc.Location` for URL-driven filters
-- Use `prevent_initial_call=True` on heavy callbacks; surface loading state via `dcc.Loading`
-- Plotly figures: `go.Figure` with `layout.template="plotly_white"` for consistency; never pass `connectgaps=True` on time-series with quality-filtered gaps
-- `dash-ag-grid` for tabular data with sorting/filtering; avoid `dash.dash_table.DataTable` for >1k rows
-- Page pattern: one `pages/<page_name>.py` module exposing a `layout()` function consumed by `app.layout` via `dcc.Location` routing
-- Hugging Face Spaces entry point: `app.py` at project root exposing `app = dash.Dash(__name__)`; multi-page uses `app.serve_layout()` callback
-- Performance: `@functools.lru_cache` on data loaders (JSON reads); `dcc.Loading` wraps long callbacks
+### Vizro (Python)
+- Pages are Pydantic `vm.Page(title=..., components=[...], controls=[...])` configs; multi-page via `vm.Dashboard(pages=[...])` and `Vizro().build(dashboard).run()`
+- Cross-page filter state: every `vm.Filter` must set `show_in_url=True` to share state across pages in 0.1.50 (per §87, §89). URLs are ugly but battle-tested.
+- Cross-filtering via `set_control` action: `<vm.Card>.actions = [vm.Action(function=set_island_filter)]` enables click-card-to-filter-other-charts (the primary migration justification)
+- Advanced Plotly (`add_vline`, `add_vrect`, `go.Scatter(fill="toself")` for CI, `px.choropleth` with vendored GeoJSON) requires `custom_charts` registration: wrap as `@capture("graph")` function in `dashboard/charts/`, call as `vm.Graph(figure=fn(data_manager["mart_X"]))`
+- DataFrames registered via `data_manager.register_data(name, lambda: load_fn())` for lazy load; `dashboard/data_access.py:load_mart()` is framework-agnostic and reused as-is
+- Plotly figures: `go.Figure` with `layout.template="plotly_white"`; never `connectgaps=True` on time-series with quality-filtered gaps
+- Built-in charts via `vizro.plotly.express` (line, bar, imshow, scatter); custom_charts only when advanced features needed
+- Hugging Face Spaces entry: `app.py` exposing `vm.Dashboard` config; gunicorn target `app:app` (not Dash's `app:server`); port 7860; 2 workers; `--timeout 120`
+- Performance: lambda-based data_manager defers DataFrame compute; `data_access.py` `lru_cache(maxsize=32)` reused
+- Validate: `uv run python -c "from dashboard.app import dashboard; print(len(dashboard.pages))"` smoke test
 
 ### Marimo Notebooks
 - Save as .py files (marimo's standard format)
