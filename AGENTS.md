@@ -11,7 +11,7 @@ Indonesia Staple Food Price Intelligence — End-to-end data pipeline + forecast
 | **Volume** | 325,240 price records + 224 markets |
 | **Date Range** | January 2007 – May 2024 |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Vizro 0.1.x → Hugging Face Spaces |
-| **Phase Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅ (11 pipeline gaps closed), Phase 6 PLANNING (Vizro migration 2026-06-02, see implementation-plan.md §6.STACK; Dash code from earlier 2026-06-02 preserved as §6.HISTORY) |
+| **Phase Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅ (11 pipeline gaps closed), Phase 5g ✅ (13 pre-dashboard gaps), Phase 6 §6.SPIKE ✅ §6.DATA ✅ §6.WIREFRAME ✅ — **§6.PAGES (Phase C) READY TO EXECUTE** (handoff: `docs/handoffs/HANDOFF-vizro-phase6-phasec-pages.md`) |
 | **Portfolio Goal** | Demonstrate upgraded ETL pipeline (DuckDB + dbt), time-series forecasting, and multi-dimensional procurement analytics |
 
 ### Business Scenario
@@ -67,7 +67,7 @@ uv run python forecast/run_forecast.py   # DONE — Phase 3e (7 bugfixes) + Phas
 ### Export + Dashboard
 ```bash
 uv run python export/export_json.py   # DONE — 5 mart JSONs via verify_export() + forecast.json
-uv run python dashboard/app.py        # Development server (http://localhost:7860)
+uv run python dashboard/app.py        # Dev server (HUMAN-USE ONLY — never run as agent verification, blocks forever)
 # Production: same script, served via Hugging Face Spaces Docker (port 7860)
 ```
 
@@ -472,7 +472,7 @@ uv run python forecast/run_forecast.py
 ### Verify Dashboard
 ```bash
 uv run python -c "from dashboard.app import app; print(f'Pages: {len(app.layout.children)}')"
-uv run python dashboard/app.py    # Smoke test: must start on http://localhost:7860
+# DO NOT run: uv run python dashboard/app.py (blocks forever, human-use only)
 ```
 
 ---

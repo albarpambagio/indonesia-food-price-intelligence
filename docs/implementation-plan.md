@@ -8,8 +8,8 @@
 | **Data First Accessed** | 2026-05-22 |
 | **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
 | **Target Completion** | ~16–20 working days |
-| **Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅ (11 pipeline gaps closed), Phase 5g ✅ (13 pre-dashboard gaps closed). **Phase 6 scaffolding 2026-06-02**: 12 files created (app, data_access, 3 components, 4 pages). Smoke test passed (`Pages: 4`). §6.8 Docker deploy execution pending. |
-| **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → DuckDB-direct queries (Dash) + static JSON for forecast → **Plotly Dash (dash-bootstrap-components + Dash Pages plugin)** → **Hugging Face Spaces** |
+| **Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅ (11 pipeline gaps closed), Phase 5g ✅ (13 pre-dashboard gaps closed). **Phase 6**: §6.SPIKE ✅ (GO), §6.DATA ✅ (7 keys), §6.WIREFRAME ✅ (all resolved). **§6.PAGES (Phase C) READY TO EXECUTE** — handoff written `docs/handoffs/HANDOFF-vizro-phase6-phasec-pages.md`. Dash pages exist as reference; will be replaced with Vizro `vm.Page(...)` configs. |
+| **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → **Vizro 0.1.x + DuckDB read-only data_manager** → **Hugging Face Spaces** |
 
 ### Parallelization Opportunities
 | Phase | Can Start After | Runs Parallel With | Saves |
@@ -19,7 +19,7 @@
 | §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
 
 **Sequential chain** (must wait): Phase 0 → 1 → 2 → 2.5 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
-> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (7 bugfixes) → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ (path, deps, dirs) → **Phase 3f ✅ (11 pipeline gaps)** → **Phase 5g ✅ (13 pre-dashboard gaps)** → **Phase 6 plan expanded 2026-06-02** (HF CLI deployment workflow documented in §6.8); execution pending.
+> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (7 bugfixes) → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ (path, deps, dirs) → **Phase 3f ✅ (11 pipeline gaps)** → **Phase 5g ✅ (13 pre-dashboard gaps)** → **Phase 6**: §6.SPIKE ✅ → §6.DATA ✅ → §6.WIREFRAME ✅ → **§6.PAGES (Phase C) READY** (handoff: `docs/handoffs/HANDOFF-vizro-phase6-phasec-pages.md`).
 
 ---
 
@@ -433,6 +433,7 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 ### §6.PAGES — Phase C: Port 3 Pages + Rebuild Page 1 (3-4 days)
 
 > **Sequential** — depends on §6.DATA. Page 1 must be rewritten (was Dash); pages 2-4 are net-new in either stack.
+> **Handoff**: `docs/handoffs/HANDOFF-vizro-phase6-phasec-pages.md` — full execution plan, Vizro patterns, wireframe references, verification checklist, suggested skills.
 
 #### §6.C.1 — Page 1 (Price Trends & Forecast) — REBUILD
 
