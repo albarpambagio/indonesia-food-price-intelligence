@@ -153,7 +153,7 @@
 │  [7d] "vs Java" column: red if above, green if below Java price     │
 │  [7e] Provinces with <12 months coverage excluded and noted         │
 │       in table footer                                               │
-│  [7f] TanStack Table — sortable                                     │
+│  [7f] AG Grid (`vm.AgGrid`) — sortable                              │
 │  [7g] Responds to Commodity filter                                  │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -200,11 +200,14 @@
 | **Loading** | Skeleton map placeholder (gray rectangle), skeleton cards and charts |
 | **Map: island group clicked** | That group highlighted with border; KPI card for that group gets focus ring; province table filtered to that group |
 | **Year slider moved** | Map recolors to show price index for selected year; KPI cards update |
-| **Animate playing** | Map colors animate year by year; slider thumb moves; Animate button becomes Pause |
+| **Animate IDLE** | Button shows "▶ Animate"; slider at current position |
+| **Animate PLAYING** | Button shows "⏸ Pause"; map colors animate year-by-year; slider thumb moves; `dcc.Interval` ticks every 1s |
+| **Animate COMPLETE** | Animation reaches 2024; button resets to "▶ Animate"; slider returns to 2024; `is_playing=False` |
 | **Island Group filter = specific group** | Province table filtered; map highlights that group; other charts unchanged |
 | **Commodity = Cooking Oil (default)** | All components active — map, line chart, KPI cards, province table |
 | **Commodity = Rice / Sugar / Flour** | Banner [3c] highlights data limitation; map shows grayed-out state with "National-level only — see Page 1" message; province table shows empty state; KPI cards show "N/A" |
 | **Province with limited coverage** | Coverage column shows "2015–24" in lighter text; tooltip explains coverage gap |
+| **Empty state (no data for filter combo)** | Map shows "No data available for current filters" message; province table shows "No provinces match current selection"; KPI cards show "—" instead of index values |
 
 ---
 
@@ -230,6 +233,6 @@
 |---------|--------|--------|
 | Island group KPI data | `geographic_disparity.json → current_index[]` | `{island_group, index, premium_pct}` |
 | Choropleth map data | `geographic_disparity.json → annual_index[]` | `{year, island_group, index}` — for year slider |
-| GeoJSON boundaries | Bundled in `/dashboard/public/indonesia_island_groups.geojson` | Simplified polygon boundaries |
+| GeoJSON boundaries | Bundled in `dashboard/assets/indonesia_island_groups.geojson` | Simplified polygon boundaries; `featureidkey="properties.island_group"` |
 | Line chart data | `geographic_disparity.json → annual_index[]` | Same array as map, pivoted to wide format client-side |
 | Province table | `geographic_disparity.json → province_detail[]` | `{province, island_group, avg_price, vs_java_pct, coverage_start, coverage_end}` |

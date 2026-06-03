@@ -6,42 +6,11 @@ This document captures key technical learnings, bugs encountered, and solutions 
 
 ## Table of Contents
 
+> **Note:** Sections 1–34 are from the original React/Next.js stack (deprecated 2026-06-02). They remain as archived reference but do not apply to the current Vizro/Dash stack.
+
 | # | Section |
 |---|---------|
-| 1 | [Dashboard Architecture & Routing](#1-dashboard-architecture--routing) |
-| 2 | [Data Fetching & Caching](#2-data-fetching--caching) |
-| 3 | [Component Loading States](#3-component-loading-states) |
-| 4 | [Build & Development Issues](#4-build--development-issues) |
-| 5 | [Sidebar Disappearance Bug](#5-sidebar-disappearance-bug) |
-| 6 | [React Hooks Rules Violation](#6-react-hooks-rules-violation) |
-| 7 | [Array.filter() Does Not Mutate In Place](#7-arrayfilter-does-not-mutate-in-place) |
-| 8 | [Global Filter Pattern Across Pages](#8-global-filter-pattern-across-pages) |
-| 9 | [KPI Cards Should Reflect Filtered Data](#9-kpi-cards-should-reflect-filtered-data) |
-| 10 | [Quick Reference](#10-quick-reference) |
-| 11 | [React Context for Centralized Data Loading](#11-react-context-for-centralized-data-loading) |
-| 12 | [Debounced Slider Pattern](#12-debounced-slider-pattern) |
-| 13 | [Scatter Chart Data Sampling](#13-scatter-chart-data-sampling-for-large-sku-sets) |
-| 14 | [Threshold-Driven Visual Styling](#14-threshold-driven-visual-styling-not-data-filtering) |
-| 15 | [Pagination with Smart Ellipsis](#15-pagination-with-smart-ellipsis) |
-| 16 | [QA Audit: setState Inside useMemo](#16-qa-audit-setstate-inside-usememo-causes-re-render-loops) |
-| 17 | [ETL Pipeline: Row-by-Row INSERT vs Batch Insert](#17-etl-pipeline-row-by-row-insert-vs-batch-insert) |
-| 18 | [ETL Pipeline: DROP TABLE vs TRUNCATE](#18-etl-pipeline-drop-table-vs-truncate-for-idempotent-loads) |
-| 19 | [Filter Composition: Avoid Mutating Source Data](#19-filter-composition-avoid-mutating-source-data) |
-| 20 | [Lazy Data Fetching: Hybrid Approach](#20-lazy-data-fetching-hybrid-approach-with-react-context) |
-| 21 | [Dynamic Imports with next/dynamic](#21-dynamic-imports-with-nextdynamic) |
-| 22 | [sessionStorage Cache Persistence](#22-sessionstorage-cache-persistence) |
-| 23 | [CSV Export: Proper Field Quoting](#23-csv-export-proper-field-quoting) |
-| 24 | [Exception Handling: Uninitialized Variable](#24-exception-handling-uninitialized-variable-in-error-handler) |
-| 25 | [`connectNulls=true` Creates False Continuity](#25-connectnullstrue-creates-false-continuity-in-line-charts) |
-| 26 | [Charts Must Respect Active Filter Scope](#26-charts-must-respect-active-filter-scope) |
-| 27 | [Median Lines Must Match Displayed Data](#27-median-lines-must-match-displayed-data) |
-| 28 | [KPI Delta Must Compare Same Cohort Over Time](#28-kpi-delta-must-compare-same-cohort-over-time) |
-| 29 | [Silent Error Swallowing in DataProvider](#29-silent-error-swallowing-in-dataprovider) |
-| 30 | [Missing Year Validation in NO_RESEP Parser](#30-missing-year-validation-in-no_resep-parser) |
-| 31 | [Division by Zero in KPI Delta Calculation](#31-division-by-zero-in-kpi-delta-calculation) |
-| 32 | [Cache-Busting Query Param for Development](#32-cache-busting-query-param-for-development) |
-| 33 | [Visible Disclaimer for Charts That Can't Be Filtered](#33-visible-disclaimer-for-charts-that-cant-be-filtered) |
-| 34 | [Strip Template Boilerplate Before Deploy](#34-strip-template-boilerplate-before-deploy) |
+| 1–34 | *Archived: React/Next.js Stack — see §1 heading below* |
 | 35 | [Cross-Tabulated Data for Multi-Dimension Filters](#35-filter-composition-cross-tabulated-data-required-for-multi-dimension-filters) |
 | 36 | [Quote-Wrapping SQL Column Names in Dynamic UPDATE](#36-quote-wrapping-sql-column-names-in-dynamic-update-statements) |
 | 37 | [Idempotent Data Loads: DROP TABLE Before CREATE TABLE AS](#37-idempotent-data-loads-drop-table-before-create-table-as) |
@@ -84,8 +53,17 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 84 | [HF Spaces Docker Packaging: Port 7860, `gunicorn`, Layer Optimization](#84-hf-spaces-docker-packaging-port-7860-gunicorn-layer-optimization) |
 | 85 | [Callback Output Declaration: All Outputs Must Be Declared in Signature](#85-callback-output-declaration-all-outputs-must-be-declared-in-signature) |
 | 86 | [Plotly Figure Specs Port Verbatim from Marimo EDA to Dash `dcc.Graph`](#86-plotly-figure-specs-port-verbatim-from-marimo-eda-to-dash-dccgraph) |
+| 92 | [Component Mismatch Assessment: Vizro vs Dash](#92-component-mismatch-assessment-vizro-vs-dash) |
+| 93 | [Static Assets Convention: `assets/` Not `public/`](#93-static-assets-convention-assets-not-public) |
+| 94 | [Source → Control → Target Interaction Pattern](#94-source--control--target-interaction-pattern) |
+| 95 | [`vm.Figure` Cannot Be a `set_control` Source](#95-vmfigure-cannot-be-a-set_control-source) |
+| 96 | [Conditional Visibility Requires Dash Callback](#96-conditional-visibility-requires-dash-callback) |
 
 ---
+
+## Archived: React/Next.js Stack (deprecated 2026-06-02)
+
+> Sections 1–34 below are from the original React/Next.js dashboard. They are retained as historical reference. The project migrated to Vizro/Dash in June 2026 — see §75–86 and §92–96 for current stack learnings.
 
 ## 1. Dashboard Architecture & Routing
 
@@ -3631,6 +3609,109 @@ CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:7860", "--workers", "2", "--timeo
 ### Rule
 
 For Vizro on HF Spaces, gunicorn target is `app:app` (not Dash's `app:server`). Everything else from §84 carries over: port 7860, 2 workers, 120s timeout, layer-ordered Dockerfile, `--frozen --no-dev`. The dashboard code structure changes (no `pages/` dir, no `components/` dir, no callbacks) but the deployment shape is identical.
+
+---
+
+## 92. Component Mismatch Assessment: Vizro vs Dash
+
+When migrating wireframes to Vizro, systematically assess every component against two lists: Vizro native (§2.1 of wireframe evaluation) and Vizro extension (§2.2). Do not assume a component is "just a card" — Vizro's `vm.Figure` has different capabilities than `vm.Graph`.
+
+| Wireframe Element | Vizro Component | Gap | Workaround |
+|-------------------|----------------|-----|------------|
+| KPI card with sparkline | `vm.Figure` (kpi_card_reference) | No embedded chart support | Custom `@capture("figure")` returning `dbc.Card` with nested `dcc.Graph` |
+| Buy Signal Monitor | `vm.Figure` or `vm.Card` | No native status list | Custom figure returning `dbc.ListGroup` |
+| Conditional chart show/hide | `vm.Graph` | No built-in visibility toggle | Dash callback on `style={"display": "none/block"}` |
+| Animated year slider | `vm.Slider` | No playback button | `dcc.Interval` + manual callback |
+
+### Rule
+
+Before building any wireframe in Vizro, produce a component-by-component mapping table (like the one above). Do not start coding until every non-native component has a named extension pattern.
+
+---
+
+## 93. Static Assets Convention: `assets/` Not `public/`
+
+Vizro/Dash serves static files from `dashboard/assets/`, not `dashboard/public/`. Wireframes and evaluation docs must reference `assets/` paths. GeoJSON files, custom CSS, and images go here.
+
+```python
+# Correct
+with open("dashboard/assets/indonesia_island_groups.geojson") as f:
+    geojson = json.load(f)
+
+# Wrong — this is a React/Next.js convention
+with open("dashboard/public/indonesia_island_groups.geojson") as f:
+    geojson = json.load(f)
+```
+
+### Rule
+
+All static asset paths in specs, wireframes, and evaluation docs must use `assets/` prefix. The `public/` directory does not exist in Vizro projects.
+
+---
+
+## 94. Source → Control → Target Interaction Pattern
+
+Every Vizro interaction follows the `wiring-vizro-actions` skill's three-role model:
+
+| Role | Definition | Examples |
+|------|-----------|----------|
+| **Source** | Component that emits data on user interaction | `vm.Graph` (clickData), `vm.AgGrid` (selectedRows), `vm.Filter` (value) |
+| **Control** | Mechanism that carries data from source to target | `vm.Filter`, `vm.Parameter`, `vm.Action`, `dcc.Store` + manual callback |
+| **Target** | Component that receives and reacts to data | `vm.Graph` (data_frame), `vm.AgGrid` (rowData), custom figure (function arg) |
+
+Critical constraint: **Only `vm.Graph` and `vm.AgGrid` can be sources.** `vm.Figure` (KPI cards, custom cards) cannot emit click data. This means:
+- KPI cards cannot be `set_control` sources
+- Custom `dbc.Card` figures cannot participate in `vm.Action` chains
+- Bidirectional KPI↔map interactions (Page 3) require manual Dash callbacks
+
+### Rule
+
+When planning interactions, explicitly label each component as Source, Control, or Target. If a `vm.Figure` needs to be a source, plan for manual `@callback` registration.
+
+---
+
+## 95. `vm.Figure` Cannot Be a `set_control` Source
+
+Vizro's `vm.Action(function=set_control)` only works when the source is a `vm.Graph` or `vm.AgGrid`. `vm.Figure` (which includes `kpi_card`, `kpi_card_reference`, and custom `@capture("figure")` returning `dbc.Card`) does not expose click data to Vizro's action system.
+
+**Impact on Page 3:** The wireframe specifies "clicking a KPI card highlights that island group on map and filters province drill-down table." This cannot be done with `va.set_control`. Implementation requires:
+
+1. Custom click handler on the KPI card's underlying `dbc.Card` (via `n_clicks` prop)
+2. A `dcc.Store` holding `selected_island_group`
+3. A manual `@callback` that reads the card click and updates the store
+4. Second-order callbacks that read the store and update the map + table
+
+### Rule
+
+If a wireframe requires KPI card → chart interaction, budget for manual callback registration. Do not attempt `vm.Action(function=set_control)` with `vm.Figure` sources — it will silently fail.
+
+---
+
+## 96. Conditional Visibility Requires Dash Callback
+
+Vizro has no built-in conditional rendering of components. When a wireframe says "show chart X when driver = Ramadan, hide when driver = Harvest," this requires a Dash callback outside Vizro's declarative model.
+
+**Implementation pattern:**
+
+```python
+# After Vizro builds the dashboard
+app = Vizro().build(dashboard)
+
+@app.callback(
+    Output("ramadan-chart-container", "style"),
+    Input("driver-radio", "value"),
+)
+def toggle_driver_chart(driver):
+    if driver == "Ramadan":
+        return {"display": "block"}
+    return {"display": "none"}
+```
+
+**Gotcha:** The callback targets the underlying HTML container ID, not the Vizro component name. Use browser DevTools to find the actual DOM IDs generated by Vizro.
+
+### Rule
+
+For conditional visibility, plan Dash callbacks in the wireframe phase. Document which components need toggling and what triggers the toggle. Do not assume Vizro handles this declaratively.
 
 ---
 

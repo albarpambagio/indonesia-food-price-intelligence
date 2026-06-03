@@ -34,7 +34,7 @@ The primary concern is not the quality of the spec — it is component mismatch.
 |------|-------------|----------------|-----------------|
 | 1 — Price Trends & Forecast | Excellent | Moderate | Sparklines in KPI cards; filter persistence |
 | 2 — Seasonal Patterns | Excellent | High | Conditional chart visibility; Ramadan overlay x-axis |
-| 3 — Geographic Disparity | Excellent | Highest | Custom GeoJSON choropleth; animated year slider |
+| 3 — Geographic Disparity | Excellent | High | Custom GeoJSON choropleth; animated year slider |
 | 4 — Commodity Signals | Excellent | Moderate | Matrix-click interactions; implication card callbacks |
 
 ---
@@ -275,7 +275,7 @@ A `vm.Card` with Markdown content, placed prominently above the map in the layou
 This is the most technically demanding component across all four pages. The implementation path depends on whether a Mapbox token is available in the deployment environment.
 
 **Option A — No Mapbox token (recommended for portability):**  
-Use `px.choropleth` with `geojson=` pointing to the bundled GeoJSON file and `featureidkey="properties.island_group"`. This renders in Plotly's built-in SVG map renderer — no token required, works offline.
+Use `px.choropleth` with `geojson=` pointing to the bundled GeoJSON file and `featureidkey="properties.island_group"`. This renders in Plotly's built-in SVG map renderer — no token required, works offline. The GeoJSON must be a 5-feature file (one per island group) with `properties.island_group` matching the data values exactly.
 
 ```python
 import json
@@ -326,7 +326,9 @@ The wireframe's data scope annotation is correctly specified: all geographic ana
 
 ### 5.3 GeoJSON Asset
 
-The wireframe specifies the GeoJSON at `/dashboard/public/indonesia_island_groups.geojson`. In a Vizro/Dash project, static assets are served from the `assets/` directory. Rename the path accordingly and ensure the file is loaded once at module import, not on every callback invocation, to avoid repeated disk reads on filter changes.
+The wireframe specifies the GeoJSON at `/dashboard/public/indonesia_island_groups.geojson`. In a Vizro/Dash project, static assets are served from the `assets/` directory. The correct path is `dashboard/assets/indonesia_island_groups.geojson`. Ensure the file is loaded once at module import, not on every callback invocation, to avoid repeated disk reads on filter changes.
+
+The GeoJSON file must have 5 features (one per island group: Java, Sumatera, Kalimantan, Sulawesi, Eastern Indonesia). Each feature must have `properties.island_group` matching the string values in `geographic_disparity.json → annual_index[].island_group`. The `featureidkey="properties.island_group"` argument on `px.choropleth` binds the data to the map polygons.
 
 ### 5.4 Layout Notes
 
@@ -502,6 +504,39 @@ Page 3 [3c] specifies a light yellow background for the banner. This requires a 
 
 Apply via `className` prop on the card's underlying `dbc.Card` component.
 
+### 7.7 CSS Class Reference
+
+The following custom CSS classes are referenced across all four pages. Define them in `dashboard/assets/custom.css`.
+
+| Class | Used By | Purpose | Style |
+|-------|---------|---------|-------|
+| `.data-availability-banner .card` | Pages 2, 3, 4 | Data scope notice | Light yellow background, left amber border |
+| `.limitations-footnote .card` | Pages 1, 2 | Model limitations footer | Smaller font, muted background, always visible |
+| `.signal-card .card` | Page 1 | Buy Signal Monitor status cards | Colored left border by signal (BUY=green, HOLD=gray, WATCH=amber) |
+| `.implication-card .card` | Page 4 | Procurement recommendation | Left accent border, warning variant for weakened relationships |
+| `.action-card .card` | Page 2 | Procurement timing cards | Commodity-colored top border |
+| `.kpi-row` | Page 1, 3 | Flex container for KPI cards | `display: flex; gap: 1rem` |
+| `.driver-toggle` | Page 2 | Seasonal driver tab row | `overflow-x: auto; white-space: nowrap` for mobile scroll |
+| `.empty-state` | Pages 3, 4 | No-data placeholder message | Centered text, muted color, min-height 120px |
+
+### 7.8 Interaction Pattern Mapping
+
+Each page's interactive elements mapped to Vizro implementation patterns. Patterns reference the `wiring-vizro-actions` skill terminology.
+
+| Page | Element | Vizro Pattern | Source | Control | Target | Notes |
+|------|---------|---------------|--------|---------|--------|-------|
+| 1 | Global filters → trend chart | Standard filter | `vm.Filter` | Commodity, Island Group, Year Range | Trend chart `vm.Graph` | Native Vizro binding |
+| 1 | Model selector → trend chart | Parameter | `vm.Dropdown` | Model name | Custom figure `model` arg | `vm.Parameter` with `vm.Dropdown` |
+| 2 | Driver toggle → chart visibility | Conditional show/hide | — | `vm.RadioItems` | 3 chart containers | Manual Dash callback on `style.display` |
+| 2 | Driver toggle → action cards | Parameter | `vm.RadioItems` | Driver name | Custom figure `driver` arg | `vm.Parameter` |
+| 3 | Map click → province table + KPI highlight | Multi-Dimensional Slice (adapted) | Map `clickData` | `dcc.Store` | Province table `filterModel` + KPI focus ring | Manual callback; `vm.Figure` cannot be click source |
+| 3 | KPI card click → map + table | Multi-Dimensional Slice (adapted) | KPI card click | `dcc.Store` | Map highlight + table filter | Manual callback; `vm.Figure` cannot be `set_control` source |
+| 3 | Animate button → map + slider | Animation loop | `dbc.Button` | `dcc.Interval` + `dcc.Store` | Map figure `year` arg + slider value | Manual callback; not a Vizro pattern |
+| 4 | Matrix click → scatter + stability + implication | Multi-Dimensional Slice | Matrix `vm.Graph` `clickData` | `dcc.Store` | Scatter, stability, implication | `vm.Action` for 2 targets; manual callback for 3rd |
+| 4 | Lag selector → matrix + cards | Parameter | `vm.RadioItems` | Lag value | Matrix figure, callout figures | `vm.Parameter` on each target |
+
+**Critical constraint:** `vm.Figure` (KPI cards) cannot be a `set_control` source — only `vm.Graph` and `vm.AgGrid` carry click-data. Page 3's bidirectional KPI↔map interaction requires manual Dash callbacks, not declarative `va.set_control`.
+
 ---
 
 ## 8. Implementation Effort Summary
@@ -556,46 +591,54 @@ The wireframes are evaluated against the criteria the `vizro-e2e-flow` `dashboar
 
 ### 9.2 What the spec could improve
 
-| Gap | Recommendation |
-|-----|----------------|
-| TanStack Table references | Replace with "AG Grid" throughout. No functional difference, but mismatched terminology will confuse the build phase. |
-| Filter persistence mechanism | The spec states filters persist but does not specify the mechanism. Add a note: "Implemented via `dcc.Store` at dashboard level with `storage_type='session'`." |
-| Animate button UX details | Page 3 specifies "Animate plays 2007→2024 at 1 second per year" and "button becomes Pause." Add a state for "Animation complete" (button resets to Animate, slider returns to 2024). |
-| Ramadan x-axis data contract | The `ramadan_overlay[]` spec lists `{year, week_relative, price_index}`. Clarify whether `week_relative` is an integer (T-8 = -8) or a string label ("T-8"), since this determines the axis configuration. |
-| Empty states | Loading states are specified; empty states (no data matching filter combination) are not. Add a note for what each chart shows when the filtered dataset is empty. |
-| Choropleth GeoJSON property names | The spec says `featureidkey` should match island group names. Document the exact property name in the GeoJSON file (e.g., `"properties.NAME"` or `"properties.island_group"`) to prevent build-phase guesswork. |
+All items from §9.2 have been resolved in the wireframe updates:
+
+| Gap | Resolution |
+|-----|------------|
+| TanStack Table references | ✅ Replaced with "AG Grid" across Pages 2, 3, 4 |
+| Filter persistence mechanism | ✅ Page 1 annotation [3b] now specifies `dcc.Store` with `storage_type="session"` |
+| Animate button UX details | ✅ Page 3 states table now specifies IDLE → PLAYING → COMPLETE |
+| Ramadan x-axis data contract | ✅ Page 2 annotation [6d] specifies integer `week_relative` with formatted tick labels |
+| Empty states | ✅ Pages 3 and 4 states tables now include empty state rows |
+| Choropleth GeoJSON property names | ✅ Page 3 content spec specifies `featureidkey="properties.island_group"` |
 
 ---
 
 ## 10. Recommended Changes Before Build
 
-The following changes should be made to the wireframe spec before passing it to the `dashboard-build` phase. They are ordered by severity.
+The following changes should be made to the wireframe spec before passing it to the `dashboard-build` phase.
 
 ### 10.1 Required (will block build if not addressed)
 
-1. **Confirm GeoJSON property names** — the choropleth on Page 3 requires the exact property key matching island group names in `indonesia_island_groups.geojson`. Verify this and add it to the Page 3 content specification.
-
-2. **Clarify `week_relative` type** in `ramadan_overlay[]` — integer or string. This determines whether the Ramadan chart x-axis is `go.scatter(x=integers)` or `go.scatter(x=string_labels)`.
-
-3. **Specify the animate button's complete state machine** — Idle → Playing → Complete (with loop or stop) on Page 3.
+All items from §10.1 have been resolved — see §10.4.
 
 ### 10.2 Recommended (will cause confusion if not addressed)
 
-4. **Replace all "TanStack Table" references** with "AG Grid" across Pages 1, 2, and 4.
+All items from §10.2 have been resolved — see §10.4.
 
-5. **Move the model selector dropdown** [Page 1, 5] from "inside chart header" to "global filter row" — this is not achievable in Vizro's layout without custom Dash components.
+### 10.3 Open Items (still require resolution)
 
-6. **Add empty states** to the states table on every page — what does each chart render when the filter selection produces no matching data?
+| # | Item | Status | Action |
+|---|------|--------|--------|
+| 1 | Mapbox token requirement | Open | Confirm `px.choropleth` (no token) is the target; add deployment note |
+| 2 | `post_2022_r` divergence threshold | Open | Wireframes now specify `abs(pre_2022_r - post_2022_r) > 0.2` — confirm in evaluation §6.1 |
+| 3 | GeoJSON creation | Open | Create `dashboard/assets/indonesia_island_groups.geojson` (5 features, province→island-group merge) |
 
-7. **Document the filter persistence mechanism** explicitly in the Page 1 global filter annotations.
+### 10.4 Resolved Items
 
-### 10.3 Nice to have
-
-8. **Add a note on Mapbox token requirement** to the Page 3 deployment section — or explicitly choose the `px.choropleth` + `featureidkey` path (no token) as the target implementation.
-
-9. **Add CSS class names** for the data availability banners (Page 3) and the limitations footnotes (Pages 1, 2) so the build phase can apply styling without guessing.
-
-10. **Specify the `post_2022_r` divergence threshold** for triggering the ⚠ caveat on Page 4 — "large divergence" is not a number. Suggest `abs(pre_2022_r - post_2022_r) > 0.2` as a starting point.
+| # | Item | Resolution |
+|---|------|------------|
+| 1 | Confirm GeoJSON property names | Added `featureidkey="properties.island_group"` to Page 3 content spec and evaluation §5.1/§5.3 |
+| 2 | Clarify `week_relative` type | Page 2 annotation [6d] now specifies integer with formatted tick labels |
+| 3 | Animate button state machine | Page 3 states table now specifies IDLE → PLAYING → COMPLETE |
+| 4 | Replace "TanStack Table" → "AG Grid" | Pages 2, 3, 4 annotations updated; evaluation §7.2 already noted this |
+| 5 | Move model selector to filter row | Page 1 annotation [5] now shows "relocated to global filter row [3]" |
+| 6 | Add empty states | Pages 3 and 4 states tables now include empty state rows |
+| 7 | Document filter persistence mechanism | Page 1 annotation [3b] now specifies `dcc.Store` with `storage_type="session"` |
+| 8 | CSS class names | Added §7.7 CSS class reference table with 8 classes |
+| 9 | Interaction pattern mapping | Added §7.8 mapping table with 9 interaction patterns |
+| 10 | GeoJSON path corrected | Page 3 content spec updated from `/dashboard/public/` to `dashboard/assets/` |
+| 11 | Page 3 friction reclassified | Verdict table updated from "Highest" to "High" |
 
 ---
 

@@ -33,11 +33,12 @@
 │ │ Sugar / Flour / All  │  │ Sumatera / ...   │  │ ◄─────────►  │ │
 │ └──────────────────────┘  └──────────────────┘  └───────────────┘ │
 │                                                                     │
- │  [3a] Year Range: dual-handle slider, 2007–2024                     │
- │  [3b] All filters persist across page navigation                    │
- │  [3c] Commodity = All shows all four series on trend chart          │
- │  [3d] Island Group filter applies to Cooking Oil only. Rice,       │
- │       Sugar, Flour always shown at national level                   │
+│  [3a] Year Range: dual-handle slider, 2007–2024                     │
+│  [3b] All filters persist across page navigation via `dcc.Store`    │
+│       at dashboard level (storage_type="session")                   │
+│  [3c] Commodity = All shows all four series on trend chart          │
+│  [3d] Island Group filter applies to Cooking Oil only. Rice,       │
+│       Sugar, Flour always shown at national level                   │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -77,10 +78,11 @@
 │ │  ░░░ 95% confidence interval                                   │ │
 │ │  ─── Actual prices   ╌╌╌ Forecast                              │ │
 │ │                                                                 │ │
-│ │  [Model: AutoARIMA ▼]  ← small dropdown to toggle model view   │ │
+│ │  [Model: AutoARIMA ▼]  ← relocated to global filter row [3]   │ │
 │ └─────────────────────────────────────────────────────────────────┘ │
 │                                                                     │
-│  [5a] Chart type: Recharts ComposedChart (Line + Area for CI)       │
+│  [5a] Chart type: Custom `@capture("figure")` returning `go.Figure` │
+│       with Line (actuals), dashed Line (forecast), filled area (CI)  │
 │  [5b] Vertical dashed line separates actuals from forecast          │
 │  [5c] Shaded area = 95% confidence interval, forecast region only   │
 │  [5d] Commodity toggle updates series shown — All shows 4 lines     │

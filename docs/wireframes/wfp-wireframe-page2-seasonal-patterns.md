@@ -133,7 +133,8 @@
 │  [6a] Chart type: Recharts LineChart, multi-series (one per year)  │
 │  [6b] Individual year lines: thin, low opacity gray                 │
 │  [6c] Average line: bold, dark — stands out from year lines         │
-│  [6d] X-axis: T-8 to T+6 weeks relative to Eid                     │
+│  [6d] X-axis: T-8 to T+6 integer weeks relative to Eid              │
+│       (week_relative is integer, formatted as "T-8" labels)         │
 │  [6e] Y-axis: price index (100 = annual average)                   │
 │  [6f] Tooltip: Week | Avg index | Year-specific index on hover     │
 │  [6g] Hidden when Harvest Season or Year-End driver selected        │
@@ -208,7 +209,7 @@
 │  [9c] Negative premiums (discounts) shown in different style        │
 │  [9d] "Lead Time" = weeks/months before event when stock action     │
 │       should be taken — this is the most actionable column          │
-│  [9e] TanStack Table — sortable                                     │
+│  [9e] AG Grid (`vm.AgGrid`) — sortable                              │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 

@@ -411,6 +411,25 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 | 6.B.3 | Verify `export_json.py` + `verify_export()` unchanged and still log to `pipeline.lineage.export_status` | ✅ | Export pipeline PASS — all 6 marts verified, 0 row count mismatches. |
 | 6.B.4 | Smoke test: verify 7 keys in data_manager | ✅ | 7 keys: 6 marts + forecast. |
 
+### §6.WIREFRAME — Phase B1: Wireframe Evaluation Resolution (0.5 day)
+
+> **Sequential** — depends on §6.DATA. Resolves all open items in `docs/wireframes/wfp-vizro-wireframe-evaluation.md` before passing wireframes to §6.PAGES build phase.
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 6.W.1 | Component mismatch assessment: map every wireframe element to Vizro native vs extension | ✅ | Added to evaluation §2.1/§2.2 and LEARNINGS.md §92. |
+| 6.W.2 | Interaction pattern mapping: Source→Control→Target for all 9 interactions | ✅ | Added to evaluation §7.8 and LEARNINGS.md §94. Critical: `vm.Figure` cannot be `set_control` source (§95). |
+| 6.W.3 | GeoJSON path correction: `/dashboard/public/` → `dashboard/assets/` | ✅ | Page 3 content spec + evaluation §5.3 updated. Property: `featureidkey="properties.island_group"`. |
+| 6.W.4 | Page 1 wireframe: filter persistence mechanism (`dcc.Store`), model selector relocated to filter row | ✅ | Annotations [3b] and [5] updated. |
+| 6.W.5 | Page 2 wireframe: TanStack→AG Grid, `week_relative` clarified as integer with formatted labels | ✅ | Annotation [9e] and [6d] updated. |
+| 6.W.6 | Page 3 wireframe: TanStack→AG Grid, animate state machine (IDLE→PLAYING→COMPLETE), empty states | ✅ | States table expanded with 3 animate states + empty state row. |
+| 6.W.7 | Page 4 wireframe: TanStack→AG Grid, divergence threshold `abs(pre_2022_r - post_2022_r) > 0.2`, empty states | ✅ | Annotation [9c] and states table updated. |
+| 6.W.8 | Evaluation §7.7: CSS class reference table (8 classes) | ✅ | Classes for data banners, limitations footnotes, signal cards, KPI rows, driver toggle, empty states. |
+| 6.W.9 | Evaluation §7.8: Interaction pattern mapping table (9 patterns) | ✅ | Maps page interactions to Vizro Source→Control→Target model. |
+| 6.W.10 | Evaluation §10 restructure: 11 items resolved (§10.4), 3 items open (§10.3) | ✅ | §9.2 all gaps marked resolved. Page 3 friction reclassified "Highest"→"High". |
+| 6.W.11 | LEARNINGS.md §92-96: 5 new Vizro learnings added | ✅ | §92 component mismatch, §93 assets/ convention, §94 Source→Control→Target, §95 vm.Figure source limitation, §96 conditional visibility callback. |
+| 6.W.12 | LEARNINGS.md archive: sections 1-34 marked as React/Next.js (deprecated 2026-06-02) | ✅ | Archive heading added before §1. ToC updated with §92-96 entries. |
+
 ### §6.PAGES — Phase C: Port 3 Pages + Rebuild Page 1 (3-4 days)
 
 > **Sequential** — depends on §6.DATA. Page 1 must be rewritten (was Dash); pages 2-4 are net-new in either stack.
@@ -509,6 +528,7 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 | 6.F.9 | Replace `AGENTS.md` "Plotly Dash (Python)" conventions block with "Vizro" block | ⬜ | Vizro conventions: `vm.Page`, `custom_charts`, `data_manager.register_data`, cross-page filter pattern, port 7860, gunicorn `app:app`. |
 | 6.F.10 | Update `AGENTS.md` Phase 6 line: "Vizro + DuckDB + HF Spaces" | ⬜ | |
 | 6.F.11 | Remove Dash deps from `pyproject.toml` after Phase C is verified working | ⬜ | `dash`, `dash-bootstrap-components`, `dash-ag-grid` removed; keep `gunicorn`. |
+| 6.F.12 | Add `docs/LEARNINGS.md` §92-96 — wireframe resolution learnings (component mismatch, assets/ convention, Source→Control→Target, vm.Figure limitation, conditional visibility) | ✅ | Completed 2026-06-02 during wireframe evaluation resolution. |
 
 ### §6.HISTORY — Superseded Dash Plan (2026-06-02, replaced same day)
 
@@ -852,6 +872,7 @@ pinned: false
 - [x] **Phase 5g 2026-06-02**: G11 — Add `dbt source freshness` step to pipeline (per LEARNINGS §49) ✅ DONE
 - [x] **Phase 5g 2026-06-02**: G12 — Sync `requirements.txt` with `pyproject.toml` (or delete) ✅ DONE
 - [x] **Phase 5g 2026-06-02**: G13 — Normalize JSON export date format to `"%Y-%m-%d"` in `export_json.py:export_table()` ✅ DONE
+- [x] **Wireframe evaluation resolution 2026-06-02**: All §10.1/10.2 items resolved; evaluation §7.7 (CSS), §7.8 (interactions) added; page wireframes updated (TanStack→AG Grid, GeoJSON paths, state machines, empty states); LEARNINGS.md §92-96 added; archive heading for §1-34 ✅ DONE
 
 ---
 
@@ -894,6 +915,7 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 8 | `docs: README, insights, recommendations` | Final packaging — README, insights_log verified |
 | Phase 3f | `fix: 11 pipeline gaps — ramadan cross-year, hardcoded date, unified run_id, dbt log, func split, docs, pep723 pins, lineage dedup` | Cross-phase gap closing post-Phase-5f |
 | Phase 6 plan | `docs: phase 6 stack change — Next.js+Shadboard+CF Pages → Plotly Dash+dbc+HF Spaces` | This document update; LEARNINGS.md §75 marked superseded; rationale in Phase 6 "Stack Change Decision" subsection |
+| Wireframe resolution | `docs: resolve wireframe evaluation — AG Grid, GeoJSON paths, state machines, §92-96` | 6 files: 4 page wireframes, evaluation doc, LEARNINGS.md. 11 resolved items, 3 open items identified. |
 
 **Rules**:
 - Conventional Commits (`feat:`, `docs:`, `fix:`)

@@ -178,11 +178,12 @@
 │  [9a] Shows all 12 directional pairs (4 commodities × 3 partners)  │
 │  [9b] "Pre-2022 r" vs "Post-2022 r" split is the key column —      │
 │       shows stability of each relationship                          │
-│  [9c] Large divergence between pre/post = flag for instability      │
+│  [9c] Large divergence = flag for instability:                       │
+│       abs(pre_2022_r - post_2022_r) > 0.2 triggers ⚠ badge          │
 │  [9d] Sorted by r descending at selected lag                        │
 │  [9e] Row click: updates scatter [6] and stability [7] charts       │
 │  [9f] Lag toggle here matches page-level lag selector               │
-│  [9g] TanStack Table                                                │
+│  [9g] AG Grid (`vm.AgGrid`)                                         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -237,6 +238,7 @@
 | **Post-2022 relationship broken** | ⚠ badge visible on callout card; implication card shows warning text |
 | **Island Group filter changed** | No effect — all correlation analysis conducted at national level. Dropdown shows "[National ▼]" as locked value. Tooltip: "National-level analysis — Island Group disabled" |
 | **Commodity filter = single** | Matrix reduces to show only rows/columns relevant to that commodity |
+| **Empty state (no pairs at selected lag)** | Scatter chart shows "Select a pair from the matrix"; stability chart shows "Select a pair to view rolling correlation"; implication card shows "Select a commodity pair for procurement recommendation" |
 
 ---
 
