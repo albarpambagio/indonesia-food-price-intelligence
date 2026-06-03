@@ -7,7 +7,7 @@ Data: mart_price_trends_national + forecast.json
 import dash
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
-from dash import Input, Output, callback, dcc
+from dash import Input, Output, callback, dcc, html
 
 from dashboard.components.filters import render_filters
 from dashboard.components.kpi_cards import render_kpi_cards
@@ -134,6 +134,40 @@ def update_page1(commodity, island, year_range):
     except Exception:
         pass
 
+    fig.add_vline(
+        x="2022-01-01",
+        line_dash="dash",
+        line_color="gray",
+    )
+    fig.add_annotation(
+        x="2022-01-01",
+        y=1,
+        text="Cooking oil export ban",
+        showarrow=False,
+        yref="paper",
+        yanchor="bottom",
+        font=dict(size=10, color="gray"),
+    )
+
+    try:
+        fdata_for_vrect = load_forecast_data()
+        if not fdata_for_vrect.empty:
+            forecast_dates = sorted(fdata_for_vrect["date"].unique())
+            if forecast_dates:
+                actual_end = str(df["month"].max())[:10]
+                fig.add_vrect(
+                    x0=actual_end,
+                    x1=forecast_dates[-1],
+                    fillcolor="gray",
+                    opacity=0.08,
+                    layer="below",
+                    line_width=0,
+                    annotation_text="Forecast region",
+                    annotation_position="top left",
+                )
+    except Exception:
+        pass
+
     fig.update_layout(
         template="plotly_white",
         xaxis_title="Month",
@@ -171,24 +205,61 @@ def update_page1(commodity, island, year_range):
         height=350,
     )
 
-    signal_children = _build_signal_card(yoy_df)
+    signal_children = _build_signal_card(yoy_df, latest)
     model_children = _build_model_card()
 
     return render_kpi_cards(kpi_rows), fig, yoy_fig, signal_children, model_children
 
 
-def _build_signal_card(yoy_df):
+def _build_signal_card(yoy_df, latest_prices):
     cards = []
-    for _, row in yoy_df.iterrows():
+    try:
+        fdata = load_forecast_data()
+        has_forecast = not fdata.empty
+    except Exception:
+        has_forecast = False
+        fdata = None
+
+    for _, row in latest_prices.iterrows():
         commodity = row.get("commodity_consolidated", "?")
-        yoy = row.get("yoy_pct")
+        current_price = row.get("avg_price_idr")
+
+        if has_forecast and current_price and current_price > 0:
+            fsub = fdata[fdata["commodity"] == commodity]
+            if not fsub.empty and "forecast_price" in fsub.columns:
+                forecast_avg = fsub["forecast_price"].mean()
+                pct_change = (forecast_avg - current_price) / current_price * 100
+                if pct_change < -2:
+                    signal, color = "BUY", "success"
+                    label = f"Forecast avg {pct_change:+.1f}% below current — favorable for bulk purchase"
+                elif pct_change > 2:
+                    signal, color = "WATCH", "danger"
+                    label = f"Forecast avg {pct_change:+.1f}% above current — consider locking contracts soon"
+                else:
+                    signal, color = "HOLD", "secondary"
+                    label = f"Forecast avg {pct_change:+.1f}% vs current — no urgency"
+                cards.append(
+                    dbc.Badge(
+                        f"{commodity}: {signal}",
+                        color=color,
+                        className="me-2 mb-2 fs-6",
+                        title=label,
+                    )
+                )
+                continue
+
+        yoy_row = yoy_df[yoy_df["commodity_consolidated"] == commodity]
+        yoy = yoy_row["yoy_pct"].iloc[0] if not yoy_row.empty and "yoy_pct" in yoy_row.columns else None
         if yoy is not None:
             if yoy < -2:
-                signal, color, label = "BUY", "success", "Price trending down — favorable for bulk purchase"
+                signal, color = "BUY", "success"
+                label = "YoY price trending down — favorable for bulk purchase"
             elif yoy > 2:
-                signal, color, label = "WATCH", "danger", "Price trending up — consider locking contracts soon"
+                signal, color = "WATCH", "danger"
+                label = "YoY price trending up — consider locking contracts soon"
             else:
-                signal, color, label = "HOLD", "secondary", "Price stable — no urgency"
+                signal, color = "HOLD", "secondary"
+                label = "Price stable — no urgency"
         else:
             signal, color, label = "N/A", "secondary", "Insufficient data"
         cards.append(
@@ -205,7 +276,7 @@ def _build_signal_card(yoy_df):
                 html.H6("Procurement Action Zone", className="card-title text-muted"),
                 html.Div(cards),
                 html.Small(
-                    "BUY = forecast avg < current -2% | HOLD = within ±2% | WATCH = forecast avg > current +2%",
+                    "BUY = 6-month forecast avg < current -2% | HOLD = within ±2% | WATCH = forecast avg > current +2%",
                     className="text-muted",
                 ),
             ]

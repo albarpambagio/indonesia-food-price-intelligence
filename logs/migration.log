@@ -1,0 +1,29 @@
+# Migration Log: Dash → Vizro
+
+## Phase A: Spike (decision gate) — 2026-06-03
+
+| Item | Result |
+|------|--------|
+| Vizro version | 0.1.53 (within >=0.1.50 range) |
+| Spike files | `dashboard/spike/app.py` (24 LOC), `dashboard/spike/custom_charts.py` (18 LOC) |
+| Custom chart LOC | 18 — well under 50 LOC threshold |
+| Build test | PASS — `Vizro().build(dashboard)` succeeds |
+| Server test | PASS — http://localhost:7860 serves 16KB page, 200 OK |
+| DuckDB wiring | PASS — `data_manager["key"] = lambda: load_mart(name)` works |
+| `@capture("graph")` | Must be **called** with `data_frame=` arg, not passed as reference |
+| Decision | **GO** — proceed to Phase C |
+
+### Key Learnings
+1. `@capture("graph")` returns `_DashboardReadyFigure` when called with string data_frame — must pass result to `vm.Graph(figure=...)`, not the function itself
+2. `vm.Dropdown(options="all")` is invalid in 0.1.53 — options must be a list; use `vm.Filter(column=...)` without explicit selector for auto-generated filters
+3. `data_manager["key"] = load_fn` (function ref) is the correct pattern for lazy evaluation
+
+## Phase B: Data Layer Port — 2026-06-03
+
+| Item | Result |
+|------|--------|
+| `dashboard/data_manager.py` | Created (25 LOC) — registers 7 data sources |
+| Keys registered | 6 marts + 1 forecast = 7 total |
+| Export pipeline | PASS — all 6 marts verified, 0 row count mismatches |
+| `data_access.py` | Unchanged — wrapped, not rewritten |
+| `export/export_json.py` | Unchanged — row-count verifier preserved |

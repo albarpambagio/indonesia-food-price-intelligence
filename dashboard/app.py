@@ -4,6 +4,11 @@ Run locally: uv run python dashboard/app.py
 HF Spaces: gunicorn app:server --bind 0.0.0.0:7860
 """
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import dash
 import dash_bootstrap_components as dbc
 

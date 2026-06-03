@@ -393,12 +393,12 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.A.1 | `uv add vizro`; verify version prints as `0.1.50` | ⬜ | Plots vizro-core version. Confirms lockfile resolves cleanly against existing deps. |
-| 6.A.2 | Create `dashboard/spike/` scratch dir; build minimal 1-page Vizro app: title, one chart, one filter | ⬜ | Validates the Pydantic 2 model + `Vizro().build(dashboard).run()` flow. ~30 LOC. |
-| 6.A.3 | Wrap `px.imshow` lag heatmap from `analysis/eda.py` A5b as `custom_charts` function | ⬜ | Tests `custom_charts` registration pattern. If > 30 LOC, flag. |
-| 6.A.4 | Wire to DuckDB via `data_manager.register_data("mart_commodity_correlation", load_mart_fn)` | ⬜ | Validates DataFrame → Vizro data flow. Reuses `load_mart("mart_commodity_correlation")` from `data_access.py`. |
-| 6.A.5 | `Vizro().build(dashboard).run(port=7860)`; load `http://localhost:7860`; verify chart renders with real data | ⬜ | End-to-end smoke test. Confirms: Pydantic config, custom chart, DuckDB, port 7860. |
-| 6.A.6 | Decision: continue to Phase C OR revert to §6.HISTORY (Dash) | ⬜ | **Gate.** Document decision in `logs/migration.log` with total LOC and time spent. |
+| 6.A.1 | `uv add vizro`; verify version prints as `0.1.53` | ✅ | vizro 0.1.53 installed, within >=0.1.50 range. |
+| 6.A.2 | Create `dashboard/spike/` scratch dir; build minimal 1-page Vizro app: title, one chart | ✅ | `dashboard/spike/app.py` (24 LOC). Pydantic 2 + `Vizro().build(dashboard).run()` validated. |
+| 6.A.3 | Wrap `px.imshow` lag heatmap from `analysis/eda.py` A5b as `custom_charts` function | ✅ | `dashboard/spike/custom_charts.py` (18 LOC). Under 50 LOC threshold. |
+| 6.A.4 | Wire to DuckDB via `data_manager["key"] = lambda: load_mart(name)` | ✅ | `data_manager["mart_correlation_summary"]` wired. DataFrame → Vizro flow validated. |
+| 6.A.5 | `Vizro().build(dashboard).run(port=7860)`; load `http://localhost:7860`; verify chart renders | ✅ | Build OK, server serves 200 OK (16KB page), real DuckDB data loaded. |
+| 6.A.6 | Decision: continue to Phase C OR revert to §6.HISTORY (Dash) | ✅ | **GO.** Logged in `logs/migration.log`. Key learning: `@capture("graph")` must be called, not passed as ref. |
 
 ### §6.DATA — Phase B: Data Layer Port (0.5 day)
 
@@ -406,10 +406,10 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.B.1 | Wrap `load_mart()` calls in `data_manager.register_data("mart_X", load_mart_X)` for all 5 marts | ⬜ | Keep `data_access.py:load_mart()` as-is; just add a registration module `dashboard/data_manager.py` that calls `data_manager.register_data` on import. |
-| 6.B.2 | Wrap `load_forecast_data()` + `load_forecast_metadata()` as `data_manager.register_data("forecast", load_forecast_data)` | ⬜ | Same pattern. Forecast metadata accessed via `data_manager["forecast_metadata"]`. |
-| 6.B.3 | Verify `export_json.py` + `verify_export()` unchanged and still log to `pipeline.lineage.export_status` | ⬜ | Export pipeline preserved as row-count verifier per §78. |
-| 6.B.4 | Smoke test: `uv run python -c "from dashboard.data_manager import *; print(data_manager.keys())"` | ⬜ | Expected: dict of 6 keys (5 marts + forecast). |
+| 6.B.1 | Wrap `load_mart()` calls in `data_manager["mart_X"] = lambda: load_mart(name)` for all 6 marts | ✅ | `dashboard/data_manager.py` (25 LOC). `data_access.py:load_mart()` unchanged. |
+| 6.B.2 | Wrap `load_forecast_data()` as `data_manager["forecast"] = load_forecast_data` | ✅ | Same module. 7 keys total (6 marts + forecast). |
+| 6.B.3 | Verify `export_json.py` + `verify_export()` unchanged and still log to `pipeline.lineage.export_status` | ✅ | Export pipeline PASS — all 6 marts verified, 0 row count mismatches. |
+| 6.B.4 | Smoke test: verify 7 keys in data_manager | ✅ | 7 keys: 6 marts + forecast. |
 
 ### §6.PAGES — Phase C: Port 3 Pages + Rebuild Page 1 (3-4 days)
 

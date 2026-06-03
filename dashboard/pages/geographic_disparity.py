@@ -10,7 +10,7 @@ from pathlib import Path
 import dash
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
-from dash import Input, Output, callback, dcc
+from dash import Input, Output, callback, dcc, html
 
 from dashboard.components.filters import render_filters
 from dashboard.components.layout import page_header
