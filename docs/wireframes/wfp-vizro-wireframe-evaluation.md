@@ -598,7 +598,7 @@ All items from §9.2 have been resolved in the wireframe updates:
 | TanStack Table references | ✅ Replaced with "AG Grid" across Pages 2, 3, 4 |
 | Filter persistence mechanism | ✅ Page 1 annotation [3b] now specifies `dcc.Store` with `storage_type="session"` |
 | Animate button UX details | ✅ Page 3 states table now specifies IDLE → PLAYING → COMPLETE |
-| Ramadan x-axis data contract | ✅ Page 2 annotation [6d] specifies integer `week_relative` with formatted tick labels |
+| Ramadan x-axis data contract | ⚠ Partial — wireframe annotation [6d] specifies integer `week_relative` with formatted tick labels, but source data is monthly (not weekly). Build-phase resolution: use `month_relative` T-2 to T+1 (4 monthly buckets) instead of `week_relative` T-8 to T+6. Wireframe deviation — surface in PR description per Phase C handoff rule. See LEARNINGS §100, HANDOFF-page2 §2. |
 | Empty states | ✅ Pages 3 and 4 states tables now include empty state rows |
 | Choropleth GeoJSON property names | ✅ Page 3 content spec specifies `featureidkey="properties.island_group"` |
 
@@ -629,7 +629,7 @@ All items from §10.2 have been resolved — see §10.4.
 | # | Item | Resolution |
 |---|------|------------|
 | 1 | Confirm GeoJSON property names | Added `featureidkey="properties.island_group"` to Page 3 content spec and evaluation §5.1/§5.3 |
-| 2 | Clarify `week_relative` type | Page 2 annotation [6d] now specifies integer with formatted tick labels |
+| 2 | Clarify `week_relative` type | Page 2 annotation [6d] now specifies integer with formatted tick labels — **but the actual build will use `month_relative` T-2 to T+1 (4 monthly buckets), not `week_relative` T-8 to T+6 (15 weekly buckets), because source data is monthly. Wireframe deviation surfaced in PR.** |
 | 3 | Animate button state machine | Page 3 states table now specifies IDLE → PLAYING → COMPLETE |
 | 4 | Replace "TanStack Table" → "AG Grid" | Pages 2, 3, 4 annotations updated; evaluation §7.2 already noted this |
 | 5 | Move model selector to filter row | Page 1 annotation [5] now shows "relocated to global filter row [3]" |

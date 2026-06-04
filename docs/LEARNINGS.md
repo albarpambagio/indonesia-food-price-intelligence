@@ -53,11 +53,20 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 84 | [HF Spaces Docker Packaging: Port 7860, `gunicorn`, Layer Optimization](#84-hf-spaces-docker-packaging-port-7860-gunicorn-layer-optimization) |
 | 85 | [Callback Output Declaration: All Outputs Must Be Declared in Signature](#85-callback-output-declaration-all-outputs-must-be-declared-in-signature) |
 | 86 | [Plotly Figure Specs Port Verbatim from Marimo EDA to Dash `dcc.Graph`](#86-plotly-figure-specs-port-verbatim-from-marimo-eda-to-dash-dccgraph) |
+| 87 | [Vizro `vm.Filter` is Per-Page, Not Cross-Page](#87-vizro-vmfilter-is-per-page-not-cross-page) |
+| 88 | [Vizro `custom_charts` Wrapper for Advanced Plotly](#88-vizro-custom_charts-wrapper-for-advanced-plotly-vline-vrect-ci-area-vendored-geojson-choropleth) |
+| 89 | [Cross-Page Filter Workaround: URL State vs Custom Action](#89-cross-page-filter-workaround-url-state-vs-custom-action) |
+| 90 | [Vizro `data_manager.register_data()` Pattern for DuckDB DataFrames](#90-vizro-data_managerregister_data-pattern-for-duckdb-dataframes) |
+| 91 | [Vizro HF Spaces Dockerfile Parity](#91-vizro-hf-spaces-dockerfile-parity-gunicorn-appapp-port-7860) |
 | 92 | [Component Mismatch Assessment: Vizro vs Dash](#92-component-mismatch-assessment-vizro-vs-dash) |
 | 93 | [Static Assets Convention: `assets/` Not `public/`](#93-static-assets-convention-assets-not-public) |
 | 94 | [Source → Control → Target Interaction Pattern](#94-source--control--target-interaction-pattern) |
 | 95 | [`vm.Figure` Cannot Be a `set_control` Source](#95-vmfigure-cannot-be-a-set_control-source) |
 | 96 | [Conditional Visibility Requires Dash Callback](#96-conditional-visibility-requires-dash-callback) |
+| 97 | [`vm.Filter` Treats "All" as Literal Column Value](#97-vmfilter-treats-all-as-literal-column-value--use-vmparameter-for-sentinel-based-filtering) |
+| 98 | [`_get_parametrized_config` Timing — Bound Argument Literals on First Render](#98-_get_parametrized_config-timing--bound-argument-literals-on-first-render-before-callback-fires) |
+| 99 | [`mart_seasonal_patterns` Has 35 Rows (Cooking Oil Only, 7 Months) — Use `mart_price_trends_national` for Cross-Commodity Seasonal Analysis](#99-mart_seasonal_patterns-has-35-rows-cooking-oil-only-7-months--use-mart_price_trends_national-for-cross-commodity-seasonal-analysis) |
+| 100 | [Source Data Is Monthly — Page 2 (Seasonal Patterns) Ramadan `month_relative` Is T-2 to T+1, Not `week_relative` T-8 to T+6](#100-source-data-is-monthly--page-2-seasonal-patterns-ramadan-month_relative-is-t-2-to-t1-not-week_relative-t-8-to-t6) |
 
 ---
 
@@ -3837,5 +3846,121 @@ When using `vm.Parameter` to override chart function parameters, never pass the 
 
 - LEARNINGS.md §97 — Companion bug: `vm.Filter` "All" sentinel issue — use `vm.Parameter` instead
 - LEARNINGS.md §96 — Conditional visibility requires Dash callback
+
+---
+
+## 99. `mart_seasonal_patterns` Has 35 Rows (Cooking Oil Only, 7 Months) — Use `mart_price_trends_national` for Cross-Commodity Seasonal Analysis
+
+### The Problem
+
+Page 2 (Seasonal Patterns) wireframe expects a 12-month × 4-commodity heatmap and a 4-commodity Ramadan overlay. The mart originally named as the source — `mart_seasonal_patterns` — has only 35 rows and only Cooking Oil data. The original handoff (`HANDOFF-page2-seasonal-patterns-implementation.md`, pre-2026-06-04) cited 597 records from `seasonal_patterns.json`; that number is wrong. Verified by direct DuckDB query on 2026-06-04.
+
+### What `mart_seasonal_patterns` Actually Contains
+
+| Source | Row count | Commodities | Date range | Reason |
+|---|---|---|---|---|
+| `mart_seasonal_patterns` (DuckDB) | **35** | Cooking Oil only | 2024-06 → 2024-12 | Filtered to `island_group IS NOT NULL AND price_flag='actual'` — eliminates national-only commodities (Rice, Sugar, Flour) and eliminates aggregate market data |
+| `seasonal_patterns.json` (legacy export) | 35 | Cooking Oil only | 2024-06 → 2024-12 | Exported from the same mart; same shape |
+| `mart_price_trends_national` (DuckDB) | **639** | **All 4** commodities | 2007-01 → 2024-12 (Cooking Oil, 165 months) · 2007-01 → 2020-03 (others, 158 months each) | National-level data with `price_flag='actual'` filter applied — covers cross-commodity seasonal analysis |
+
+### Root Cause of the Limitation
+
+`mart_seasonal_patterns.sql` (Phase 2 / Phase 2.5) joins `int_prices_normalised` and applies both:
+- `commodity_consolidated IS NOT NULL` (keeps all 4 commodities)
+- `island_group IS NOT NULL` (keeps only rows that have an island_group mapping)
+- `price_flag = 'actual'` (removes aggregate records)
+
+Rice, Sugar, and Flour in the WFP dataset exist only as `price_flag = 'aggregate'` at the national level (market_id = 974), so they are excluded by the `price_flag = 'actual'` filter. The `island_group IS NOT NULL` filter does not affect them (they have island_group = 'National'), but the `price_flag = 'actual'` filter alone removes them. The 35 rows are 5 island groups × 7 months of Cooking Oil actual prices in 2024.
+
+### Solution
+
+For cross-commodity seasonal analysis (heatmap 12×4, action cards 4 commodities, Ramadan overlay 4 commodities), use `mart_price_trends_national` as the **primary** source. The mart already exists (created in Phase 5g.1) and has 639 rows covering all 4 commodities. `mart_seasonal_patterns` remains the **secondary** source for the island-disaggregated branch (only when global Island Group filter is set to a specific island AND Commodity = Cooking Oil).
+
+### Per-Commodity Date Floor in `mart_price_trends_national`
+
+| Commodity | Date range | Months |
+|---|---|---|
+| Cooking Oil | 2007-01 → 2024-12 | 165 |
+| Rice | 2007-01 → 2020-03 | 158 |
+| Sugar | 2007-01 → 2020-03 | 158 |
+| Flour | 2007-01 → 2020-03 | 158 |
+
+The Rice/Sugar/Flour terminal date of 2020-03 is a known WFP data gap, not a mart issue. The dashboard must communicate this as a limitation: "Rice/Sugar/Flour data ends March 2020; seasonal patterns computed on the available window."
+
+### Files Affected
+
+- `dashboard/pages/seasonal_patterns.py` — uses `mart_price_trends_national` as primary; `mart_seasonal_patterns` only for island-disaggregated Cooking Oil path
+- `docs/handoffs/HANDOFF-page2-seasonal-patterns-implementation.md` — updated 2026-06-04 with corrected row counts, source recommendation, and 15 gap-fixes
+
+### Cross-Reference
+
+- LEARNINGS.md §100 — Source data is monthly; Ramadan `month_relative` reframing
+- LEARNINGS.md §97 — `vm.Filter` "All" sentinel → `vm.Parameter` (matters because the Commodity dropdown now needs "All" support for the 4-commodity heatmap)
+- AGENTS.md Known Limitations — Rice/Sugar/Flour data ends March 2020; Page 3 (Geographic Disparity) remains Cooking Oil only
+
+### Rule
+
+**Verify mart row counts before assuming a mart is fit for purpose.** A 35-row mart is not a cross-commodity source; it is an island-disaggregated Cooking Oil slice. When the wireframe or task description implies more data than the mart contains, query the mart directly with `SELECT COUNT(*), COUNT(DISTINCT commodity_consolidated), MIN(month), MAX(month) FROM wfp_marts.<mart_name>` before designing the dashboard page. Match the source mart to the cardinality requirements of the page.
+
+---
+
+## 100. Source Data Is Monthly — Page 2 (Seasonal Patterns) Ramadan `month_relative` Is T-2 to T+1, Not `week_relative` T-8 to T+6
+
+### The Problem
+
+Page 2 wireframe (`docs/wireframes/wfp-wireframe-page2-seasonal-patterns.md`, annotation [6d]) specifies the Ramadan overlay x-axis as `week_relative` ranging from T-8 to T+6 (15 weekly buckets). The wireframe evaluation doc (`docs/wireframes/wfp-vizro-wireframe-evaluation.md` §6.W.5, line 601) "resolved" this as "integer `week_relative` with formatted tick labels." Both are wrong: the source data is monthly, not weekly. Building per-week buckets from monthly data is either impossible (no week-level data exists) or misleading (interpolating a fake weekly series from monthly samples).
+
+### What the Data Actually Is
+
+| Layer | Grain | Source |
+|---|---|---|
+| `raw.food_prices` | Monthly (always 15th of month) | WFP CSV |
+| `int_prices_normalised` | Monthly | `DATE_TRUNC('month', date)` |
+| `mart_price_trends_national` | Monthly | Group by `month` |
+| `int_islamic_calendar` | Yearly (Eid date per year) | `seeds/islamic_calendar.csv` |
+
+There is no weekly grain anywhere in the pipeline. `week_relative` cannot be computed from this data.
+
+### Solution
+
+Compute `month_relative` instead, with range T-2 to T+1 (4 monthly buckets: 2 months before Eid, the Eid month, and 1 month after):
+
+```python
+# dashboard/data_access.py
+def compute_ramadan_overlay(monthly_df: pd.DataFrame, islamic_cal: pd.DataFrame) -> pd.DataFrame:
+    """Add month_relative column: months from Eid al-Fitr (range T-2 to T+1)."""
+    cal = islamic_cal[["year", "eid_date"]].copy()
+    cal["eid_month"] = pd.to_datetime(cal["eid_date"]).dt.to_period("M")
+    out = monthly_df.merge(cal, left_on="month_year", right_on="eid_month", how="left")
+    out["month_relative"] = (
+        (out["month"].dt.year - out["eid_date"].dt.year) * 12
+        + (out["month"].dt.month - out["eid_date"].dt.month)
+    )
+    return out[out["month_relative"].between(-2, 1)]
+```
+
+X-axis label: `["T-2 (2 mo before)", "T-1 (1 mo before)", "T (Eid month)", "T+1 (1 mo after)"]`. Y-axis: `price_index_vs_annual_avg` with `add_hline(y=100)` as annual average baseline. One trace per commodity, bold lines.
+
+### Wireframe Deviation
+
+Per Phase C handoff rule (`docs/handoffs/HANDOFF-vizro-phase6-phasec-pages.md`), do NOT edit wireframes even when the spec is wrong. Surface the deviation in the PR description when Page 2 is submitted:
+
+> **Wireframe deviation (Page 2, annotation [6d]):** Wireframe specifies `week_relative` T-8 to T+6. Source data is monthly, so the implementation uses `month_relative` T-2 to T+1. The wireframe x-axis range and bucket count are reduced to match the source grain. Annotation/caption on the chart explains the monthly grain and the T-2 to T+1 range.
+
+### Files Affected
+
+- `docs/wireframes/wfp-vizro-wireframe-evaluation.md` §6.W.5 — note that the "integer `week_relative`" resolution was insufficient; actual resolution is `month_relative` T-2 to T+1
+- `dashboard/data_access.py` — add `compute_ramadan_overlay(monthly_df, islamic_cal)` helper
+- `dashboard/pages/seasonal_patterns.py` — Ramadan overlay chart uses `month_relative` and the new T-2 to T+1 range
+- `docs/handoffs/HANDOFF-page2-seasonal-patterns-implementation.md` §2 — updated 2026-06-04 with the `month_relative` reframing
+
+### Cross-Reference
+
+- LEARNINGS.md §99 — `mart_seasonal_patterns` 35-row limitation; `mart_price_trends_national` as primary source
+- LEARNINGS.md §88 — Vizro `custom_charts` wrapper pattern (used to build the Ramadan overlay figure)
+
+### Rule
+
+**Match the analysis grain to the source data grain.** If the data is monthly, do not design weekly or daily visualisations. Compute offsets in the same unit as the source grain. Wireframe specs that imply a finer grain than the data supports are a deviation to surface, not a constraint to honour by interpolating fake data.
 
 ---

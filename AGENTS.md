@@ -398,7 +398,7 @@ Mismatch sets `pipeline.lineage.export_status = 'failed'` and logs detailed coun
 | Forecast accuracy degrades at 5–6 months | CI widens explicitly on dashboard; 1–2 month forecasts operationally reliable |
 | No volume weighting | All markets equal weight; would weight by sourcing volume in production |
 | 2022 structural break (cooking oil) | Model retrained on post-2022 data as robustness check |
-| Rice/Sugar/Flour: no market-level `actual` prices in WFP data — only national avg (market_id=974) | `mart_commodity_correlation` provides all 4 at national level; Pages 2/3 limited to Cooking Oil for geographic/seasonal analysis; documented on dashboard |
+| Rice/Sugar/Flour: no market-level `actual` prices in WFP data — only national avg (market_id=974) | `mart_commodity_correlation` provides all 4 at national level; `mart_price_trends_national` provides all 4 at national level for seasonal analysis (Page 2). **Page 3 (Geographic Disparity)** remains Cooking Oil only because province-level data is unavailable for Rice/Sugar/Flour. Page 2 (Seasonal Patterns) is **all 4 commodities at national level**; the island-disaggregated breakdown is Cooking Oil only — see `docs/handoffs/HANDOFF-page2-seasonal-patterns-implementation.md` and LEARNINGS §99. |
 | Forecast uses all price data (incl. `aggregate`) while dashboard plots `actual`-only | Explicitly documented in `forecast.json` metadata via `data_source_note` field |
 
 ---

@@ -421,7 +421,7 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 | 6.W.2 | Interaction pattern mapping: Source→Control→Target for all 9 interactions | ✅ | Added to evaluation §7.8 and LEARNINGS.md §94. Critical: `vm.Figure` cannot be `set_control` source (§95). |
 | 6.W.3 | GeoJSON path correction: `/dashboard/public/` → `dashboard/assets/` | ✅ | Page 3 content spec + evaluation §5.3 updated. Property: `featureidkey="properties.island_group"`. |
 | 6.W.4 | Page 1 wireframe: filter persistence mechanism (`dcc.Store`), model selector relocated to filter row | ✅ | Annotations [3b] and [5] updated. |
-| 6.W.5 | Page 2 wireframe: TanStack→AG Grid, `week_relative` clarified as integer with formatted labels | ✅ | Annotation [9e] and [6d] updated. |
+| 6.W.5 | Page 2 wireframe: TanStack→AG Grid, `week_relative` clarified as integer with formatted labels | ⚠ Partial | Annotation [9e] (TanStack→AG Grid) is correct. Annotation [6d] (`week_relative` integer) is **insufficient** — source data is monthly, so the build will use `month_relative` T-2 to T+1 (4 monthly buckets) instead of `week_relative` T-8 to T+6. This is a wireframe deviation; surface in PR description per Phase C handoff rule. See LEARNINGS §100, HANDOFF-page2 §2. |
 | 6.W.6 | Page 3 wireframe: TanStack→AG Grid, animate state machine (IDLE→PLAYING→COMPLETE), empty states | ✅ | States table expanded with 3 animate states + empty state row. |
 | 6.W.7 | Page 4 wireframe: TanStack→AG Grid, divergence threshold `abs(pre_2022_r - post_2022_r) > 0.2`, empty states | ✅ | Annotation [9c] and states table updated. |
 | 6.W.8 | Evaluation §7.7: CSS class reference table (8 classes) | ✅ | Classes for data banners, limitations footnotes, signal cards, KPI rows, driver toggle, empty states. |
@@ -444,22 +444,25 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 | 6.C.1.1 | Wrap main trend chart as `custom_charts` function: `go.Figure()` + `add_vline` + `add_vrect` for forecast region + `go.Scatter(fill="toself")` for 95% CI area | ⬜ | Reuse verbatim from `analysis/eda.py` Q1. Wrap in `@capture("graph")` for Vizro. |
 | 6.C.1.2 | Wrap YoY bar chart as `custom_charts` function | ⬜ | Reuse `compute_yoy_delta()` from `data_access.py`. |
 | 6.C.1.3 | Build `vm.Page(title="Price Trends", components=[vm.Graph(figure=trend), vm.Graph(figure=yoy), vm.Card(...)])` | ⬜ | KPI cards → `vm.Card` with text. Signal logic → conditional `vm.Text` per commodity. |
-| 6.C.1.4 | Add 3 page-level `vm.Filter`s: commodity, island, year_range | ⬜ | Per Vizro pattern, filters scope to data_frames of all components on page. |
+| 6.C.1.4 | Add 2 `vm.Parameter`s (commodity, island) + 1 `vm.Filter` (year_range, numeric bounds) | ✅ | **CRITICAL**: dropdowns containing "All" sentinel must use `vm.Parameter`, NOT `vm.Filter` (LEARNINGS §97). Year Range uses `vm.Filter` with `vm.RangeSlider` because no sentinel. All filters set `show_in_url=True` for cross-page state (LEARNINGS §87, §89). |
 | 6.C.1.5 | Wire model info card + forecast footnote via `vm.Container` | ⬜ | Forecast limitations footnote always visible — use `vm.Container` outside the page filter group. |
 | 6.C.1.6 | Verify chart parity with original Dash Page 1: line shapes, colors, CI area, annotations | ⬜ | Visual regression check via side-by-side screenshot. |
 
 #### §6.C.2 — Page 2 (Seasonal Patterns) — NEW
 
-> **NEW** in either stack.
+> **NEW** in either stack. **Handoff (2026-06-04):** `docs/handoffs/HANDOFF-page2-seasonal-patterns-implementation.md` — full execution plan with corrected data sources, `month_relative` reframing, and Vizro patterns. **Source correction:** primary source is `mart_price_trends_national` (639 rows, all 4 commodities), not `mart_seasonal_patterns` (35 rows, Cooking Oil only, 7 months) — see LEARNINGS §99.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.C.2.1 | Wrap seasonal heatmap (`px.imshow` 12×4 matrix) as `custom_charts` | ⬜ | Reuse `mart_seasonal_patterns` pivot from EDA A3. |
-| 6.C.2.2 | Wrap monthly line chart with driver-toggle bands (Ramadan/Harvest/Year-End/All) as `custom_charts` | ⬜ | `add_vrect` for highlighted months based on driver. |
-| 6.C.2.3 | Wrap Ramadan overlay chart (T-3 to T+1, hline y=100) as `custom_charts` | ⬜ | Filter `mart_seasonal_patterns` by `flag_ramadan_*` columns. |
-| 6.C.2.4 | Build summary table via `vm.Table` with `dash_ag_grid` backend | ⬜ | Aggregated: commodity, avg price, peak month, Ramadan premium. |
-| 6.C.2.5 | Add page-level driver toggle: `vm.Parameter(targets=[...], selector=vm.RadioItems(options=["All", "Ramadan", "Harvest", "Year-End"]))` | ⬜ | Parameter (not Filter) because it controls chart configuration, not data. |
-| 6.C.2.6 | Build `vm.Page(...)`; wire all components | ⬜ | |
+| 6.C.2.1 | Wrap seasonal heatmap (`px.imshow` 12×4 matrix) as `custom_charts` | ⬜ | **Source = `mart_price_trends_national`** (LEARNINGS §99). Pivot to 12×4 matrix (month × commodity) of `price_index_vs_annual_avg`. Y-axis: commodities, X-axis: months (Jan–Dec). `color_continuous_scale="RdYlGn_r"`. |
+| 6.C.2.2 | Wrap monthly line chart with driver-toggle bands (Ramadan/Harvest/Year-End/All) as `custom_charts` | ⬜ | `add_vrect` for highlighted months based on driver. Data: `mart_price_trends_national` filtered to display window. |
+| 6.C.2.3 | Wrap Ramadan overlay chart (`month_relative` T-2 to T+1, hline y=100) as `custom_charts` | ⬜ | **Grain correction** (LEARNINGS §100): source is monthly, so compute `month_relative` T-2 to T+1, NOT `week_relative` T-8 to T+6. Use `compute_ramadan_overlay()` from `data_access.py`. Filter `mart_price_trends_national` rows by `month_relative` range. X-axis: ["T-2 (2 mo before)", "T-1 (1 mo before)", "T (Eid month)", "T+1 (1 mo after)"]. Wireframe deviation [6d] — surface in PR description. |
+| 6.C.2.4 | Build summary table via `vm.AgGrid` (NOT `vm.Table` + `dash_ag_grid`) | ⬜ | **Vizro correction**: use `vm.AgGrid` directly (verified available in 0.1.53 via `dir(vizro.models)`). Aggregated: commodity, avg price, peak month, Ramadan premium (%). Sortable, sticky columns, conditional cell styling. Wireframe deviation [9e] from "TanStack Table" to AG Grid already resolved (eval §7.2). |
+| 6.C.2.5 | Add page-level driver toggle: `vm.Parameter(targets=[...], selector=vm.RadioItems(options=["All", "Ramadan", "Harvest", "Year-End"]))` | ⬜ | Parameter (not Filter) because it controls chart configuration, not data. Chart functions handle "All" sentinel themselves. |
+| 6.C.2.5b | Build action window cards (3 cards: Action Now / Upcoming Spikes / Safe to Lock) as `vm.Card` markdown components | ⬜ | **Pattern correction**: action cards are `vm.Card` markdown, not Plotly `kpi_sparklines`. Pattern from `_build_model_info_card` in Page 1. Use `compute_action_windows()` from `data_access.py`. |
+| 6.C.2.5c | Add page-level filter pattern: 2 `vm.Parameter`s (commodity, island) + 1 `vm.Filter` (year_range) | ⬜ | **Critical** (LEARNINGS §97): dropdowns with "All" use `vm.Parameter`; year_range numeric bounds use `vm.Filter`. All set `show_in_url=True` for cross-page state. Island Group "All" branch uses `mart_price_trends_national`; specific island branch (Cooking Oil only) uses `mart_seasonal_patterns`. |
+| 6.C.2.5d | Add Ramadan overlay detail sub-section: `month_relative` chart with `flag_ramadan_eid_month` overlay from `int_islamic_calendar` | ⬜ | For Cooking Oil, secondary detail showing exact month-to-month Ramadan price movement (2 mo before Eid, Eid month, 1 mo after). |
+| 6.C.2.6 | Build `vm.Page(...)`; wire all components; register in `dashboard/app.py` | ⬜ | Use `vm.Container` for action cards row. Pattern A (empty-figure swap via `vm.Parameter`) for conditional visibility — no Dash callback needed (LEARNINGS §96 alternative). |
 
 #### §6.C.3 — Page 3 (Geographic Disparity) — NEW
 
@@ -494,7 +497,7 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.D.1 | **DECISION GATE**: Choose between (a) `show_in_url=True` on each `vm.Filter` → URL state, or (b) custom `vm.Action` pushing filter to global state | ⬜ | (a) is battle-tested, URLs ugly. (b) is cleaner but custom-action territory. **Default to (a) for first cut; revisit if user rejects URL state.** |
+| 6.D.1 | **DECISION GATE**: Choose between (a) `show_in_url=True` on each `vm.Filter`/`vm.Parameter` → URL state, or (b) custom `vm.Action` pushing filter to global state | ✅ (a) | (a) is battle-tested, URLs ugly. (b) is cleaner but custom-action territory. **DECISION: (a) for first cut.** Apply uniformly to Commodity / Island / Year filters on all 4 pages. **CRITICAL** (LEARNINGS §97): dropdowns with "All" sentinel use `vm.Parameter`, not `vm.Filter` — URL state still works for both. Also: never pass literal parameter name as bound arg in `vm.Graph(figure=fn(data_frame="..."))` (LEARNINGS §98); let chart functions use their Python defaults on first render. |
 | 6.D.2 | Document chosen pattern in `docs/LEARNINGS.md` §89 | ⬜ | Cross-page filter workaround — one of two patterns. |
 | 6.D.3 | Apply pattern uniformly to Commodity / Island / Year filters on all 4 pages | ⬜ | Single pattern, applied 3 filters × 4 pages = 12 placements. |
 | 6.D.4 | Verify filter survives page navigation; test both directions (Page 1 → Page 2, Page 4 → Page 1) | ⬜ | Manual smoke test in browser. |
