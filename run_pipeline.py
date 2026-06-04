@@ -3,18 +3,17 @@ import shutil
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import duckdb
 
 from ingest.config import (
-    DB_PATH,
+    complete_lineage,
     generate_run_id,
     get_connection,
     init_lineage,
     update_lineage,
-    complete_lineage,
 )
 
 LOG_FILE = "logs/pipeline_run.log"
@@ -30,6 +29,7 @@ logging.basicConfig(
     ],
 )
 logger = logging.getLogger(__name__)
+
 
 def step(name: str) -> None:
     logger.info("=== STEP: %s ===", name)
@@ -63,13 +63,15 @@ def run_dbt(command: list[str]) -> None:
         text=True,
     )
     with open(TRANSFORM_LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(f"\n--- dbt {' '.join(command)} at {datetime.now(timezone.utc).isoformat()} ---\n")
+        f.write(f"\n--- dbt {' '.join(command)} at {datetime.now(UTC).isoformat()} ---\n")
         if result.stdout.strip():
             f.write(result.stdout + "\n")
         if result.stderr.strip():
             f.write(result.stderr + "\n")
     if result.returncode != 0:
-        logger.error("dbt %s FAILED\n%s", " ".join(command), result.stderr.strip() or result.stdout.strip())
+        logger.error(
+            "dbt %s FAILED\n%s", " ".join(command), result.stderr.strip() or result.stdout.strip()
+        )
         raise RuntimeError(f"dbt {' '.join(command)} failed")
     logger.info("dbt %s OK", " ".join(command))
     for line in result.stdout.splitlines():
@@ -194,24 +196,31 @@ def main() -> None:
         stg_food = reconcile_layer(
             conn, "food_prices: raw -> staging", raw_food, "wfp_staging.stg_food_prices"
         )
+        reconcile_layer(conn, "markets: raw -> staging", raw_markets, "wfp_staging.stg_markets")
         reconcile_layer(
-            conn, "markets: raw -> staging", raw_markets, "wfp_staging.stg_markets"
-        )
-        reconcile_layer(
-            conn, "food_prices: staging -> int_prices_normalised",
-            stg_food, "wfp_intermediate.int_prices_normalised",
+            conn,
+            "food_prices: staging -> int_prices_normalised",
+            stg_food,
+            "wfp_intermediate.int_prices_normalised",
         )
 
         # Mart reconciliation (verify each mart has rows)
         step("Mart reconciliation")
         mart_trends = reconcile_mart(conn, "mart_price_trends", "wfp_marts.mart_price_trends")
-        mart_seasonal = reconcile_mart(conn, "mart_seasonal_patterns", "wfp_marts.mart_seasonal_patterns")
+        mart_seasonal = reconcile_mart(
+            conn, "mart_seasonal_patterns", "wfp_marts.mart_seasonal_patterns"
+        )
         mart_geo = reconcile_mart(conn, "mart_geo_disparity", "wfp_marts.mart_geo_disparity")
-        mart_corr = reconcile_mart(conn, "mart_commodity_correlation", "wfp_marts.mart_commodity_correlation")
-        mart_corr_summary = reconcile_mart(conn, "mart_correlation_summary", "wfp_marts.mart_correlation_summary")
+        mart_corr = reconcile_mart(
+            conn, "mart_commodity_correlation", "wfp_marts.mart_commodity_correlation"
+        )
+        mart_corr_summary = reconcile_mart(
+            conn, "mart_correlation_summary", "wfp_marts.mart_correlation_summary"
+        )
 
         update_lineage(
-            conn, run_id,
+            conn,
+            run_id,
             transform_status="completed",
             issues_log={
                 "mart_price_trends_rows": mart_trends,
@@ -254,7 +263,12 @@ def main() -> None:
         fail_conn = get_connection_safe()
         if fail_conn:
             try:
-                update_lineage(fail_conn, run_id, **{current_step: "failed"}, issues_log={"error": str(e), "step": current_step_name})
+                update_lineage(
+                    fail_conn,
+                    run_id,
+                    **{current_step: "failed"},
+                    issues_log={"error": str(e), "step": current_step_name},
+                )
                 fail_conn.close()
             except Exception:
                 pass

@@ -22,13 +22,29 @@ COMMODITY_COLORS = {
 }
 
 MONTH_NAMES = {
-    1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
-    7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec",
+    1: "Jan",
+    2: "Feb",
+    3: "Mar",
+    4: "Apr",
+    5: "May",
+    6: "Jun",
+    7: "Jul",
+    8: "Aug",
+    9: "Sep",
+    10: "Oct",
+    11: "Nov",
+    12: "Dec",
 }
 
 DRIVER_FLAGS = {
     "All": None,
-    "Ramadan": ["flag_ramadan_t_minus_3", "flag_ramadan_t_minus_2", "flag_ramadan_t_minus_1", "flag_ramadan_eid_month", "flag_ramadan_t_plus_1"],
+    "Ramadan": [
+        "flag_ramadan_t_minus_3",
+        "flag_ramadan_t_minus_2",
+        "flag_ramadan_t_minus_1",
+        "flag_ramadan_eid_month",
+        "flag_ramadan_t_plus_1",
+    ],
     "Harvest": ["flag_harvest_mar_apr", "flag_harvest_aug_sep"],
     "Year-End": ["flag_year_end"],
 }
@@ -59,7 +75,10 @@ def layout():
             dcc.Loading(dcc.Graph(id="page2-heatmap"), type="circle"),
             dcc.Loading(dcc.Graph(id="page2-line-chart"), type="circle"),
             dcc.Loading(dcc.Graph(id="page2-ramadan-chart"), type="circle"),
-            dcc.Loading(dbc.Table(id="page2-summary-table", bordered=True, hover=True, size="sm"), type="circle"),
+            dcc.Loading(
+                dbc.Table(id="page2-summary-table", bordered=True, hover=True, size="sm"),
+                type="circle",
+            ),
         ],
         fluid=True,
     )
@@ -84,18 +103,26 @@ def update_page2(commodity, island, year_range, driver):
 
     df = load_mart("mart_seasonal_patterns", **filters)
     empty_fig = go.Figure()
-    empty_fig.update_layout(template="plotly_white", annotations=[dict(text="No data available", showarrow=False)])
+    empty_fig.update_layout(
+        template="plotly_white", annotations=[dict(text="No data available", showarrow=False)]
+    )
 
     if df.empty:
         return empty_fig, empty_fig, empty_fig, []
 
     if year_range:
-        df = df[(df["month"] >= f"{year_range[0]}-01-01") & (df["month"] <= f"{year_range[1]}-12-31")]
+        df = df[
+            (df["month"] >= f"{year_range[0]}-01-01") & (df["month"] <= f"{year_range[1]}-12-31")
+        ]
 
     df["month_of_year"] = df["month"].astype(str).str[5:7].astype(int)
 
-    pivot = df.groupby(["commodity_consolidated", "month_of_year"])["price_index"].mean().reset_index()
-    matrix = pivot.pivot(index="commodity_consolidated", columns="month_of_year", values="price_index")
+    pivot = (
+        df.groupby(["commodity_consolidated", "month_of_year"])["price_index"].mean().reset_index()
+    )
+    matrix = pivot.pivot(
+        index="commodity_consolidated", columns="month_of_year", values="price_index"
+    )
 
     heatmap_fig = px.imshow(
         matrix,
@@ -122,7 +149,9 @@ def update_page2(commodity, island, year_range, driver):
                 line=dict(color=color, width=2),
             )
         )
-    line_fig.add_hline(y=100, line_dash="dash", line_color="gray", annotation_text="Annual Avg = 100")
+    line_fig.add_hline(
+        y=100, line_dash="dash", line_color="gray", annotation_text="Annual Avg = 100"
+    )
 
     if driver and driver != "All":
         flags = DRIVER_FLAGS.get(driver, [])
@@ -153,15 +182,17 @@ def update_page2(commodity, island, year_range, driver):
         height=400,
     )
 
-    ramadan_df = df[
-        (df.get("flag_ramadan_t_minus_3", False) == True)
-        | (df.get("flag_ramadan_t_minus_2", False) == True)
-        | (df.get("flag_ramadan_t_minus_1", False) == True)
-        | (df.get("flag_ramadan_eid_month", False) == True)
-        | (df.get("flag_ramadan_t_plus_1", False) == True)
-    ] if any(
-        f in df.columns for f in ["flag_ramadan_t_minus_3", "flag_ramadan_eid_month"]
-    ) else df.iloc[0:0]
+    ramadan_df = (
+        df[
+            (df.get("flag_ramadan_t_minus_3", False) == True)
+            | (df.get("flag_ramadan_t_minus_2", False) == True)
+            | (df.get("flag_ramadan_t_minus_1", False) == True)
+            | (df.get("flag_ramadan_eid_month", False) == True)
+            | (df.get("flag_ramadan_t_plus_1", False) == True)
+        ]
+        if any(f in df.columns for f in ["flag_ramadan_t_minus_3", "flag_ramadan_eid_month"])
+        else df.iloc[0:0]
+    )
 
     ramadan_fig = go.Figure()
     if not ramadan_df.empty:
@@ -177,7 +208,9 @@ def update_page2(commodity, island, year_range, driver):
                     line=dict(color=color, width=2),
                 )
             )
-    ramadan_fig.add_hline(y=100, line_dash="dash", line_color="gray", annotation_text="Annual Avg = 100")
+    ramadan_fig.add_hline(
+        y=100, line_dash="dash", line_color="gray", annotation_text="Annual Avg = 100"
+    )
     ramadan_fig.update_layout(
         template="plotly_white",
         xaxis_title="Month",
@@ -197,7 +230,9 @@ def update_page2(commodity, island, year_range, driver):
         ramadan_mask = sub.get("flag_ramadan_eid_month", False) == True
         non_ramadan_mask = ~ramadan_mask
         ramadan_avg = sub[ramadan_mask]["price_index"].mean() if ramadan_mask.any() else None
-        non_ramadan_avg = sub[non_ramadan_mask]["price_index"].mean() if non_ramadan_mask.any() else None
+        non_ramadan_avg = (
+            sub[non_ramadan_mask]["price_index"].mean() if non_ramadan_mask.any() else None
+        )
         premium = (
             round((ramadan_avg - non_ramadan_avg) / non_ramadan_avg * 100, 1)
             if ramadan_avg and non_ramadan_avg and non_ramadan_avg > 0
@@ -205,17 +240,29 @@ def update_page2(commodity, island, year_range, driver):
         )
 
         summary_rows.append(
-            html.Tr([
-                html.Td(commodity_name),
-                html.Td(f"{avg_price:.1f}"),
-                html.Td(MONTH_NAMES.get(peak_month, str(peak_month))),
-                html.Td(MONTH_NAMES.get(trough_month, str(trough_month))),
-                html.Td(f"+{premium}%" if premium else "—"),
-            ])
+            html.Tr(
+                [
+                    html.Td(commodity_name),
+                    html.Td(f"{avg_price:.1f}"),
+                    html.Td(MONTH_NAMES.get(peak_month, str(peak_month))),
+                    html.Td(MONTH_NAMES.get(trough_month, str(trough_month))),
+                    html.Td(f"+{premium}%" if premium else "—"),
+                ]
+            )
         )
 
     summary_table = [
-        html.Thead(html.Tr([html.Th("Commodity"), html.Th("Avg Index"), html.Th("Peak Month"), html.Th("Trough Month"), html.Th("Ramadan Premium")])),
+        html.Thead(
+            html.Tr(
+                [
+                    html.Th("Commodity"),
+                    html.Th("Avg Index"),
+                    html.Th("Peak Month"),
+                    html.Th("Trough Month"),
+                    html.Th("Ramadan Premium"),
+                ]
+            )
+        ),
         html.Tbody(summary_rows),
     ]
 

@@ -5,9 +5,7 @@ from vizro.models.types import capture
 
 @capture("graph")
 def lag_heatmap(data_frame: pd.DataFrame):
-    pivot = data_frame.pivot(
-        index="commodity_pair", columns="lag_months", values="pearson_r"
-    )
+    pivot = data_frame.pivot(index="commodity_pair", columns="lag_months", values="pearson_r")
     fig = px.imshow(
         pivot,
         text_auto=".3f",

@@ -65,7 +65,11 @@ def signal_badges(
                 continue
 
         yoy_row = yoy_df[yoy_df["commodity_consolidated"] == commodity]
-        yoy = yoy_row["yoy_pct"].iloc[0] if not yoy_row.empty and "yoy_pct" in yoy_row.columns else None
+        yoy = (
+            yoy_row["yoy_pct"].iloc[0]
+            if not yoy_row.empty and "yoy_pct" in yoy_row.columns
+            else None
+        )
         if yoy is not None:
             if yoy < -2:
                 signal, color = "BUY", "#28a745"
@@ -83,8 +87,10 @@ def signal_badges(
     for i, (commodity, signal, color, reason) in enumerate(signals):
         x_pos = 0.125 + i * 0.25
         fig.add_annotation(
-            x=x_pos, y=0.7,
-            xref="paper", yref="paper",
+            x=x_pos,
+            y=0.7,
+            xref="paper",
+            yref="paper",
             text=f"<b>{commodity}</b><br><span style='color:{color};font-size:16px'>{signal}</span><br><span style='font-size:10px;color:gray'>{reason}</span>",
             showarrow=False,
             font=dict(size=12),

@@ -36,7 +36,8 @@ def kpi_sparklines(
     commodities = ["Rice", "Cooking Oil", "Sugar", "Flour"]
 
     fig = make_subplots(
-        rows=1, cols=4,
+        rows=1,
+        cols=4,
         subplot_titles=commodities,
         horizontal_spacing=0.04,
     )
@@ -60,23 +61,40 @@ def kpi_sparklines(
 
         if commodity_row.empty:
             fig.add_trace(
-                go.Scatter(x=[0], y=[0], mode="lines", line=dict(color="white", width=0), showlegend=False, hoverinfo="skip"),
-                row=row, col=col,
+                go.Scatter(
+                    x=[0],
+                    y=[0],
+                    mode="lines",
+                    line=dict(color="white", width=0),
+                    showlegend=False,
+                    hoverinfo="skip",
+                ),
+                row=row,
+                col=col,
             )
             fig.add_annotation(
                 text="No data",
                 xref=f"x{idx + 1 if idx > 0 else ''} domain",
                 yref=f"y{idx + 1 if idx > 0 else ''} domain",
-                x=0.5, y=0.5,
+                x=0.5,
+                y=0.5,
                 showarrow=False,
                 font=dict(size=12, color="gray"),
             )
             continue
 
         price = commodity_row["avg_price_idr"].iloc[0]
-        yoy = yoy_row["yoy_pct"].iloc[0] if not yoy_row.empty and "yoy_pct" in yoy_row.columns else None
+        yoy = (
+            yoy_row["yoy_pct"].iloc[0]
+            if not yoy_row.empty and "yoy_pct" in yoy_row.columns
+            else None
+        )
 
-        sub = data_frame[data_frame["commodity_consolidated"] == commodity].sort_values("month").tail(24)
+        sub = (
+            data_frame[data_frame["commodity_consolidated"] == commodity]
+            .sort_values("month")
+            .tail(24)
+        )
         if not sub.empty:
             fig.add_trace(
                 go.Scatter(
@@ -87,17 +105,23 @@ def kpi_sparklines(
                     showlegend=False,
                     hoverinfo="skip",
                 ),
-                row=row, col=col,
+                row=row,
+                col=col,
             )
 
-        yoy_str = f"{'↑' if yoy and yoy > 0 else '↓' if yoy and yoy < 0 else ''} {yoy:.1f}%" if yoy else "—"
+        yoy_str = (
+            f"{'↑' if yoy and yoy > 0 else '↓' if yoy and yoy < 0 else ''} {yoy:.1f}%"
+            if yoy
+            else "—"
+        )
         yoy_color = "red" if yoy and yoy > 0 else "green" if yoy and yoy < 0 else "gray"
 
         fig.add_annotation(
             text=f"<b>{_fmt_idr(price)}</b><br><span style='color:{yoy_color}'>{yoy_str} YoY</span>",
             xref=f"x{idx + 1 if idx > 0 else ''} domain",
             yref=f"y{idx + 1 if idx > 0 else ''} domain",
-            x=0.5, y=-0.25,
+            x=0.5,
+            y=-0.25,
             showarrow=False,
             font=dict(size=11),
         )
@@ -106,11 +130,15 @@ def kpi_sparklines(
             type="rect",
             xref=f"x{idx + 1 if idx > 0 else ''} domain",
             yref=f"y{idx + 1 if idx > 0 else ''} domain",
-            x0=0, y0=0, x1=1, y1=1,
+            x0=0,
+            y0=0,
+            x1=1,
+            y1=1,
             line=dict(color="rgba(128,128,128,0.15)", width=1),
             fillcolor="rgba(128,128,128,0.03)",
             layer="below",
-            row=row, col=col,
+            row=row,
+            col=col,
         )
 
     fig.update_layout(

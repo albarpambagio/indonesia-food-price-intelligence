@@ -60,7 +60,10 @@ def layout():
                     dbc.Col(
                         dcc.Dropdown(
                             id="pair-selector",
-                            options=[{"label": p.replace("-", " ↔ ").title(), "value": p} for p in PAIR_COLORS],
+                            options=[
+                                {"label": p.replace("-", " ↔ ").title(), "value": p}
+                                for p in PAIR_COLORS
+                            ],
                             value="rice-oil",
                             clearable=False,
                         ),
@@ -71,7 +74,10 @@ def layout():
             ),
             dcc.Loading(dcc.Graph(id="page4-scatter"), type="circle"),
             dcc.Loading(dcc.Graph(id="page4-rolling"), type="circle"),
-            dcc.Loading(dbc.Table(id="page4-comparison-table", bordered=True, hover=True, size="sm"), type="circle"),
+            dcc.Loading(
+                dbc.Table(id="page4-comparison-table", bordered=True, hover=True, size="sm"),
+                type="circle",
+            ),
             dcc.Loading(dbc.Card(id="page4-implication-card"), type="circle"),
         ],
         fluid=True,
@@ -88,7 +94,9 @@ def layout():
 def update_summary(lag):
     df = load_mart("mart_correlation_summary")
     empty_fig = go.Figure()
-    empty_fig.update_layout(template="plotly_white", annotations=[dict(text="No data available", showarrow=False)])
+    empty_fig.update_layout(
+        template="plotly_white", annotations=[dict(text="No data available", showarrow=False)]
+    )
 
     if df.empty:
         return [], empty_fig, [], dbc.Card()
@@ -119,7 +127,9 @@ def update_summary(lag):
             )
         )
 
-    matrix_pivot = lag_df.pivot_table(index="commodity_pair", columns="lag_months", values="pearson_r")
+    matrix_pivot = lag_df.pivot_table(
+        index="commodity_pair", columns="lag_months", values="pearson_r"
+    )
     if not matrix_pivot.empty:
         heatmap_fig = px.imshow(
             matrix_pivot.values,
@@ -140,17 +150,37 @@ def update_summary(lag):
         pre = pdf["pearson_r_pre_2022"].mean()
         post = pdf["pearson_r_post_2022"].mean()
         delta = pre - post if pre and post else None
-        delta_color = "text-danger" if (delta and delta > 0) else "text-success" if (delta and delta < 0) else ""
+        delta_color = (
+            "text-danger"
+            if (delta and delta > 0)
+            else "text-success"
+            if (delta and delta < 0)
+            else ""
+        )
         comparison_rows.append(
-            html.Tr([
-                html.Td(pair.replace("-", " ↔ ").title()),
-                html.Td(f"{pre:.3f}" if pre else "—"),
-                html.Td(f"{post:.3f}" if post else "—"),
-                html.Td(f"{'+' if delta and delta > 0 else ''}{delta:.3f}" if delta else "—", className=delta_color),
-            ])
+            html.Tr(
+                [
+                    html.Td(pair.replace("-", " ↔ ").title()),
+                    html.Td(f"{pre:.3f}" if pre else "—"),
+                    html.Td(f"{post:.3f}" if post else "—"),
+                    html.Td(
+                        f"{'+' if delta and delta > 0 else ''}{delta:.3f}" if delta else "—",
+                        className=delta_color,
+                    ),
+                ]
+            )
         )
     comparison_table = [
-        html.Thead(html.Tr([html.Th("Pair"), html.Th("Pre-2022"), html.Th("Post-2022"), html.Th("Δ (weakening)")])),
+        html.Thead(
+            html.Tr(
+                [
+                    html.Th("Pair"),
+                    html.Th("Pre-2022"),
+                    html.Th("Post-2022"),
+                    html.Th("Δ (weakening)"),
+                ]
+            )
+        ),
         html.Tbody(comparison_rows),
     ]
 
@@ -192,7 +222,9 @@ def update_summary(lag):
 def update_pair_charts(pair):
     df = load_mart("mart_commodity_correlation")
     empty_fig = go.Figure()
-    empty_fig.update_layout(template="plotly_white", annotations=[dict(text="No data available", showarrow=False)])
+    empty_fig.update_layout(
+        template="plotly_white", annotations=[dict(text="No data available", showarrow=False)]
+    )
 
     if df.empty or not pair:
         return empty_fig, empty_fig
@@ -258,8 +290,12 @@ def update_pair_charts(pair):
             )
         )
         rolling_fig.add_vrect(
-            x0="2022-01-01", x1="2022-12-31",
-            fillcolor="red", opacity=0.1, layer="below", line_width=0,
+            x0="2022-01-01",
+            x1="2022-12-31",
+            fillcolor="red",
+            opacity=0.1,
+            layer="below",
+            line_width=0,
             annotation_text="2022 shock",
         )
     rolling_fig.update_layout(

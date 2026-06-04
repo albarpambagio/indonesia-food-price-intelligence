@@ -5,11 +5,11 @@ from pathlib import Path
 from config import (
     FOOD_PRICES_CSV,
     MARKETS_CSV,
+    complete_lineage,
     generate_run_id,
     get_connection,
     init_lineage,
     update_lineage,
-    complete_lineage,
 )
 
 LOG_DIR = Path(__file__).resolve().parent.parent / "logs"
@@ -41,7 +41,9 @@ def load_csv_to_raw(
 ) -> int:
     logger.info("Loading %s -> raw.%s ...", csv_path, table_name)
     conn.execute(f"DROP TABLE IF EXISTS raw.{table_name}")
-    conn.execute(f"CREATE TABLE raw.{table_name} AS SELECT *, CURRENT_TIMESTAMP AS _loaded_at FROM read_csv_auto('{csv_path}')")
+    conn.execute(
+        f"CREATE TABLE raw.{table_name} AS SELECT *, CURRENT_TIMESTAMP AS _loaded_at FROM read_csv_auto('{csv_path}')"
+    )
     row_count = conn.execute(f"SELECT COUNT(*) FROM raw.{table_name}").fetchone()[0]
     logger.info("Loaded %d rows into raw.%s", row_count, table_name)
     return row_count

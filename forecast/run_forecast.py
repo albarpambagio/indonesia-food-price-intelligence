@@ -1,7 +1,7 @@
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +13,7 @@ from statsforecast.models import AutoARIMA, AutoETS
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ingest.config import LINEAGE_TABLE_DDL, ensure_lineage_table
+from ingest.config import ensure_lineage_table
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DB_PATH = str(PROJECT_ROOT / "data" / "wfp.duckdb")
@@ -75,8 +75,12 @@ def add_islamic_flags(df: pd.DataFrame, cal: pd.DataFrame) -> tuple[pd.DataFrame
     for flag in flags:
         df[flag] = 0
     for _, row in cal.iterrows():
-        for col, flag in [("eid_month", "eid_month_flag"), ("t_minus_1", "t_minus_1_flag"),
-                          ("t_minus_2", "t_minus_2_flag"), ("t_minus_3", "t_minus_3_flag")]:
+        for col, flag in [
+            ("eid_month", "eid_month_flag"),
+            ("t_minus_1", "t_minus_1_flag"),
+            ("t_minus_2", "t_minus_2_flag"),
+            ("t_minus_3", "t_minus_3_flag"),
+        ]:
             df.loc[df["ym"] == row[col], flag] = 1
     return df, flags
 
@@ -89,8 +93,12 @@ def get_future_exog(cal: pd.DataFrame, start: str, periods: int, commodity: str)
     for flag in flags:
         fdf[flag] = 0
     for _, row in cal.iterrows():
-        for col, flag in [("eid_month", "eid_month_flag"), ("t_minus_1", "t_minus_1_flag"),
-                          ("t_minus_2", "t_minus_2_flag"), ("t_minus_3", "t_minus_3_flag")]:
+        for col, flag in [
+            ("eid_month", "eid_month_flag"),
+            ("t_minus_1", "t_minus_1_flag"),
+            ("t_minus_2", "t_minus_2_flag"),
+            ("t_minus_3", "t_minus_3_flag"),
+        ]:
             fdf.loc[fdf["ym"] == row[col], flag] = 1
     return fdf[["unique_id", "ds"] + flags]
 
@@ -102,7 +110,9 @@ def holdout_mae(actual: np.ndarray, predicted: np.ndarray) -> float:
     return float(np.mean(np.abs(actual[mask] - predicted[mask])))
 
 
-def extract_forecast_values(fcast: pd.DataFrame, train_unique_id: str, commodity: str) -> list[dict]:
+def extract_forecast_values(
+    fcast: pd.DataFrame, train_unique_id: str, commodity: str
+) -> list[dict]:
     model_cols = [c for c in fcast.columns if c not in ("unique_id", "ds")]
     if not model_cols:
         return []
@@ -112,12 +122,18 @@ def extract_forecast_values(fcast: pd.DataFrame, train_unique_id: str, commodity
 
     results = []
     for _, row in fcast.iterrows():
-        results.append({
-            "date": row["ds"].strftime("%Y-%m-%d"),
-            "forecast_price": round(float(row[chosen]), 2),
-            "lower_95": round(float(row.get(lo_col, row[chosen])), 2) if lo_col in row else None,
-            "upper_95": round(float(row.get(hi_col, row[chosen])), 2) if hi_col in row else None,
-        })
+        results.append(
+            {
+                "date": row["ds"].strftime("%Y-%m-%d"),
+                "forecast_price": round(float(row[chosen]), 2),
+                "lower_95": round(float(row.get(lo_col, row[chosen])), 2)
+                if lo_col in row
+                else None,
+                "upper_95": round(float(row.get(hi_col, row[chosen])), 2)
+                if hi_col in row
+                else None,
+            }
+        )
     return results
 
 
@@ -174,7 +190,9 @@ def fit_and_forecast(
     cal: pd.DataFrame,
     commodity: str,
 ) -> dict[str, Any]:
-    hist_id, hist_with_flags, exog_cols, forecast_start = prepare_commodity_data(full_hist, cal, commodity)
+    hist_id, hist_with_flags, exog_cols, forecast_start = prepare_commodity_data(
+        full_hist, cal, commodity
+    )
     if forecast_start == "insufficient_data":
         logger.warning("  %s: insufficient data (%d months)", commodity, len(hist_id))
         return {"commodity": commodity, "error": "insufficient_data"}
@@ -191,18 +209,24 @@ def fit_and_forecast(
     if best_arima:
         sf_final.fit(df=hist_with_flags[["unique_id", "ds", "y"] + exog_cols])
         future_exog = get_future_exog(cal, forecast_start, FORECAST_H, commodity)
-        fcast = sf_final.forecast(h=FORECAST_H, df=hist_with_flags[["unique_id", "ds", "y"] + exog_cols],
-                                  X_df=future_exog, level=[95])
+        fcast = sf_final.forecast(
+            h=FORECAST_H,
+            df=hist_with_flags[["unique_id", "ds", "y"] + exog_cols],
+            X_df=future_exog,
+            level=[95],
+        )
     else:
         sf_final.fit(df=hist_id[["unique_id", "ds", "y"]])
         fcast = sf_final.forecast(h=FORECAST_H, df=hist_id[["unique_id", "ds", "y"]], level=[95])
 
     historical = []
     for _, row in hist_id.iterrows():
-        historical.append({
-            "date": row["ds"].strftime("%Y-%m-%d"),
-            "actual_price": round(float(row["y"]), 2),
-        })
+        historical.append(
+            {
+                "date": row["ds"].strftime("%Y-%m-%d"),
+                "actual_price": round(float(row["y"]), 2),
+            }
+        )
 
     forecast_data = extract_forecast_values(fcast, commodity, commodity)
     for f in forecast_data:
@@ -260,9 +284,12 @@ def fit_cooking_oil_post2022(
         sf_final.fit(df=post_with_flags[["unique_id", "ds", "y"] + exog_cols])
         post_forecast_start = (post2022["ds"].max() + pd.DateOffset(months=1)).strftime("%Y-%m-%d")
         future_exog = get_future_exog(cal, post_forecast_start, FORECAST_H, commodity)
-        fcast = sf_final.forecast(h=FORECAST_H,
-                                  df=post_with_flags[["unique_id", "ds", "y"] + exog_cols],
-                                  X_df=future_exog, level=[95])
+        fcast = sf_final.forecast(
+            h=FORECAST_H,
+            df=post_with_flags[["unique_id", "ds", "y"] + exog_cols],
+            X_df=future_exog,
+            level=[95],
+        )
     else:
         sf_final.fit(df=post2022[["unique_id", "ds", "y"]])
         fcast = sf_final.forecast(h=FORECAST_H, df=post2022[["unique_id", "ds", "y"]], level=[95])
@@ -284,13 +311,19 @@ def validate_forecast(combined_data: list[dict]) -> list[str]:
         fp = rec.get("forecast_price")
         if fp is not None:
             if np.isnan(fp) or np.isinf(fp):
-                errors.append(f"Invalid forecast_price for {rec.get('commodity')} on {rec.get('date')}: {fp}")
+                errors.append(
+                    f"Invalid forecast_price for {rec.get('commodity')} on {rec.get('date')}: {fp}"
+                )
             if fp <= 0:
-                errors.append(f"Non-positive forecast_price for {rec.get('commodity')} on {rec.get('date')}: {fp}")
+                errors.append(
+                    f"Non-positive forecast_price for {rec.get('commodity')} on {rec.get('date')}: {fp}"
+                )
             lo = rec.get("lower_95")
             hi = rec.get("upper_95")
             if lo is not None and hi is not None and lo > hi:
-                errors.append(f"CI reversal for {rec.get('commodity')} on {rec.get('date')}: lower={lo} > upper={hi}")
+                errors.append(
+                    f"CI reversal for {rec.get('commodity')} on {rec.get('date')}: lower={lo} > upper={hi}"
+                )
     return errors
 
 
@@ -298,20 +331,25 @@ def update_lineage(run_id: str, status: str, issues: list[str] | None = None) ->
     try:
         conn = duckdb.connect(DB_PATH)
         ensure_lineage_table(conn)
-        conn.execute("""
+        conn.execute(
+            """
             INSERT INTO pipeline.lineage (run_id, forecast_status, issues_log)
             VALUES (?, ?, ?::JSON)
             ON CONFLICT (run_id)
             DO UPDATE SET forecast_status = EXCLUDED.forecast_status,
                           issues_log = EXCLUDED.issues_log
-        """, [run_id, status, json.dumps({"forecast_issues": issues or []})])
+        """,
+            [run_id, status, json.dumps({"forecast_issues": issues or []})],
+        )
         conn.close()
     except Exception as e:
         logger.warning("Could not update lineage: %s", e)
 
 
 def main() -> None:
-    run_id = sys.argv[1] if len(sys.argv) > 1 else datetime.now(timezone.utc).strftime("pipeline_%Y%m%d_%H%M%S")
+    run_id = (
+        sys.argv[1] if len(sys.argv) > 1 else datetime.now(UTC).strftime("pipeline_%Y%m%d_%H%M%S")
+    )
     logger.info("=" * 60)
     logger.info("Forecast run started | run_id=%s", run_id)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -346,15 +384,21 @@ def main() -> None:
             }
 
             for h in result["historical"]:
-                combined_data.append({"date": h["date"], "commodity": commodity,
-                                      "actual_price": h["actual_price"]})
+                combined_data.append(
+                    {"date": h["date"], "commodity": commodity, "actual_price": h["actual_price"]}
+                )
 
             for f in result["forecast"]:
-                combined_data.append({"date": f["date"], "commodity": commodity,
-                                      "forecast_price": f["forecast_price"],
-                                      "lower_95": f["lower_95"],
-                                      "upper_95": f["upper_95"],
-                                      "model_used": f["model_used"]})
+                combined_data.append(
+                    {
+                        "date": f["date"],
+                        "commodity": commodity,
+                        "forecast_price": f["forecast_price"],
+                        "lower_95": f["lower_95"],
+                        "upper_95": f["upper_95"],
+                        "model_used": f["model_used"],
+                    }
+                )
 
             if commodity == "Cooking Oil" and "post2022" in result:
                 p22 = result["post2022"]
@@ -366,14 +410,21 @@ def main() -> None:
                         "holdout_mae": p22["holdout_mae"],
                     }
                     for f in p22["forecast"]:
-                        combined_data.append({"date": f["date"], "commodity": "Cooking Oil",
-                                              "forecast_price": f["forecast_price"],
-                                              "model_used": f["model_used"],
-                                              "scenario": "post2022_robustness"})
+                        combined_data.append(
+                            {
+                                "date": f["date"],
+                                "commodity": "Cooking Oil",
+                                "forecast_price": f["forecast_price"],
+                                "model_used": f["model_used"],
+                                "scenario": "post2022_robustness",
+                            }
+                        )
 
         validation_errors = validate_forecast(combined_data)
         if skipped_commodities:
-            validation_errors.append(f"Skipped commodities (insufficient data): {', '.join(skipped_commodities)}")
+            validation_errors.append(
+                f"Skipped commodities (insufficient data): {', '.join(skipped_commodities)}"
+            )
         if validation_errors:
             all_forecasts_valid = False
             logger.warning("Forecast validation found %d issue(s)", len(validation_errors))
@@ -389,7 +440,7 @@ def main() -> None:
 
         output = {
             "metadata": {
-                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "generated_at": datetime.now(UTC).isoformat(),
                 "data_start": min_ds.strftime("%Y-%m-%d"),
                 "data_end": max_ds.strftime("%Y-%m-%d"),
                 "forecast_horizon": f"{FORECAST_H}_months",
@@ -414,7 +465,7 @@ def main() -> None:
                 "cooking_oil_forecast_behavior": {
                     "primary": "Full-history AutoARIMA (default trace on Page 1)",
                     "secondary": "Post-2022 AutoARIMA robustness check (toggleable via Page 1 checkbox)",
-                    "rationale": "2022 cooking oil price shock creates a structural break. Primary model uses all history for trend context; secondary model retrained on post-2022 data to show structural-break sensitivity."
+                    "rationale": "2022 cooking oil price shock creates a structural break. Primary model uses all history for trend context; secondary model retrained on post-2022 data to show structural-break sensitivity.",
                 },
             },
             "data": combined_data,

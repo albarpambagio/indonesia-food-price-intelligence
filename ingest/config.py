@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS pipeline.lineage (
 
 
 def generate_run_id() -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return now.strftime("pipeline_%Y%m%d_%H%M%S")
 
 

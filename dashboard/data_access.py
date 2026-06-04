@@ -70,16 +70,13 @@ def load_forecast_metadata() -> dict:
     return raw.get("metadata", {})
 
 
-def get_latest_prices(df: pd.DataFrame, commodity_col: str = "commodity_consolidated") -> pd.DataFrame:
+def get_latest_prices(
+    df: pd.DataFrame, commodity_col: str = "commodity_consolidated"
+) -> pd.DataFrame:
     """Get the most recent price per commodity from a trends DataFrame."""
     if df.empty:
         return df
-    latest = (
-        df.sort_values("month")
-        .groupby(commodity_col)
-        .tail(1)
-        .reset_index(drop=True)
-    )
+    latest = df.sort_values("month").groupby(commodity_col).tail(1).reset_index(drop=True)
     return latest
 
 
@@ -106,8 +103,11 @@ def compute_yoy_delta(df: pd.DataFrame, price_col: str = "avg_price_idr") -> pd.
     prev_col = f"{price_col}_prev"
     if prev_col in merged.columns:
         merged["yoy_pct"] = merged.apply(
-            lambda r: round((r[price_col] - r[prev_col]) / r[prev_col] * 100, 1)
-            if r[prev_col] and r[prev_col] > 0 else None,
+            lambda r: (
+                round((r[price_col] - r[prev_col]) / r[prev_col] * 100, 1)
+                if r[prev_col] and r[prev_col] > 0
+                else None
+            ),
             axis=1,
         )
     else:

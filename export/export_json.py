@@ -1,17 +1,15 @@
 import json
 import logging
-import math
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 import duckdb
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ingest.config import LINEAGE_TABLE_DDL, ensure_lineage_table
+from ingest.config import ensure_lineage_table
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DB_PATH = str(PROJECT_ROOT / "data" / "wfp.duckdb")
@@ -95,29 +93,38 @@ def verify_export(conn: duckdb.DuckDBPyConnection, cfg: dict, exported_count: in
     if db_count != exported_count:
         logger.error(
             "  FAIL %s: DB has %d rows, exported %d rows",
-            filename, db_count, exported_count,
+            filename,
+            db_count,
+            exported_count,
         )
         return False
     logger.info("  OK %s: DB=%d exported=%d", filename, db_count, exported_count)
     return True
 
 
-def update_lineage(conn: duckdb.DuckDBPyConnection, run_id: str, status: str, issues: list[str] | None = None) -> None:
+def update_lineage(
+    conn: duckdb.DuckDBPyConnection, run_id: str, status: str, issues: list[str] | None = None
+) -> None:
     try:
         ensure_lineage_table(conn)
-        conn.execute("""
+        conn.execute(
+            """
             INSERT INTO pipeline.lineage (run_id, export_status, issues_log)
             VALUES (?, ?, ?::JSON)
             ON CONFLICT (run_id)
             DO UPDATE SET export_status = EXCLUDED.export_status,
                           issues_log = EXCLUDED.issues_log
-        """, [run_id, status, json.dumps({"export_issues": issues or []})])
+        """,
+            [run_id, status, json.dumps({"export_issues": issues or []})],
+        )
     except Exception as e:
         logger.warning("Could not update lineage: %s", e)
 
 
 def main() -> None:
-    run_id = sys.argv[1] if len(sys.argv) > 1 else datetime.now(timezone.utc).strftime("pipeline_%Y%m%d_%H%M%S")
+    run_id = (
+        sys.argv[1] if len(sys.argv) > 1 else datetime.now(UTC).strftime("pipeline_%Y%m%d_%H%M%S")
+    )
     logger.info("=" * 60)
     logger.info("Export run started | run_id=%s", run_id)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

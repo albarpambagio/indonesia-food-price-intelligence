@@ -38,6 +38,28 @@ This dashboard was built for Procurement and Supply Chain Analysts at Indonesian
 uv sync
 ```
 
+### LSP & Linting (Astral toolchain)
+```bash
+# Tools installed globally via uv tool (persist across sessions)
+uv tool install ruff@latest    # ruff 0.15.15 — linting + formatting
+uv tool install ty@latest      # ty 0.0.43 — type checking (beta, WSL only)
+
+# Lint check
+ruff check .
+
+# Format check (dry-run)
+ruff format --check .
+
+# Auto-fix safe issues
+ruff check --fix .
+
+# Format all files
+ruff format .
+
+# Type check (run from WSL — ty cannot resolve WSL .venv from Windows)
+wsl -d Debian -- bash -c "cd /home/tomioka/PROJECTS/food\ price\ dashboard && ty check ."
+```
+
 ### Run Marimo Notebooks
 ```bash
 uv run marimo edit analysis/data_validation.py          # Phase 0 — data validation
@@ -389,6 +411,43 @@ Mismatch sets `pipeline.lineage.export_status = 'failed'` and logs detailed coun
 
 ---
 
+## LSP Quality (Astral Toolchain)
+
+**Global config:** `~/.config/opencode/opencode.json` — ruff + ty servers, ruff formatter.
+
+### Tools
+| Tool | Version | Purpose | Platform |
+|------|---------|---------|----------|
+| ruff | 0.15.15 | Linting + formatting (replaces flake8, isort, black) | Windows + WSL |
+| ty | 0.0.43 (beta) | Type checking + IDE features (replaces mypy/pyright) | WSL only |
+
+### Current Baseline (2026-06-04)
+| Check | Count | Category | Actionable? |
+|-------|-------|----------|-------------|
+| ruff E501 | 98 | Line too long | No — markdown tables in `eda.py`, Plotly template strings in dashboard |
+| ruff F821 | 11 | Undefined name | No — marimo cell scoping (variables exported via `return` across cells) |
+| ruff E712 | 7 | `== True` comparison | Yes — should use `df[flag]` directly |
+| ruff B905 | 5 | zip without `strict=` | Yes — add `strict=True` or `strict=False` |
+| ruff F841 | 2 | Unused variable | Yes — remove `opacity` (kpi_sparklines.py:56), `cm` (seasonal_patterns.py:135) |
+| **ty** unresolved-reference | 11 | Marimo scoping | No — cross-cell variables via `return` |
+| **ty** missing-argument | 16 | Vizro components | No — ty beta sees default args as required |
+| **ty** not-subscriptable | 7 | duckdb `fetchone()` | No — returns `Optional[tuple]`, always `[0]` in practice |
+| **ty** unresolved-attribute | 3 | `marimo.App` | No — ty beta can't resolve marimo's dynamic exports |
+| **ty** other | 10 | Various | No — framework interop (numpy/pandas, vizro) |
+
+### Known False Positives (safe to ignore)
+- **marimo cell scoping**: ty reports `unresolved-reference` for variables defined in `setup()` cell but used in downstream cells — marimo's `return` mechanism exports them across the reactive DAG
+- **Vizro `missing-argument`**: ty beta doesn't see Vizro's Pydantic field defaults; all components work at runtime
+- **duckdb `not-subscriptable`**: `conn.execute().fetchone()[0]` always returns a tuple; ty infers `None` from the Optional return type
+- **`marimo.App`**: ty can't resolve marimo's `__all__` exports — marimo.App works at runtime
+
+### When to Fix Manually
+- E712 (`== True`): Replace with `df[flag]` for boolean column checks
+- B905: Add `strict=False` to `zip()` where lengths are intentionally unequal
+- F841: Remove unused variable assignments
+
+---
+
 ## Known Limitations
 
 | Limitation | Mitigation |
@@ -454,6 +513,12 @@ raw schema → staging (view) → intermediate (view) → marts (table, JSON exp
 ---
 
 ## Testing Instructions
+
+### Verify Linting & Formatting
+```bash
+ruff check .          # Must pass (E501/F821/E712/B905/F841 acceptable)
+ruff format --check . # Must pass (no files would be reformatted)
+```
 
 ### Verify dbt
 ```bash

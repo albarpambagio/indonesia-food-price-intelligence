@@ -53,7 +53,10 @@ def layout():
             dcc.Loading(dbc.Row(id="page3-kpi-cards"), type="circle"),
             dcc.Loading(dcc.Graph(id="page3-choropleth"), type="circle"),
             dcc.Loading(dcc.Graph(id="page3-comparison-chart"), type="circle"),
-            dcc.Loading(dbc.Table(id="page3-province-table", bordered=True, hover=True, size="sm"), type="circle"),
+            dcc.Loading(
+                dbc.Table(id="page3-province-table", bordered=True, hover=True, size="sm"),
+                type="circle",
+            ),
         ],
         fluid=True,
     )
@@ -77,7 +80,9 @@ def update_page3(commodity, island, year_range):
 
     df = load_mart("mart_geo_disparity", **filters)
     empty_fig = go.Figure()
-    empty_fig.update_layout(template="plotly_white", annotations=[dict(text="No data available", showarrow=False)])
+    empty_fig.update_layout(
+        template="plotly_white", annotations=[dict(text="No data available", showarrow=False)]
+    )
 
     if df.empty:
         return [], empty_fig, empty_fig, []
@@ -110,26 +115,31 @@ def update_page3(commodity, island, year_range):
                                 f"{'+' if yoy and yoy > 0 else ''}{yoy:.1f}" if yoy else "—",
                                 color=color,
                                 className="mt-1",
-                            ) if yoy else None,
+                            )
+                            if yoy
+                            else None,
                         ]
                     ),
                     className="shadow-sm",
                 ),
             )
         )
-    kpi_cards.insert(0, dbc.Col(
-        md=2,
-        children=dbc.Card(
-            dbc.CardBody(
-                [
-                    html.H6("Java (Baseline)", className="card-title text-muted small"),
-                    html.H4("100.0", className="card-text"),
-                    html.Small("Reference index", className="text-muted"),
-                ]
+    kpi_cards.insert(
+        0,
+        dbc.Col(
+            md=2,
+            children=dbc.Card(
+                dbc.CardBody(
+                    [
+                        html.H6("Java (Baseline)", className="card-title text-muted small"),
+                        html.H4("100.0", className="card-text"),
+                        html.Small("Reference index", className="text-muted"),
+                    ]
+                ),
+                className="shadow-sm border-primary",
             ),
-            className="shadow-sm border-primary",
         ),
-    ))
+    )
 
     geojson = _load_geojson()
     choropleth_fig = go.Figure()
@@ -169,7 +179,9 @@ def update_page3(commodity, island, year_range):
                 marker=dict(color=color, size=10),
             )
         )
-    comparison_fig.add_hline(y=100, line_dash="dash", line_color="gray", annotation_text="Java baseline")
+    comparison_fig.add_hline(
+        y=100, line_dash="dash", line_color="gray", annotation_text="Java baseline"
+    )
     comparison_fig.update_layout(
         template="plotly_white",
         xaxis_title="Province",
@@ -185,16 +197,31 @@ def update_page3(commodity, island, year_range):
         yoy = row.get("yoy_change_index")
         color = "text-danger" if (yoy and yoy > 0) else "text-success" if (yoy and yoy < 0) else ""
         table_rows.append(
-            html.Tr([
-                html.Td(row.get("admin1", "—")),
-                html.Td(row.get("island_group", "—")),
-                html.Td(f"{row.get('price_index_vs_java', 0):.1f}"),
-                html.Td(f"{'+' if yoy and yoy > 0 else ''}{yoy:.1f}" if yoy else "—", className=color),
-                html.Td(f"{row.get('months_with_data', 0):.0f}"),
-            ])
+            html.Tr(
+                [
+                    html.Td(row.get("admin1", "—")),
+                    html.Td(row.get("island_group", "—")),
+                    html.Td(f"{row.get('price_index_vs_java', 0):.1f}"),
+                    html.Td(
+                        f"{'+' if yoy and yoy > 0 else ''}{yoy:.1f}" if yoy else "—",
+                        className=color,
+                    ),
+                    html.Td(f"{row.get('months_with_data', 0):.0f}"),
+                ]
+            )
         )
     table = [
-        html.Thead(html.Tr([html.Th("Province"), html.Th("Island"), html.Th("Index"), html.Th("YoY Δ"), html.Th("Months")])),
+        html.Thead(
+            html.Tr(
+                [
+                    html.Th("Province"),
+                    html.Th("Island"),
+                    html.Th("Index"),
+                    html.Th("YoY Δ"),
+                    html.Th("Months"),
+                ]
+            )
+        ),
         html.Tbody(table_rows),
     ]
 

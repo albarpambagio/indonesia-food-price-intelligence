@@ -35,7 +35,9 @@ def trend_forecast(
         return fig
 
     for commodity_name in sorted(data_frame["commodity_consolidated"].unique()):
-        sub = data_frame[data_frame["commodity_consolidated"] == commodity_name].sort_values("month")
+        sub = data_frame[data_frame["commodity_consolidated"] == commodity_name].sort_values(
+            "month"
+        )
         color = COMMODITY_COLORS.get(commodity_name, "#888")
         fig.add_trace(
             go.Scatter(

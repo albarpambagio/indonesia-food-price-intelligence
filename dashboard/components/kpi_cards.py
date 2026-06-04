@@ -38,7 +38,9 @@ def render_kpi_cards(rows: list[dict]) -> dbc.Row:
         price = row.get("avg_price_idr")
         yoy = row.get("yoy_pct")
         color = _color_for_delta(yoy)
-        icon = {"Rice": "🍚", "Cooking Oil": "🫒", "Sugar": "🍬", "Flour": "🌾"}.get(commodity, "📦")
+        icon = {"Rice": "🍚", "Cooking Oil": "🫒", "Sugar": "🍬", "Flour": "🌾"}.get(
+            commodity, "📦"
+        )
         cards.append(
             dbc.Col(
                 md=3,
