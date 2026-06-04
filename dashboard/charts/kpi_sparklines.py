@@ -106,7 +106,7 @@ def kpi_sparklines(
     fig.update_layout(
         template="plotly_white",
         height=300,
-        margin=dict(t=40, b=30),
+        margin=dict(t=40, b=30, autoexpand=True),
         showlegend=False,
     )
 

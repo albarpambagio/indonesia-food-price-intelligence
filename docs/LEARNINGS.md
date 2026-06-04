@@ -3727,3 +3727,115 @@ For conditional visibility, plan Dash callbacks in the wireframe phase. Document
 | Port 7860 preserved (not changed to Dash default 8050) | HF Spaces standard; same as §84. Local dev matches production for parity. |
 | gunicorn target `app:app` (not `app:server`) | Vizro exposes its own Flask handle differently than Dash. `Vizro().build(dashboard).run()` returns object with `.app` attribute = WSGI app. |
 | Dash deps removed from `pyproject.toml` after Phase C verified | During Phase A-C, keep `dash`, `dash-bootstrap-components`, `dash-ag-grid` in deps for the working Dash dashboard. After Vizro spike passes and pages are ported, remove Dash deps to keep lockfile clean. |
+
+---
+
+## 97. `vm.Filter` Treats "All" as Literal Column Value — Use `vm.Parameter` for Sentinel-Based Filtering
+
+### The Problem
+
+`vm.Filter(column="commodity_consolidated", selector=vm.Dropdown(options=["All", "Rice", ...], value="All"))` calls `_filter_isin(series, ["All"])` which filters for rows where `commodity_consolidated == "All"` — no matches → empty DataFrame. Vizro has no concept of "All" as a "show everything" sentinel.
+
+### Root Cause
+
+Vizro 0.1.53's `_filter_isin` (`.venv/lib/python3.13/site-packages/vizro/models/_controls/filter.py:63-75`) applies `series.isin(value)` with no sentinel handling. Every value in the `options` list is treated as a literal column value to match.
+
+### Solution
+
+Replace `vm.Filter` with `vm.Parameter`:
+
+```python
+# Before: vm.Filter filters data at the Vizro engine level — no "All" sentinel support
+vm.Filter(
+    column="commodity_consolidated",
+    selector=vm.Dropdown(options=["All", "Rice", ...], value="All"),
+)
+
+# After: vm.Parameter passes the dropdown value to chart functions — they handle "All" themselves
+vm.Parameter(
+    targets=["kpi_sparklines.commodity_filter", "trend_forecast.commodity_filter", ...],
+    selector=vm.Dropdown(options=["All", "Rice", ...], value="All", multi=False),
+)
+```
+
+Chart functions receive the Dropdown value directly and handle `"All"` → no-filter:
+```python
+@capture("graph")
+def my_chart(data_frame: pd.DataFrame, commodity_filter: str = "All") -> go.Figure:
+    if commodity_filter != "All":
+        data_frame = data_frame[data_frame["commodity_consolidated"] == commodity_filter]
+    ...
+```
+
+### Rule
+
+`vm.Filter` does not support sentinel values like "All" — it passes all values literally to the `series.isin()` filter. Use `vm.Parameter` when the first dropdown option is a "show all" sentinel. The chart function receives the raw dropdown value and implements its own filter logic with a simple `if sentinel != "All"` guard.
+
+### Files Affected
+
+- `dashboard/pages/price_trends.py` — `vm.Filter` → `vm.Parameter` with `targets` pointing to chart function params
+- All 4 chart files — added `commodity_filter: str = "All"` parameter with the sentinel guard
+
+### Cross-Reference
+
+- LEARNINGS.md §98 — Companion bug: `_get_parametrized_config` timing causes first-render issues with `vm.Parameter`
+- LEARNINGS.md §87 — Vizro `vm.Filter` is per-page, not cross-page
+
+---
+
+## 98. `_get_parametrized_config` Timing — Bound Argument Literals on First Render Before Callback Fires
+
+### The Problem
+
+Forecast trend lines + CI area missing on initial page load. After toggling the sidebar (close/reopen), the chart renders correctly.
+
+### Root Cause
+
+Vizro callback timing. On first page load, `_get_parametrized_config()` (`_actions_utils.py:165`) returns the literal bound argument `{"commodity_filter": "commodity_filter"}` because the `vm.Parameter` callback **hasn't fired yet**. The chart function receives `commodity_filter="commodity_filter"` → no data matches → early return with "No data available".
+
+Sidebar toggle triggers a re-render where the `vm.Parameter` callback has already fired → `commodity_filter` gets the real Dropdown value → chart renders correctly.
+
+### Solution
+
+Remove the literal `commodity_filter="commodity_filter"` from `vm.Graph()` calls. Chart functions already have `commodity_filter: str = "All"` as default. On first render, bound args won't include `commodity_filter`, so the function uses its default `"All"`. `vm.Parameter` still overrides it on subsequent renders because `CapturedCallable.__call__` merges `{**bound_arguments, **kwargs}` with runtime kwargs overriding.
+
+```python
+# Before: literal arg is passed as bound argument — causes function to receive the string "commodity_filter"
+vm.Graph(
+    id="trend_forecast",
+    figure=trend_forecast(data_frame="...", commodity_filter="commodity_filter"),
+)
+
+# After: no literal arg — chart function uses its default "All" on first render
+vm.Graph(
+    id="trend_forecast",
+    figure=trend_forecast(data_frame="..."),  # no commodity_filter literal
+)
+```
+
+### How the Fix Works
+
+| Render | Bound arguments | `commodity_filter` value | Source |
+|--------|----------------|-------------------------|--------|
+| First load | `{}` (empty — no callback fired yet) | `"All"` | Function default parameter |
+| Filter change | `{"commodity_filter": "Rice"}` | `"Rice"` | `vm.Parameter` override |
+| Page navigation | `{"commodity_filter": "Sugar"}` | `"Sugar"` | `vm.Parameter` (show_in_url restored) |
+
+### Reference
+
+`_actions_utils.py:252-280` — `_get_modified_page_figures` calls `_get_parametrized_config(ctds_parameter, target, data_frame=False)` which copies bound arguments. On first load, `ctds_parameter` is empty → config stays as literals.
+
+### Rule
+
+When using `vm.Parameter` to override chart function parameters, never pass the parameter name as a literal value in the `vm.Graph()` call. Let the chart function use its Python default for the first render. `vm.Parameter` will override on subsequent renders via `CapturedCallable.__call__` merge behavior. Always provide sensible function defaults (like `"All"`) as the fallback.
+
+### Files Affected
+
+- `dashboard/pages/price_trends.py` — removed `commodity_filter="commodity_filter"` from all 4 `vm.Graph()` calls
+
+### Cross-Reference
+
+- LEARNINGS.md §97 — Companion bug: `vm.Filter` "All" sentinel issue — use `vm.Parameter` instead
+- LEARNINGS.md §96 — Conditional visibility requires Dash callback
+
+---

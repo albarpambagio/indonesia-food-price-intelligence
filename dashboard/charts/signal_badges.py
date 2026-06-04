@@ -94,7 +94,7 @@ def signal_badges(
     fig.update_layout(
         template="plotly_white",
         height=200,
-        margin=dict(t=10, b=10, l=10, r=10),
+        margin=dict(t=10, b=10, l=10, r=10, autoexpand=True),
         xaxis=dict(visible=False),
         yaxis=dict(visible=False),
         showlegend=False,

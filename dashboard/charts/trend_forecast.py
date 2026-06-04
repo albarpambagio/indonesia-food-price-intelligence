@@ -115,8 +115,10 @@ def trend_forecast(
         xaxis_title="Month",
         yaxis_title="Price (IDR)",
         yaxis_tickformat="~s",
+        yaxis_automargin=True,
+        showlegend=True,
         legend=dict(orientation="h", yanchor="bottom", y=1.02),
-        margin=dict(t=30),
+        margin=dict(t=50, b=50, autoexpand=True),
         height=450,
     )
     return fig

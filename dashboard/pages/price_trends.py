@@ -60,35 +60,36 @@ price_trends_page = vm.Page(
     title="Price Trends & Forecast",
     description="17-year national price history with 6-month forecast overlay",
     components=[
-        vm.Graph(
-            id="kpi_sparklines",
-            figure=kpi_sparklines(
-                data_frame="mart_price_trends_national",
-                commodity_filter="commodity_filter",
-            ),
+        vm.Container(
+            components=[
+                vm.Graph(
+                    id="kpi_sparklines",
+                    figure=kpi_sparklines(
+                        data_frame="mart_price_trends_national",
+                    ),
+                ),
+                vm.Graph(
+                    id="trend_forecast",
+                    figure=trend_forecast(
+                        data_frame="mart_price_trends_national",
+                    ),
+                ),
+                vm.Graph(
+                    id="yoy_bar",
+                    figure=yoy_bar(
+                        data_frame="mart_price_trends_national",
+                    ),
+                ),
+                vm.Graph(
+                    id="signal_badges",
+                    figure=signal_badges(
+                        data_frame="mart_price_trends_national",
+                    ),
+                ),
+                _build_model_info_card(),
+            ],
+            layout=vm.Flex(direction="column", gap="20px"),
         ),
-        vm.Graph(
-            id="trend_forecast",
-            figure=trend_forecast(
-                data_frame="mart_price_trends_national",
-                commodity_filter="commodity_filter",
-            ),
-        ),
-        vm.Graph(
-            id="yoy_bar",
-            figure=yoy_bar(
-                data_frame="mart_price_trends_national",
-                commodity_filter="commodity_filter",
-            ),
-        ),
-        vm.Graph(
-            id="signal_badges",
-            figure=signal_badges(
-                data_frame="mart_price_trends_national",
-                commodity_filter="commodity_filter",
-            ),
-        ),
-        _build_model_info_card(),
     ],
     controls=[
         vm.Parameter(
