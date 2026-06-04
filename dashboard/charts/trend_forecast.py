@@ -80,7 +80,7 @@ def trend_forecast(
     except Exception:
         pass
 
-    fig.add_vline(x="2022-01-01", line_dash="dash", line_color="gray")
+    fig.add_vline(x="2022-01-01", line_dash="dash", line_color="rgba(128,128,128,0.3)")
     fig.add_annotation(
         x="2022-01-01",
         y=1,
@@ -88,7 +88,7 @@ def trend_forecast(
         showarrow=False,
         yref="paper",
         yanchor="bottom",
-        font=dict(size=10, color="gray"),
+        font=dict(size=10),
     )
 
     try:

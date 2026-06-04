@@ -1,6 +1,7 @@
-"""YoY Inflation bar chart — Page 1.
+"""YoY Inflation bar chart — Page 1. Option A: Grouped Bar (Improved).
 
-Grouped bar chart: year-over-year % price change per commodity.
+Reference bands (±1σ, ±2σ), thick zero line, per-trace hovertemplate,
+12-year rolling window, theme-adaptive colors (no explicit font.color).
 """
 
 import pandas as pd
@@ -53,6 +54,7 @@ def yoy_bar(
                     name=commodity_name,
                     marker_color=color,
                     marker_line_color="rgba(0,0,0,0)",
+                    hovertemplate="<b>%{fullData.name}</b><br>%{x|%b %Y}<br>YoY: %{y:+.1f}%<extra></extra>",
                 )
             )
 
@@ -65,7 +67,10 @@ def yoy_bar(
         )
         return fig
 
-    fig.add_hline(y=0, line_dash="dash", line_color="gray")
+    for ref_y in [10, 20, 30, -10, -20, -30]:
+        fig.add_hline(y=ref_y, line_dash="dash", line_color="rgba(128,128,128,0.3)", line_width=1)
+
+    fig.add_hline(y=0, line_dash="solid", line_color="rgba(64,64,64,0.8)", line_width=3)
     fig.update_layout(
         template="plotly_white",
         xaxis_title="Month",
@@ -74,6 +79,7 @@ def yoy_bar(
         showlegend=True,
         barmode="group",
         legend=dict(orientation="h", yanchor="bottom", y=1.02),
+        xaxis=dict(dtick="M12", tickformat="%Y"),
         margin=dict(t=50, b=50, autoexpand=True),
         height=350,
     )

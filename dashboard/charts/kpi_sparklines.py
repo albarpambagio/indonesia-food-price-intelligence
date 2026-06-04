@@ -1,6 +1,6 @@
 """KPI Sparklines chart — Page 1.
 
-2x2 subplot grid: one sparkline per commodity with current price + YoY%.
+1x4 KPI card row: one sparkline per commodity with current price + YoY%.
 """
 
 import pandas as pd
@@ -36,10 +36,9 @@ def kpi_sparklines(
     commodities = ["Rice", "Cooking Oil", "Sugar", "Flour"]
 
     fig = make_subplots(
-        rows=2, cols=2,
+        rows=1, cols=4,
         subplot_titles=commodities,
-        vertical_spacing=0.12,
-        horizontal_spacing=0.08,
+        horizontal_spacing=0.04,
     )
 
     if commodity_filter != "All":
@@ -49,8 +48,8 @@ def kpi_sparklines(
     yoy_df = compute_yoy_delta(latest)
 
     for idx, commodity in enumerate(commodities):
-        row = idx // 2 + 1
-        col = idx % 2 + 1
+        row = 1
+        col = idx + 1
         color = COMMODITY_COLORS.get(commodity, "#888")
 
         is_filtered = commodity_filter != "All" and commodity != commodity_filter
@@ -98,20 +97,31 @@ def kpi_sparklines(
             text=f"<b>{_fmt_idr(price)}</b><br><span style='color:{yoy_color}'>{yoy_str} YoY</span>",
             xref=f"x{idx + 1 if idx > 0 else ''} domain",
             yref=f"y{idx + 1 if idx > 0 else ''} domain",
-            x=0.5, y=-0.15,
+            x=0.5, y=-0.25,
             showarrow=False,
-            font=dict(size=11, color=f"rgba(0,0,0,{opacity})"),
+            font=dict(size=11),
+        )
+
+        fig.add_shape(
+            type="rect",
+            xref=f"x{idx + 1 if idx > 0 else ''} domain",
+            yref=f"y{idx + 1 if idx > 0 else ''} domain",
+            x0=0, y0=0, x1=1, y1=1,
+            line=dict(color="rgba(128,128,128,0.15)", width=1),
+            fillcolor="rgba(128,128,128,0.03)",
+            layer="below",
+            row=row, col=col,
         )
 
     fig.update_layout(
         template="plotly_white",
-        height=300,
-        margin=dict(t=40, b=30, autoexpand=True),
+        height=200,
+        margin=dict(t=40, b=50, autoexpand=True),
         showlegend=False,
     )
 
     for i in range(1, 5):
-        fig.update_xaxes(visible=False, row=(i - 1) // 2 + 1, col=(i - 1) % 2 + 1)
-        fig.update_yaxes(visible=False, row=(i - 1) // 2 + 1, col=(i - 1) % 2 + 1)
+        fig.update_xaxes(visible=False, row=1, col=i)
+        fig.update_yaxes(visible=False, row=1, col=i)
 
     return fig
