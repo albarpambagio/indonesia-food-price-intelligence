@@ -35,6 +35,10 @@ dashboard/out/
 .env
 .env.local
 
+# AI tooling artifacts
+docs/archive/
+docs/superpowers/
+
 # dbt user config
 transform/.user.yml
 
