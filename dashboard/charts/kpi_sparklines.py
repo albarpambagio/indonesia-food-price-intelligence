@@ -6,7 +6,6 @@
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from vizro.models.types import capture
 
 from dashboard.data_access import compute_yoy_delta, get_latest_prices
 
@@ -20,7 +19,7 @@ COMMODITY_COLORS = {
 
 def _fmt_idr(value):
     if value is None:
-        return "—"
+        return "\u2014"
     if value >= 1_000_000:
         return f"Rp {value / 1_000_000:,.1f}M"
     if value >= 1_000:
@@ -28,7 +27,6 @@ def _fmt_idr(value):
     return f"Rp {value:,.0f}"
 
 
-@capture("graph")
 def kpi_sparklines(
     data_frame: pd.DataFrame,
     commodity_filter: str = "All",
@@ -52,9 +50,6 @@ def kpi_sparklines(
         row = 1
         col = idx + 1
         color = COMMODITY_COLORS.get(commodity, "#888")
-
-        is_filtered = commodity_filter != "All" and commodity != commodity_filter
-        opacity = 0.3 if is_filtered else 1.0
 
         commodity_row = latest[latest["commodity_consolidated"] == commodity]
         yoy_row = yoy_df[yoy_df["commodity_consolidated"] == commodity]
@@ -110,9 +105,9 @@ def kpi_sparklines(
             )
 
         yoy_str = (
-            f"{'↑' if yoy and yoy > 0 else '↓' if yoy and yoy < 0 else ''} {yoy:.1f}%"
+            f"{'\u2191' if yoy and yoy > 0 else '\u2193' if yoy and yoy < 0 else ''} {yoy:.1f}%"
             if yoy
-            else "—"
+            else "\u2014"
         )
         yoy_color = "red" if yoy and yoy > 0 else "green" if yoy and yoy < 0 else "gray"
 

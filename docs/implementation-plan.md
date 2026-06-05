@@ -452,7 +452,7 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 | 6.C.1.1 | Wrap main trend chart as `custom_charts` function: `go.Figure()` + `add_vline` + `add_vrect` for forecast region + `go.Scatter(fill="toself")` for 95% CI area | ✅ | `dashboard/charts/trend_forecast.py` (126 LOC). Reuses `load_forecast_data()` from `data_access.py`. |
 | 6.C.1.2 | Wrap YoY bar chart as `custom_charts` function | ✅ | `dashboard/charts/yoy_bar.py` (86 LOC). Option A grouped bar with reference bands, thick zero line, per-trace hovertemplate. Uses `compute_yoy_delta()` from `data_access.py`. |
 | 6.C.1.3 | Build `vm.Page(title="Price Trends", components=[vm.Graph(figure=trend), vm.Graph(figure=yoy), vm.Card(...)])` | ✅ | `dashboard/pages/price_trends.py` (110 LOC). 4 `vm.Graph` components (kpi_sparklines, trend_forecast, yoy_bar, signal_badges) + `_build_model_info_card()`. Registered in `dashboard/app.py`. |
-| 6.C.1.4 | Add 2 `vm.Parameter`s (commodity, island) + 1 `vm.Filter` (year_range, numeric bounds) | ⚠ Partial | Commodity `vm.Parameter` done (LEARNINGS §97 — "All" sentinel must use `vm.Parameter`, NOT `vm.Filter`). **Island + Year Range filters still pending** per `HANDOFF-page1-completion.md`. |
+| 6.C.1.4 | Add 2 `vm.Parameter`s (commodity, island) + 1 `vm.Filter` (year_range, numeric bounds) | ✅ | Commodity `vm.Parameter` + inert island `vm.Parameter` + `vm.Filter(column="month")`. Island filter inert with data-availability notice (`mart_price_trends_national` has no `island_group` column). |
 | 6.C.1.5 | Wire model info card + forecast footnote via `vm.Container` | ✅ | `_build_model_info_card()` in `price_trends.py` shows per-commodity model selection + holdout MAE + limitations card. |
 | 6.C.1.6 | Verify chart parity with original Dash Page 1: line shapes, colors, CI area, annotations | ⬜ | Visual regression check via side-by-side screenshot. |
 | 6.C.1.7 | **[NEW] Bugfix: first-render timing** — `vm.Graph(figure=fn(commodity_filter="commodity_filter"))` literal string on first render | ✅ | Removed literal `commodity_filter` from all 4 `vm.Graph()` calls. LEARNINGS §98. `HANDOFF-page1-bugs-and-learnings.md` (P1). |
@@ -460,12 +460,6 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 | 6.C.1.9 | **[NEW] Bugfix: chart overlap + y-axis clipping** — wrapped components in `vm.Container(layout=vm.Flex(direction="column", gap="20px"))`, added `yaxis_automargin=True` | ✅ | Committed in `9c0c948`. `HANDOFF-page1-hover-theme-wireframe.md`. |
 | 6.C.1.10 | **[NEW] Bugfix: YoY hover + theme text colors** — added per-trace `hovertemplate`, removed explicit `font.color` for dark mode | ✅ | Theme-adaptive colors: explicit `color` values baked into figure JSON survive Vizro's `update_graph_theme` shallow copy. `HANDOFF-page1-hover-theme-wireframe.md`. |
 | 6.C.1.11 | **[NEW] Bugfix: sidebar toggle workaround** — `vm.Parameter` first-render timing requires sidebar close/reopen to establish bound value | ✅ | Known Vizro 0.1.53 behavior. Workaround documented. LEARNINGS §98. `HANDOFF-page1-bugs-remaining.md`. |
-
-#### Page Explainer
-
-> **What this page conveys:** "When should we increase stock for each commodity?"
->
-> Answers via commodity/island/year **dropdowns + slider** and a **driver toggle** (Ramadan / Harvest / Year-End / All) filtering a 12×4 seasonal **heatmap** (month × commodity, red=above avg, green=below), monthly **line chart** with highlighted driver bands, Ramadan **overlay chart** (T-2 to T+1 relative to Eid), sortable **summary table** (avg price, peak month, Ramadan premium), and 3 **action window cards**. Data: `mart_price_trends_national`.
 
 #### §6.C.2 — Page 2 (Seasonal Patterns) — NEW
 
@@ -478,8 +472,8 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 | 6.C.2.3 | Wrap Ramadan overlay chart (`month_relative` T-2 to T+1, hline y=100) as `custom_charts` | ✅ | `dashboard/charts/ramadan_overlay.py` — `@capture("graph")` multi-year overlay. Fixed: `month_relative` x-labels, `bool()` cast for `showlegend`, `.values` merge pattern. |
 | 6.C.2.4 | Build summary table via `vm.AgGrid` (NOT `vm.Table` + `dash_ag_grid`) | ✅ | `dashboard/charts/seasonal_summary_table.py` — `@capture("ag_grid")` with `vm.AgGrid`. Fixed: `__wrapped__()` pattern to test underlying function outside Vizro. |
 | 6.C.2.5 | Add page-level driver toggle: `vm.Parameter(targets=[...], selector=vm.RadioItems(options=["All", "Ramadan", "Harvest", "Year-End"]))` | ✅ | `vm.Parameter(selector=vm.RadioItems(options=["All", "Ramadan", "Harvest", "Year-End"]))` with `show_in_url=True`. |
-| 6.C.2.5b | Build action window cards (3 cards: Action Now / Upcoming Spikes / Safe to Lock) as `vm.Card` markdown components | ✅ | 3 `vm.Card` markdown components in `seasonal_patterns.py`. Content from `compute_action_windows()` in `data_access.py`. |
-| 6.C.2.5c | Add page-level filter pattern: 2 `vm.Parameter`s (commodity, island) + 1 `vm.Filter` (year_range) | ✅ | `vm.Parameter` for commodity/island (dropdowns with "All"); `vm.Filter` for year_range. All `show_in_url=True`. |
+| 6.C.2.5b | Build action window cards (3 cards: Action Now / Upcoming Spikes / Safe to Lock) as `vm.Card` markdown components | ✅ | Replaced with dynamic `@capture("graph")` `action_cards()` in `dashboard/charts/action_cards.py`. Renders 3-panel figure driven by `compute_action_windows()`, reacts to commodity/island/driver filters. |
+| 6.C.2.5c | Add page-level filter pattern: 2 `vm.Parameter`s (commodity, island) + 1 `vm.Filter` (year_range) | ✅ | `vm.Parameter` for commodity/island (dropdowns with "All"); `vm.Filter(column="month")` for year_range. All `show_in_url=True`. Inert island filter on Page 1 with data-availability notice (national data). |
 | 6.C.2.5d | Add Ramadan overlay detail sub-section: `month_relative` chart with `flag_ramadan_eid_month` overlay from `int_islamic_calendar` | ✅ | `ramadan_overlay.py` overlays month_relative data with `flag_ramadan_eid_month` from `int_islamic_calendar`. |
 | 6.C.2.6 | Build `vm.Page(...)`; wire all components; register in `dashboard/app.py` | ✅ | `dashboard/pages/seasonal_patterns.py` — `vm.Page` with 2 `vm.Row` layout (3 driver charts + 3 cards + table). Registered in `app.py`. |
 

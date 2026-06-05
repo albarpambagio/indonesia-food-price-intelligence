@@ -2,7 +2,6 @@
 
 import pandas as pd
 import plotly.graph_objects as go
-from vizro.models.types import capture
 
 from dashboard.data_access import compute_heatmap_matrix
 
@@ -28,7 +27,6 @@ def _empty_collapsed_fig() -> go.Figure:
     return fig
 
 
-@capture("graph")
 def yearend_chart(
     data_frame: pd.DataFrame,
     commodity_filter: str = "All",

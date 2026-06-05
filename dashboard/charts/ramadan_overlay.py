@@ -2,9 +2,8 @@
 
 import pandas as pd
 import plotly.graph_objects as go
-from vizro.models.types import capture
 
-from dashboard.data_access import compute_ramadan_overlay, load_islamic_calendar
+from dashboard.data_access import compute_ramadan_overlay
 
 COMMODITY_COLORS = {
     "Rice": "#4C72B0",
@@ -28,16 +27,14 @@ def _empty_collapsed_fig() -> go.Figure:
     return fig
 
 
-@capture("graph")
 def ramadan_overlay(
     data_frame: pd.DataFrame,
+    islamic_cal: pd.DataFrame,
     commodity_filter: str = "All",
     driver: str = "All",
 ) -> go.Figure:
     if driver != "Ramadan":
         return _empty_collapsed_fig()
-
-    islamic_cal = load_islamic_calendar()
     commodities = (
         [commodity_filter]
         if commodity_filter != "All"

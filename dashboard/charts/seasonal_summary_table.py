@@ -1,19 +1,15 @@
 """Seasonal summary table — Page 2. Action windows across all drivers."""
 
-import dash_ag_grid as dag
 import pandas as pd
-from vizro.models.types import capture
 
-from dashboard.data_access import compute_action_windows, load_islamic_calendar
+from dashboard.data_access import compute_action_windows
 
 
-@capture("ag_grid")
 def seasonal_summary_table(
     data_frame: pd.DataFrame,
+    islamic_cal: pd.DataFrame,
     commodity_filter: str = "All",
-) -> dag.AgGrid:
-    islamic_cal = load_islamic_calendar()
-
+) -> pd.DataFrame:
     all_windows = []
     for driver in ["Ramadan", "Harvest", "Year-End"]:
         windows = compute_action_windows(data_frame, driver, islamic_cal)
@@ -21,13 +17,9 @@ def seasonal_summary_table(
             windows["driver"] = driver
             all_windows.append(windows)
 
-    empty_cols = ["Driver", "Commodity", "Spike %", "Consistency", "Lead Time", "Data Scope"]
     if not all_windows:
-        return dag.AgGrid(
-            columnDefs=[{"field": c} for c in empty_cols],
-            rowData=[],
-            className="ag-theme-vizro",
-            defaultColDef={"resizable": True, "sortable": True, "filter": True},
+        return pd.DataFrame(
+            columns=["Driver", "Commodity", "Spike %", "Consistency", "Lead Time", "Data Scope"]
         )
 
     result = pd.concat(all_windows, ignore_index=True)
@@ -48,20 +40,4 @@ def seasonal_summary_table(
     result = result.sort_values("Spike %", ascending=False).reset_index(drop=True)
     result = result[["Driver", "Commodity", "Spike %", "Consistency", "Lead Time", "Data Scope"]]
 
-    return dag.AgGrid(
-        columnDefs=[{"field": col} for col in result.columns],
-        rowData=result.to_dict("records"),
-        className="ag-theme-vizro",
-        defaultColDef={
-            "resizable": True,
-            "sortable": True,
-            "filter": True,
-        },
-        dashGridOptions={
-            "animateRows": False,
-            "domLayout": "autoHeight",
-            "pagination": True,
-            "paginationPageSize": 20,
-        },
-        columnSize="responsiveSizeToFit",
-    )
+    return result

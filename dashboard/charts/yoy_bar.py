@@ -1,12 +1,10 @@
-"""YoY Inflation bar chart — Page 1. Option A: Grouped Bar (Improved).
+"""YoY Inflation bar chart — Page 1.
 
-Reference bands (±1σ, ±2σ), thick zero line, per-trace hovertemplate,
-12-year rolling window, theme-adaptive colors (no explicit font.color).
+Grouped bar chart with reference bands and zero line.
 """
 
 import pandas as pd
 import plotly.graph_objects as go
-from vizro.models.types import capture
 
 from dashboard.data_access import compute_yoy_delta
 
@@ -18,7 +16,6 @@ COMMODITY_COLORS = {
 }
 
 
-@capture("graph")
 def yoy_bar(
     data_frame: pd.DataFrame,
     commodity_filter: str = "All",

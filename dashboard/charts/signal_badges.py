@@ -5,18 +5,16 @@ BUY/HOLD/WATCH badges based on forecast vs current price comparison.
 
 import pandas as pd
 import plotly.graph_objects as go
-from vizro.models.types import capture
 
 from dashboard.data_access import (
     compute_yoy_delta,
     get_latest_prices,
-    load_forecast_data,
 )
 
 
-@capture("graph")
 def signal_badges(
     data_frame: pd.DataFrame,
+    forecast_df: pd.DataFrame,
     commodity_filter: str = "All",
 ) -> go.Figure:
     if commodity_filter != "All":
@@ -34,13 +32,7 @@ def signal_badges(
 
     latest = get_latest_prices(data_frame)
     yoy_df = compute_yoy_delta(latest)
-
-    try:
-        fdata = load_forecast_data()
-        has_forecast = not fdata.empty
-    except Exception:
-        has_forecast = False
-        fdata = None
+    has_forecast = not forecast_df.empty
 
     signals = []
     for _, row in latest.iterrows():
@@ -48,7 +40,7 @@ def signal_badges(
         current_price = row.get("avg_price_idr")
 
         if has_forecast and current_price and current_price > 0:
-            fsub = fdata[fdata["commodity"] == commodity]
+            fsub = forecast_df[forecast_df["commodity"] == commodity]
             if not fsub.empty and "forecast_price" in fsub.columns:
                 forecast_avg = fsub["forecast_price"].mean()
                 pct_change = (forecast_avg - current_price) / current_price * 100

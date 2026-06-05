@@ -1,0 +1,175 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.7",
+    "script_metadata_hash": "ac2be39f09d3fdbbb4008220c537feda"
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "39b9fc9c04b726d5a278556c1e39db09",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "No module named 'dashboard'",
+          "traceback": null
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "<span class=\"codehilite\"><div class=\"highlight\"><pre><span></span><span class=\"gt\">Traceback (most recent call last):</span>\n  File <span class=\"nb\">&quot;/tmp/marimo_127755/__marimo__cell_Hbol_.py&quot;</span>, line <span class=\"m\">6</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"kn\">from</span><span class=\"w\"> </span><span class=\"nn\">dashboard.data_static</span><span class=\"w\"> </span><span class=\"kn\">import</span> <span class=\"n\">load_json</span>\n<span class=\"gr\">ModuleNotFoundError</span>: <span class=\"n\">No module named &#39;dashboard&#39;</span>\n</pre></div>\n</span>",
+          "mimetype": "application/vnd.marimo+traceback"
+        }
+      ]
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "329dbc1015908a993504eb6ea59b40a7",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "An ancestor raised an exception (ModuleNotFoundError): ",
+          "traceback": null
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "b7f346442eedd013609c957ff5bb7d48",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "An ancestor raised an exception (ModuleNotFoundError): ",
+          "traceback": null
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "5e80e5d387be6a7a7eea8709ce2c8790",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "An ancestor raised an exception (ModuleNotFoundError): ",
+          "traceback": null
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "f0d9061c9f0bc9cf579d10390b48c82a",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'commodity_val' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'content' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "d2543dcfd134ae18260d50e0033820bb",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'commodity_val' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'content' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'heatmap_fig' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'table' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "e8b40c17ec985275bfb4c80e67d5d506",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'commodity_val' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'content' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'table' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "dcc969701903efe54acd29e2764fce60",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'content' was defined by another cell",
+          "traceback": []
+        },
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'heatmap_fig' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "cf9daa107db1defff1c709036f5fa199",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "An ancestor raised an exception (ModuleNotFoundError): ",
+          "traceback": null
+        }
+      ],
+      "console": []
+    }
+  ]
+}

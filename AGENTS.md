@@ -338,7 +338,7 @@ Mismatch sets `pipeline.lineage.export_status = 'failed'` and logs detailed coun
 | Page | Decision | Data Source |
 |------|----------|-------------|
 | 1 — Price Trends & Forecast | "Is now a good time to lock in bulk purchase contracts?" | `price_trends.json` + `forecast.json` |
-| 2 — Seasonal Patterns | "When should we increase stock for each commodity?" | `seasonal_patterns.json` |
+| 2 — Seasonal Patterns | "When should we increase stock for each commodity?" | `mart_price_trends_national` (4 commodities) + `int_islamic_calendar` |
 | 3 — Geographic Disparity | "Which island group offers the best sourcing price?" | `geographic_disparity.json` |
 | 4 — Commodity Signals | "Which commodities to monitor as early warning indicators?" | `commodity_correlation.json` |
 

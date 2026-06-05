@@ -1,9 +1,8 @@
 """Seasonal heatmap — Page 2. 4x12 matrix of price premiums by commodity x month."""
 
 import pandas as pd
+import plotly.express as px
 import plotly.graph_objects as go
-import vizro.plotly.express as px
-from vizro.models.types import capture
 
 from dashboard.data_access import compute_heatmap_matrix
 
@@ -23,7 +22,6 @@ MONTH_NAMES = {
 }
 
 
-@capture("graph")
 def seasonal_heatmap(
     data_frame: pd.DataFrame,
     commodity_filter: str = "All",
@@ -45,9 +43,8 @@ def seasonal_heatmap(
         values="premium_pct",
     )
     pivot.columns = [MONTH_NAMES.get(c, str(c)) for c in pivot.columns]
-    pivot = pivot[
-        ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    ]
+    _all_months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    pivot = pivot.reindex(columns=_all_months)
 
     if commodity_filter != "All":
         pivot = pivot[pivot.index == commodity_filter]

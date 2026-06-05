@@ -2,7 +2,6 @@
 
 import pandas as pd
 import plotly.graph_objects as go
-from vizro.models.types import capture
 
 from dashboard.data_access import compute_heatmap_matrix
 
@@ -38,13 +37,22 @@ def _empty_collapsed_fig() -> go.Figure:
     return fig
 
 
-@capture("graph")
 def harvest_chart(
     data_frame: pd.DataFrame,
+    commodity_filter: str = "All",
     driver: str = "All",
 ) -> go.Figure:
     if driver != "Harvest":
         return _empty_collapsed_fig()
+
+    if commodity_filter != "All" and commodity_filter != "Rice":
+        fig = go.Figure()
+        fig.update_layout(
+            template="plotly_white",
+            annotations=[dict(text="Harvest cycle analysis is Rice-specific", showarrow=False)],
+            height=250,
+        )
+        return fig
 
     rice_df = data_frame[data_frame["commodity_consolidated"] == "Rice"].copy()
     if rice_df.empty:

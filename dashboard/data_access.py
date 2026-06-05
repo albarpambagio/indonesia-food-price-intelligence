@@ -1,73 +1,10 @@
-"""DuckDB data access layer for the dashboard.
+"""Data access helpers for the dashboard.
 
-All queries go through this module — pages never query DuckDB directly.
-Uses @functools.lru_cache for in-process caching (survives across callbacks).
+Pure pandas computation helpers — no DuckDB dependency.
+Data is loaded from static JSON files via data_static.py.
 """
 
-import functools
-import json
-from pathlib import Path
-
-import duckdb
 import pandas as pd
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DB_PATH = str(PROJECT_ROOT / "data" / "wfp.duckdb")
-FORECAST_PATH = str(PROJECT_ROOT / "dashboard" / "public" / "data" / "forecast.json")
-SCHEMA = "wfp_marts"
-
-
-def _connect() -> duckdb.DuckDBPyConnection:
-    return duckdb.connect(DB_PATH, read_only=True)
-
-
-@functools.lru_cache(maxsize=32)
-def load_mart(name: str, **filters: str | int | float) -> pd.DataFrame:
-    """Load a mart model from DuckDB with optional WHERE clauses.
-
-    Args:
-        name: Mart model name (e.g. 'mart_price_trends_national').
-        **filters: Column-value pairs added as WHERE clauses.
-
-    Returns:
-        DataFrame with the query results.
-    """
-    query = f"SELECT * FROM {SCHEMA}.{name}"
-    conditions = []
-    values = []
-    for col, val in filters.items():
-        if val is not None and val != "All":
-            conditions.append(f"{col} = ?")
-            values.append(val)
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
-    query += " ORDER BY 1"
-
-    conn = _connect()
-    try:
-        df = conn.execute(query, values).fetchdf()
-    finally:
-        conn.close()
-    return df
-
-
-@functools.lru_cache(maxsize=8)
-def load_forecast_data() -> pd.DataFrame:
-    """Load forecast data from the static JSON file."""
-    with open(FORECAST_PATH, encoding="utf-8") as f:
-        raw = json.load(f)
-    records = raw.get("data", [])
-    if not records:
-        return pd.DataFrame()
-    return pd.DataFrame(records)
-
-
-@functools.lru_cache(maxsize=8)
-def load_forecast_metadata() -> dict:
-    """Load forecast metadata (models, data_source_note, etc.)."""
-    with open(FORECAST_PATH, encoding="utf-8") as f:
-        raw = json.load(f)
-    return raw.get("metadata", {})
 
 
 def get_latest_prices(
@@ -115,22 +52,6 @@ def compute_yoy_delta(df: pd.DataFrame, price_col: str = "avg_price_idr") -> pd.
 
     merged.drop(columns=["_month_dt", "_year", "_month_num"], inplace=True, errors="ignore")
     return merged
-
-
-@functools.lru_cache(maxsize=8)
-def load_islamic_calendar() -> pd.DataFrame:
-    """Load Islamic calendar from DuckDB int_islamic_calendar model."""
-    conn = _connect()
-    try:
-        df = conn.execute(
-            "SELECT year, eid_date, eid_month FROM wfp_intermediate.int_islamic_calendar ORDER BY year"
-        ).fetchdf()
-    finally:
-        conn.close()
-    if not df.empty:
-        df["eid_date"] = pd.to_datetime(df["eid_date"])
-    return df
-
 
 def compute_heatmap_matrix(df_national: pd.DataFrame) -> pd.DataFrame:
     """Compute 4x12 matrix: commodity x month_of_year, values = mean premium % vs annual avg.
