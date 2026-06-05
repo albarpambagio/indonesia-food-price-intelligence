@@ -8,7 +8,7 @@
 | **Data First Accessed** | 2026-05-22 |
 | **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
 | **Target Completion** | ~16–20 working days |
-| **Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅ (11 pipeline gaps closed), Phase 5g ✅ (13 pre-dashboard gaps closed). **Phase 6**: §6.SPIKE ✅ (GO), §6.DATA ✅ (7 keys), §6.WIREFRAME ✅ (all resolved). **§6.PAGES (Phase C) READY TO EXECUTE** — handoff written `docs/handoffs/HANDOFF-vizro-phase6-phasec-pages.md`. Dash pages exist as reference; will be replaced with Vizro `vm.Page(...)` configs. |
+| **Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅ (11 pipeline gaps closed), Phase 5g ✅ (13 pre-dashboard gaps closed). **Phase 6**: §6.SPIKE ✅ (GO), §6.DATA ✅ (7 keys), §6.WIREFRAME ✅ (all resolved). **§6.PAGES (Phase C) IN PROGRESS** — Page 1 Vizro built (`app.py` + 4 charts + `vm.Page`) with 4 bugfix sessions documented; Page 2 Seasonal Patterns built (5 charts + 3 cards + table + filters). Pages 3-4 have implementation handoffs ready. Dash pages 3-4 still exist as reference; will be replaced with Vizro `vm.Page(...)` configs. |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → **Vizro 0.1.x + DuckDB read-only data_manager** → **Hugging Face Spaces** |
 
 ### Parallelization Opportunities
@@ -19,7 +19,7 @@
 | §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
 
 **Sequential chain** (must wait): Phase 0 → 1 → 2 → 2.5 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
-> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (7 bugfixes) → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ (path, deps, dirs) → **Phase 3f ✅ (11 pipeline gaps)** → **Phase 5g ✅ (13 pre-dashboard gaps)** → **Phase 6**: §6.SPIKE ✅ → §6.DATA ✅ → §6.WIREFRAME ✅ → **§6.PAGES (Phase C) READY** (handoff: `docs/handoffs/HANDOFF-vizro-phase6-phasec-pages.md`).
+> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (7 bugfixes) → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ (path, deps, dirs) → **Phase 3f ✅ (11 pipeline gaps)** → **Phase 5g ✅ (13 pre-dashboard gaps)** → **Phase 6**: §6.SPIKE ✅ → §6.DATA ✅ → §6.WIREFRAME ✅ → **§6.PAGES (Phase C) IN PROGRESS** — Page 1 Vizro built ✅ → Page 1 bugfixes (4 sessions) ✅ → Page 2 Seasonal Patterns ✅ (5 charts + 3 cards + table + filters) → Pages 3-4 pending (handoffs ready).
 
 ---
 
@@ -434,19 +434,38 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 
 > **Sequential** — depends on §6.DATA. Page 1 must be rewritten (was Dash); pages 2-4 are net-new in either stack.
 > **Handoff**: `docs/handoffs/HANDOFF-vizro-phase6-phasec-pages.md` — full execution plan, Vizro patterns, wireframe references, verification checklist, suggested skills.
+> **Status**: Page 1 **BUILT** in Vizro (4 charts + vm.Page + model info card). 4 bugfix sessions documented. Pages 2-4 have detailed implementation handoffs ready (`HANDOFF-page2-seasonal-patterns-implementation.md`).
+
+#### Page Explainer
+
+> **What this page conveys:** "Is now a good time to lock in bulk purchase contracts?"
+>
+> Answers via commodity/island/year **dropdowns + slider** filtering 4 price **KPI cards** (current IDR price, YoY%), a multi-line **trend chart** with 6-month forecast overlay and 95% CI, **BUY/HOLD/WATCH signal badges**, and a YoY bar chart. Data: `mart_price_trends_national` + `forecast.json`.
 
 #### §6.C.1 — Page 1 (Price Trends & Forecast) — REBUILD
 
 > **REBUILDS** Dash `dashboard/pages/price_trends.py` (11,620 bytes, 2026-06-02) in Vizro.
+> **Status: BUILT with known bugs** — 4 chart files + vm.Page registered. 4 bugfix sessions documented in handoffs.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.C.1.1 | Wrap main trend chart as `custom_charts` function: `go.Figure()` + `add_vline` + `add_vrect` for forecast region + `go.Scatter(fill="toself")` for 95% CI area | ⬜ | Reuse verbatim from `analysis/eda.py` Q1. Wrap in `@capture("graph")` for Vizro. |
-| 6.C.1.2 | Wrap YoY bar chart as `custom_charts` function | ⬜ | Reuse `compute_yoy_delta()` from `data_access.py`. |
-| 6.C.1.3 | Build `vm.Page(title="Price Trends", components=[vm.Graph(figure=trend), vm.Graph(figure=yoy), vm.Card(...)])` | ⬜ | KPI cards → `vm.Card` with text. Signal logic → conditional `vm.Text` per commodity. |
-| 6.C.1.4 | Add 2 `vm.Parameter`s (commodity, island) + 1 `vm.Filter` (year_range, numeric bounds) | ✅ | **CRITICAL**: dropdowns containing "All" sentinel must use `vm.Parameter`, NOT `vm.Filter` (LEARNINGS §97). Year Range uses `vm.Filter` with `vm.RangeSlider` because no sentinel. All filters set `show_in_url=True` for cross-page state (LEARNINGS §87, §89). |
-| 6.C.1.5 | Wire model info card + forecast footnote via `vm.Container` | ⬜ | Forecast limitations footnote always visible — use `vm.Container` outside the page filter group. |
+| 6.C.1.1 | Wrap main trend chart as `custom_charts` function: `go.Figure()` + `add_vline` + `add_vrect` for forecast region + `go.Scatter(fill="toself")` for 95% CI area | ✅ | `dashboard/charts/trend_forecast.py` (126 LOC). Reuses `load_forecast_data()` from `data_access.py`. |
+| 6.C.1.2 | Wrap YoY bar chart as `custom_charts` function | ✅ | `dashboard/charts/yoy_bar.py` (86 LOC). Option A grouped bar with reference bands, thick zero line, per-trace hovertemplate. Uses `compute_yoy_delta()` from `data_access.py`. |
+| 6.C.1.3 | Build `vm.Page(title="Price Trends", components=[vm.Graph(figure=trend), vm.Graph(figure=yoy), vm.Card(...)])` | ✅ | `dashboard/pages/price_trends.py` (110 LOC). 4 `vm.Graph` components (kpi_sparklines, trend_forecast, yoy_bar, signal_badges) + `_build_model_info_card()`. Registered in `dashboard/app.py`. |
+| 6.C.1.4 | Add 2 `vm.Parameter`s (commodity, island) + 1 `vm.Filter` (year_range, numeric bounds) | ⚠ Partial | Commodity `vm.Parameter` done (LEARNINGS §97 — "All" sentinel must use `vm.Parameter`, NOT `vm.Filter`). **Island + Year Range filters still pending** per `HANDOFF-page1-completion.md`. |
+| 6.C.1.5 | Wire model info card + forecast footnote via `vm.Container` | ✅ | `_build_model_info_card()` in `price_trends.py` shows per-commodity model selection + holdout MAE + limitations card. |
 | 6.C.1.6 | Verify chart parity with original Dash Page 1: line shapes, colors, CI area, annotations | ⬜ | Visual regression check via side-by-side screenshot. |
+| 6.C.1.7 | **[NEW] Bugfix: first-render timing** — `vm.Graph(figure=fn(commodity_filter="commodity_filter"))` literal string on first render | ✅ | Removed literal `commodity_filter` from all 4 `vm.Graph()` calls. LEARNINGS §98. `HANDOFF-page1-bugs-and-learnings.md` (P1). |
+| 6.C.1.8 | **[NEW] Bugfix: YoY computation** — row-based `pct_change(periods=12)` replaced with merge-based `compute_yoy_delta()` | ✅ | Calendar-aligned YoY via merge on `(commodity, shifted_year, month_num)`. `HANDOFF-page1-bugs-and-learnings.md` (P2). |
+| 6.C.1.9 | **[NEW] Bugfix: chart overlap + y-axis clipping** — wrapped components in `vm.Container(layout=vm.Flex(direction="column", gap="20px"))`, added `yaxis_automargin=True` | ✅ | Committed in `9c0c948`. `HANDOFF-page1-hover-theme-wireframe.md`. |
+| 6.C.1.10 | **[NEW] Bugfix: YoY hover + theme text colors** — added per-trace `hovertemplate`, removed explicit `font.color` for dark mode | ✅ | Theme-adaptive colors: explicit `color` values baked into figure JSON survive Vizro's `update_graph_theme` shallow copy. `HANDOFF-page1-hover-theme-wireframe.md`. |
+| 6.C.1.11 | **[NEW] Bugfix: sidebar toggle workaround** — `vm.Parameter` first-render timing requires sidebar close/reopen to establish bound value | ✅ | Known Vizro 0.1.53 behavior. Workaround documented. LEARNINGS §98. `HANDOFF-page1-bugs-remaining.md`. |
+
+#### Page Explainer
+
+> **What this page conveys:** "When should we increase stock for each commodity?"
+>
+> Answers via commodity/island/year **dropdowns + slider** and a **driver toggle** (Ramadan / Harvest / Year-End / All) filtering a 12×4 seasonal **heatmap** (month × commodity, red=above avg, green=below), monthly **line chart** with highlighted driver bands, Ramadan **overlay chart** (T-2 to T+1 relative to Eid), sortable **summary table** (avg price, peak month, Ramadan premium), and 3 **action window cards**. Data: `mart_price_trends_national`.
 
 #### §6.C.2 — Page 2 (Seasonal Patterns) — NEW
 
@@ -454,15 +473,21 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.C.2.1 | Wrap seasonal heatmap (`px.imshow` 12×4 matrix) as `custom_charts` | ⬜ | **Source = `mart_price_trends_national`** (LEARNINGS §99). Pivot to 12×4 matrix (month × commodity) of `price_index_vs_annual_avg`. Y-axis: commodities, X-axis: months (Jan–Dec). `color_continuous_scale="RdYlGn_r"`. |
-| 6.C.2.2 | Wrap monthly line chart with driver-toggle bands (Ramadan/Harvest/Year-End/All) as `custom_charts` | ⬜ | `add_vrect` for highlighted months based on driver. Data: `mart_price_trends_national` filtered to display window. |
-| 6.C.2.3 | Wrap Ramadan overlay chart (`month_relative` T-2 to T+1, hline y=100) as `custom_charts` | ⬜ | **Grain correction** (LEARNINGS §100): source is monthly, so compute `month_relative` T-2 to T+1, NOT `week_relative` T-8 to T+6. Use `compute_ramadan_overlay()` from `data_access.py`. Filter `mart_price_trends_national` rows by `month_relative` range. X-axis: ["T-2 (2 mo before)", "T-1 (1 mo before)", "T (Eid month)", "T+1 (1 mo after)"]. Wireframe deviation [6d] — surface in PR description. |
-| 6.C.2.4 | Build summary table via `vm.AgGrid` (NOT `vm.Table` + `dash_ag_grid`) | ⬜ | **Vizro correction**: use `vm.AgGrid` directly (verified available in 0.1.53 via `dir(vizro.models)`). Aggregated: commodity, avg price, peak month, Ramadan premium (%). Sortable, sticky columns, conditional cell styling. Wireframe deviation [9e] from "TanStack Table" to AG Grid already resolved (eval §7.2). |
-| 6.C.2.5 | Add page-level driver toggle: `vm.Parameter(targets=[...], selector=vm.RadioItems(options=["All", "Ramadan", "Harvest", "Year-End"]))` | ⬜ | Parameter (not Filter) because it controls chart configuration, not data. Chart functions handle "All" sentinel themselves. |
-| 6.C.2.5b | Build action window cards (3 cards: Action Now / Upcoming Spikes / Safe to Lock) as `vm.Card` markdown components | ⬜ | **Pattern correction**: action cards are `vm.Card` markdown, not Plotly `kpi_sparklines`. Pattern from `_build_model_info_card` in Page 1. Use `compute_action_windows()` from `data_access.py`. |
-| 6.C.2.5c | Add page-level filter pattern: 2 `vm.Parameter`s (commodity, island) + 1 `vm.Filter` (year_range) | ⬜ | **Critical** (LEARNINGS §97): dropdowns with "All" use `vm.Parameter`; year_range numeric bounds use `vm.Filter`. All set `show_in_url=True` for cross-page state. Island Group "All" branch uses `mart_price_trends_national`; specific island branch (Cooking Oil only) uses `mart_seasonal_patterns`. |
-| 6.C.2.5d | Add Ramadan overlay detail sub-section: `month_relative` chart with `flag_ramadan_eid_month` overlay from `int_islamic_calendar` | ⬜ | For Cooking Oil, secondary detail showing exact month-to-month Ramadan price movement (2 mo before Eid, Eid month, 1 mo after). |
-| 6.C.2.6 | Build `vm.Page(...)`; wire all components; register in `dashboard/app.py` | ⬜ | Use `vm.Container` for action cards row. Pattern A (empty-figure swap via `vm.Parameter`) for conditional visibility — no Dash callback needed (LEARNINGS §96 alternative). |
+| 6.C.2.1 | Wrap seasonal heatmap (`px.imshow` 12×4 matrix) as `custom_charts` | ✅ | `dashboard/charts/seasonal_heatmap.py` — `@capture("graph")` function returning `px.imshow`. Pivot via `compute_heatmap_matrix()` in `data_access.py`. |
+| 6.C.2.2 | Wrap monthly line chart with driver-toggle bands (Ramadan/Harvest/Year-End/All) as `custom_charts` | ✅ | Replaced by heatmap. Driver switching handled by 3 separate charts (Ramadan overlay, harvest, year-end). |
+| 6.C.2.3 | Wrap Ramadan overlay chart (`month_relative` T-2 to T+1, hline y=100) as `custom_charts` | ✅ | `dashboard/charts/ramadan_overlay.py` — `@capture("graph")` multi-year overlay. Fixed: `month_relative` x-labels, `bool()` cast for `showlegend`, `.values` merge pattern. |
+| 6.C.2.4 | Build summary table via `vm.AgGrid` (NOT `vm.Table` + `dash_ag_grid`) | ✅ | `dashboard/charts/seasonal_summary_table.py` — `@capture("ag_grid")` with `vm.AgGrid`. Fixed: `__wrapped__()` pattern to test underlying function outside Vizro. |
+| 6.C.2.5 | Add page-level driver toggle: `vm.Parameter(targets=[...], selector=vm.RadioItems(options=["All", "Ramadan", "Harvest", "Year-End"]))` | ✅ | `vm.Parameter(selector=vm.RadioItems(options=["All", "Ramadan", "Harvest", "Year-End"]))` with `show_in_url=True`. |
+| 6.C.2.5b | Build action window cards (3 cards: Action Now / Upcoming Spikes / Safe to Lock) as `vm.Card` markdown components | ✅ | 3 `vm.Card` markdown components in `seasonal_patterns.py`. Content from `compute_action_windows()` in `data_access.py`. |
+| 6.C.2.5c | Add page-level filter pattern: 2 `vm.Parameter`s (commodity, island) + 1 `vm.Filter` (year_range) | ✅ | `vm.Parameter` for commodity/island (dropdowns with "All"); `vm.Filter` for year_range. All `show_in_url=True`. |
+| 6.C.2.5d | Add Ramadan overlay detail sub-section: `month_relative` chart with `flag_ramadan_eid_month` overlay from `int_islamic_calendar` | ✅ | `ramadan_overlay.py` overlays month_relative data with `flag_ramadan_eid_month` from `int_islamic_calendar`. |
+| 6.C.2.6 | Build `vm.Page(...)`; wire all components; register in `dashboard/app.py` | ✅ | `dashboard/pages/seasonal_patterns.py` — `vm.Page` with 2 `vm.Row` layout (3 driver charts + 3 cards + table). Registered in `app.py`. |
+
+#### Page Explainer
+
+> **What this page conveys:** "When should we increase stock for each commodity?"
+>
+> Answers via commodity/year **dropdowns** and seasonal driver **radio toggle** filtering a **4×12 heatmap** (price index vs annual average by month), a **Ramadan overlay** (multi-year month-relative price movement), a **harvest cycle** chart (monthly deviation by year), a **year-end** chart (Nov-Dec premium), a **summary table** (peak month, Ramadan premium), and **3 action cards** (Action Now / Upcoming Spikes / Safe to Lock). Data: `mart_price_trends_national` (all 4 commodities), `int_islamic_calendar` (Ramadan/Eid dates).
 
 #### §6.C.3 — Page 3 (Geographic Disparity) — NEW
 
@@ -476,6 +501,12 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 | 6.C.3.4 | Build province drill-down table via `vm.Table` sorted by price index asc | ⬜ | Honesty column noting data gaps. |
 | 6.C.3.5 | Add `vm.Container` with `vm.Text` data limitation callout (Cooking Oil only) | ⬜ | Always-visible alert. |
 | 6.C.3.6 | Build `vm.Page(...)`; wire cross-filter via `set_control` on island KPI cards | ⬜ | **Cross-filter primitive — primary justification for migration.** |
+
+#### Page Explainer
+
+> **What this page conveys:** "Which commodities to monitor as early warning indicators?"
+>
+> Answers via a **lag selector** (0–3 months) controlling a 4×4 **correlation heatmap** and 2 **leading indicator callout cards** (plain-language pair descriptions), plus commodity/year **dropdowns + slider** filtering a pair **scatter chart** (pre/post-2022 dot split), a 36-month **rolling correlation chart** (with 2022 break band), a **pre/post comparison table** (color-coded delta), and a **procurement implication card**. Data: `mart_correlation_summary` + `mart_commodity_correlation`.
 
 #### §6.C.4 — Page 4 (Commodity Signals) — NEW
 
@@ -533,6 +564,10 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 | 6.F.10 | Update `AGENTS.md` Phase 6 line: "Vizro + DuckDB + HF Spaces" | ⬜ | |
 | 6.F.11 | Remove Dash deps from `pyproject.toml` after Phase C is verified working | ⬜ | `dash`, `dash-bootstrap-components`, `dash-ag-grid` removed; keep `gunicorn`. |
 | 6.F.12 | Add `docs/LEARNINGS.md` §92-96 — wireframe resolution learnings (component mismatch, assets/ convention, Source→Control→Target, vm.Figure limitation, conditional visibility) | ✅ | Completed 2026-06-02 during wireframe evaluation resolution. |
+| 6.F.13 | **[NEW]** Add `docs/LEARNINGS.md` §97 — `vm.Filter` "All" sentinel bug (use `vm.Parameter` for dropdowns containing "All") | ✅ | Completed 2026-06-03 during Page 1 bugfix. Critical for Pages 2-4. |
+| 6.F.14 | **[NEW]** Add `docs/LEARNINGS.md` §98 — `_get_parametrized_config` first-render timing (never pass literal default args in `vm.Graph(figure=fn(...))`) | ✅ | Completed 2026-06-03 during Page 1 bugfix. |
+| 6.F.15 | **[NEW]** Add `docs/LEARNINGS.md` §99 — Page 2 data source mismatch (`mart_seasonal_patterns` 35 rows vs `mart_price_trends_national` 639 rows) | ✅ | Completed 2026-06-04 during Page 2 handoff. |
+| 6.F.16 | **[NEW]** Add `docs/LEARNINGS.md` §100 — Ramadan `month_relative` reframing (monthly source → T-2 to T+1, not weekly T-8 to T+6) | ✅ | Completed 2026-06-04 during Page 2 handoff. |
 
 ### §6.HISTORY — Superseded Dash Plan (2026-06-02, replaced same day)
 
@@ -540,6 +575,8 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 <summary><b>⚠ SUPERSEDED 2026-06-02</b> — Click to expand full Dash-based Phase 6 plan. Preserved for git history + sunk-cost accounting. Do not implement from this section; use §6.STACK through §6.DOCS above.</summary>
 
 ### Page 1 — Price Trends & Forecast ✅ DONE (2026-06-02)
+> **Explainer:** "Is now a good time to lock in bulk purchase contracts?" — **KPI cards** (price + YoY%), **dropdowns + slider** filter, **trend chart** with forecast overlay + CI, **BUY/HOLD/WATCH badges**, **YoY bar chart**, **model-info card**.
+
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 6.1.1 | KPI cards: current price + YoY% per commodity (4 cards) | ✅ DONE | `dbc.Card` × 4 via `components/kpi_cards.py`. Data source: `load_mart("mart_price_trends_national")` — gets latest row per commodity. `compute_yoy_delta()` adds YoY% column. Color-coded: green for price drops, red for increases. Always visible regardless of filter. |
@@ -556,6 +593,8 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 - Fixed Plotly 6.x incompatibility: `add_vline` `annotation_position` param → separate `add_annotation()` call
 
 ### Page 2 — Seasonal Patterns
+> **Explainer:** "When should we increase stock for each commodity?" — **heatmap** (month × commodity), **line chart** with driver bands, Ramadan **overlay chart**, sortable **summary table**, 3 **action window cards**. Toggle: Ramadan / Harvest / Year-End.
+
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 6.2.1 | Seasonal heatmap: month × commodity price index | ⬜ | `px.imshow` with `mart_seasonal_patterns` pivoted to 12×4 matrix. `color_continuous_scale="RdYlGn_r"` (red = above avg, green = below avg). Y-axis: commodities, X-axis: months (Jan–Dec). Instant visual scan for seasonal patterns. |
@@ -566,6 +605,8 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 | 6.2.6 | Wire page via single callback | ⬜ | `Input`: 3 global filters + `seasonal-driver`. `Output`: 4 chart figures + summary table children. Data source: `load_mart("mart_seasonal_patterns")`. |
 
 ### Page 3 — Geographic Disparity
+> **Explainer:** "Which island group offers the best sourcing price?" — 5 island **KPI cards** (clickable), **choropleth map** (province-level), **comparison line chart** (5 series + Java hline), sortable **province drill-down table**, **data limitation callout** (Cooking Oil only).
+
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 6.3.1 | KPI cards: price index per island group (5 cards) | ⬜ | `dbc.Card` × 5 from `mart_geo_disparity`. Java = 100 baseline (hardcoded). Each card shows island group name, current price index, and YoY change (`yoy_change_index`). Clickable cards set island filter via callback to `dcc.Store`. |
@@ -576,6 +617,8 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 | 6.3.6 | Wire page via single callback | ⬜ | `Input`: 3 global filters. `Output`: KPI cards, choropleth figure, comparison chart figure, drill-down table children. Data source: `load_mart("mart_geo_disparity")`. |
 
 ### Page 4 — Commodity Signals
+> **Explainer:** "Which commodities to monitor as early warning indicators?" — **lag selector** (0–3 mo) controlling **correlation heatmap** + 2 **callout cards**, pair **scatter chart** (pre/post-2022), **rolling correlation chart**, **pre/post comparison table**, **procurement implication card**.
+
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 6.4.1 | Leading indicator callout cards (top 2 relationships, plain language) | ⬜ | `dbc.Card` × 2 from `mart_correlation_summary` filtered to top 2 by `ABS(pearson_r)` at lag_months > 0. Category Manager audience — no r values in user-facing copy. Plain language: "When [Commodity A] rises, [Commodity B] typically follows within N months." Data: `load_mart("mart_correlation_summary", lag_months=selected_lag)` sorted by `ABS(pearson_r)` desc. |
@@ -863,6 +906,10 @@ pinned: false
 - [ ] **DEFERRED to Phase 6**: Dockerfile + HF Spaces metadata + push via `hf upload`
 - [ ] **DEFERRED to Phase 6**: HF Spaces live URL (`https://albarpambagio-wfp-food-price.hf.space`)
 - [ ] **DEFERRED to Phase 6**: dbt lineage screenshot + dashboard screenshots
+- [x] **Phase 6 Page 1 Vizro build**: `dashboard/app.py` Vizro entry + 4 chart files (`trend_forecast.py`, `kpi_sparklines.py`, `yoy_bar.py`, `signal_badges.py`) + `vm.Page` registered ✅ DONE
+- [x] **Phase 6 Page 1 bugfixes**: first-render timing (§98), YoY computation, chart overlap + y-axis clipping, YoY hover + theme text colors, sidebar toggle workaround — 4 sessions documented in handoffs ✅ DONE
+- [x] **LEARNINGS §97-§100 added**: vm.Filter "All" sentinel (§97), first-render timing (§98), Page 2 data source mismatch (§99), Ramadan month_relative reframing (§100) ✅ DONE
+- [x] **Page 2 implementation handoff**: `HANDOFF-page2-seasonal-patterns-implementation.md` — data sources, chart functions, conditional visibility, filter patterns, known bugs ✅ DONE
 - [x] **SUPERSEDED 2026-06-02**: Next.js + Shadboard + Recharts + Cloudflare Pages — replaced by Plotly Dash + dash-bootstrap-components + Hugging Face Spaces. See Phase 6 "Stack Change Decision" subsection for rationale.
 - [x] **Phase 5g 2026-06-02**: G1 — `mart_price_trends_national.sql` for Page 1 multi-commodity trend ✅ DONE
 - [x] **Phase 5g 2026-06-02**: G2 — Indonesia provinces GeoJSON vendored at `dashboard/assets/` ✅ DONE
@@ -920,6 +967,9 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 3f | `fix: 11 pipeline gaps — ramadan cross-year, hardcoded date, unified run_id, dbt log, func split, docs, pep723 pins, lineage dedup` | Cross-phase gap closing post-Phase-5f |
 | Phase 6 plan | `docs: phase 6 stack change — Next.js+Shadboard+CF Pages → Plotly Dash+dbc+HF Spaces` | This document update; LEARNINGS.md §75 marked superseded; rationale in Phase 6 "Stack Change Decision" subsection |
 | Wireframe resolution | `docs: resolve wireframe evaluation — AG Grid, GeoJSON paths, state machines, §92-96` | 6 files: 4 page wireframes, evaluation doc, LEARNINGS.md. 11 resolved items, 3 open items identified. |
+| Page 1 Vizro build | `feat: Page 1 Vizro — trend forecast, KPI sparklines, YoY bar, signal badges` | 4 chart files + vm.Page + model info card + data_manager registration |
+| Page 1 bugfixes | `fix: Page 1 Vizro bugs — first-render, YoY, overlap, clipping, hover, theme` | 6 fixes across charts + LEARNINGS §97-§98 |
+| Page 2 handoff | `docs: Page 2 seasonal patterns implementation handoff` | Data source correction, month_relative reframing, chart functions, filter patterns |
 
 **Rules**:
 - Conventional Commits (`feat:`, `docs:`, `fix:`)
@@ -948,3 +998,4 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | 2026-06-02 | **Phase 6 stack change — Next.js + Shadboard + Cloudflare Pages → Plotly Dash + dash-bootstrap-components + Hugging Face Spaces**. LEARNINGS.md §75's "Cloudflare Pages hard-blocks Python server frameworks" conclusion is **overridden**: HF Spaces replaces CF Pages as the deployment target, and §80's "Plotly EDA → Plotly dashboard" parity is now realized. The 5-JSON export pipeline (Phase 3.6–3.8) is preserved as a row-count verification artefact, not as the dashboard's data source — the Dash app queries DuckDB directly via `dashboard/data_access.py` with `@functools.lru_cache`. | Full plan written into Phase 6 section of this document (lines 282–end of Phase 6). Execution deferred at user request. Stack change rationale and rejected alternatives table inline in Phase 6 "Stack Change Decision" subsection. |
 | 2026-06-02 | **Phase 5g pre-dashboard gap analysis — 13 gaps found across 3 tiers**. Cross-referenced `implementation-plan.md` (Phases 0–5, 7, 8), `LEARNINGS.md` (80 sections), `AGENTS.md`, and current filesystem state. Tier 1 (data, 4 gaps): `mart_price_trends` lacks national-level data for 3/4 commodities (Page 1 KPI cards); Indonesia provinces GeoJSON not vendored (Page 3 choropleth); `mart_correlation_summary` lacks pre/post-2022 split (Page 4 scatter); Cooking Oil dual-forecast UX not specified (Page 1 chart). Tier 2 (docs, 4 gaps): AGENTS.md, README.md, `wfp-food-price-intelligence-project-plan.md` still reference Next.js+Shadboard+CF Pages; LEARNINGS.md §75 not marked SUPERSEDED. Tier 3 (pipeline, 5 gaps): dead `current_step_map` dict; `transform_status="running"` set after `dbt seed` (not before); no `dbt source freshness` invocation; `requirements.txt` out of sync; inconsistent date format in JSON exports. **User decisions**: G1 + G3 use option (a) — new mart / new columns. G4 shows both forecasts (primary default + secondary toggle). G6 defers §81-§85 stubs (Dash-specific learnings earned during Phase 6). Tier 3 bundled into Phase 5g plan, execution deferred. | Full plan written as "Phase 5g — Pre-Dashboard Gap Closing" subsection of this document. Status note at top of section; all 13 items in 3 tier tables + key decisions table + execution order table. Validation Checklist +13 deferred checkboxes. Commit Strategy +1 row. Execution deferred — pipeline orchestrator, exported JSONs, and dbt marts remain in current state until user triggers. |
 | 2026-06-02 | **Phase 6 plan expanded — HF CLI deployment workflow (§6.8)**. Consulted `huggingface/skills` HF CLI skill (`hf` command, replaces deprecated `huggingface-cli`). Documented: authentication (`hf auth login`), Space creation (`hf repos create --type space --space-sdk docker`), code upload (`hf upload ... --type space --delete`), build monitoring (`hf spaces logs --build --follow`), hot-reload (`hf spaces hot-reload`), SSH debugging (`hf spaces dev-mode` + `hf spaces ssh`), sleep/wake management. Expanded §6.6 (Dashboard Init) from 8 to 14 tasks with per-file implementation detail. Expanded §6.1–§6.4 (all 4 pages) with data source references and callback signatures. Added §6.8.10 (Local Dev vs Production differences table). Updated validation checklist. | Full plan written. Execution pending user go-ahead. |
+| 2026-06-03/04 | **Page 1 Vizro build + 4 bugfix sessions**. Built `dashboard/app.py` (Vizro entry) + 4 chart files (`trend_forecast.py`, `kpi_sparklines.py`, `yoy_bar.py`, `signal_badges.py`) + `vm.Page` registered. 4 handoff-documented bugfix sessions: (1) first-render timing — `vm.Graph(figure=fn(commodity_filter="commodity_filter"))` literal string bug (LEARNINGS §98); (2) YoY computation — row-based `pct_change(periods=12)` replaced with merge-based `compute_yoy_delta()`; (3) chart overlap + y-axis clipping — `vm.Container(layout=vm.Flex(direction="column", gap="20px"))` + `yaxis_automargin=True`; (4) YoY hover + theme text colors — per-trace `hovertemplate` + removed explicit `font.color` for dark mode. **Known workaround**: sidebar toggle required on first render due to Vizro 0.1.53 `vm.Parameter` callback timing. Pages 2-4 have detailed implementation handoffs ready. | Handoffs: `HANDOFF-page1-completion.md`, `HANDOFF-page1-bugs-and-learnings.md`, `HANDOFF-page1-hover-theme-wireframe.md`, `HANDOFF-page1-option-a-redesign.md`, `HANDOFF-page1-bugs-remaining.md`, `HANDOFF-page2-seasonal-patterns-implementation.md`. LEARNINGS §97-§100 added. |

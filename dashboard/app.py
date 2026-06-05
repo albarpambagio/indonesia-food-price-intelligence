@@ -14,9 +14,10 @@ from vizro import Vizro
 
 import dashboard.data_manager  # noqa: F401 — registers all data sources
 from dashboard.pages.price_trends import price_trends_page
+from dashboard.pages.seasonal_patterns import seasonal_patterns_page
 
 dashboard = vm.Dashboard(
-    pages=[price_trends_page],
+    pages=[price_trends_page, seasonal_patterns_page],
 )
 
 app = Vizro().build(dashboard)
