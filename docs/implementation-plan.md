@@ -8,7 +8,7 @@
 | **Data First Accessed** | 2026-05-22 |
 | **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
 | **Target Completion** | ~16–20 working days |
-| **Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅, Phase 5g ✅. **Phase 6**: Marimo-native dashboard **code deleted for clean rebuild** — architecture blueprint preserved in `docs/handoffs/HANDOFF-dashboard-marimo-rewrite.md` (data schemas, cross-cell scoping, dual-path resolution, Page 4 sync, failure modes). Rebuild will produce single `dashboard/app.py` Marimo notebook with static JSON + `mo.ui` components. |
+| **Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅, Phase 5g ✅. **Phase 6**: Page 1 complete (Price Trends & Forecast) + **UX polish pass** — all high-priority audit items resolved. Pages 2-4 placeholders. |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → **Marimo (native UI, mo.ui + mo.state)** → **Hugging Face Spaces (WASM)** |
 
 ### Parallelization Opportunities
@@ -19,7 +19,7 @@
 | §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
 
 **Sequential chain** (must wait): Phase 0 → 1 → 2 → 2.5 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
-> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ → Phase 3f ✅ → Phase 5g ✅ → **Phase 6 🟡 (Page 1 complete, Pages 2-4 pending)**
+> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ → Phase 3f ✅ → Phase 5g ✅ → **Phase 6 🟡 (Page 1 complete + UX polish pass, Pages 2-4 pending)**
 
 ---
 
@@ -338,8 +338,8 @@
 
 ---
 
-## Phase 6 — Dashboard (Marimo-native, static JSON, 4 pages) [PAGE 1 COMPLETE, PAGES 2-4 PENDING]
-> **Phase 6 REBUILD: Page 1 complete (2026-06-08).** The Marimo-native rewrite was completed 2026-06-08, deleted for clean rebuild, and **rebuilt** with Page 1 (Price Trends & Forecast) fully implemented: `mo.stat()` KPI cards, trend+forecast chart with CI, buy signal monitor, YoY annual table. Pages 2–4 are placeholders (`mo.md("Coming soon")`). Architecture blueprint preserved in `docs/handoffs/HANDOFF-dashboard-marimo-rewrite.md`. Rebuild handoff for Page 1 in `docs/handoffs/HANDOFF-page1-rebuild-plan.md`. All dbt marts, forecast JSONs, and export pipeline remain intact.
+## Phase 6 — Dashboard (Marimo-native, static JSON, 4 pages) [PAGE 1 COMPLETE ✅ UX AUDIT PASS ✅, PAGES 2-4 PENDING]
+> **Phase 6 REBUILD: Page 1 complete (2026-06-08) + UX audit pass (2026-06-08).** The Marimo-native rewrite was completed 2026-06-08, deleted for clean rebuild, and **rebuilt** with Page 1 (Price Trends & Forecast) fully implemented. A UX audit identified 18 issues; all high-priority items are resolved: dead Island Group control removed, stub tabs hidden, dual commodity filter merged, buy signal methodology disclosed, year slider defaults to last 5 years, unit labels added to KPI prices, colour-blind safe signal icons, reactivity cells split, emoji removed from sortable table columns. See LEARNINGS.md §106-111 for new learnings. Pages 2–4 are placeholders (`mo.md("Coming soon")`). Architecture blueprint preserved in `docs/handoffs/HANDOFF-dashboard-marimo-rewrite.md`. All dbt marts, forecast JSONs, and export pipeline remain intact.
 >
 > **Why Marimo over Vizro/Dash:** Vizro's cross-filtering promise was compelling on paper but its Pydantic configuration model made it hard to iterate on chart layout and impossible to fix Vizro-specific rendering bugs without framework patches. Marimo's reactive DAG provides equivalent cross-filter behavior (commodity/island filters propagate to all charts on the same page) without a framework abstraction layer — every chart is plain `go.Figure` inside `mo.ui.plotly()`.
 
@@ -737,7 +737,11 @@ pinned: false
 - [x] Phase 8: insights_log.md verified — 13 findings, all 3 insight types
 - [x] Phase 3f: 11 pipeline gaps closed (ramadan cross-year, hardcoded dates, run_id, dbt log, func split, docs, pins, lineage DDL)
 - [x] Full pipeline end-to-end verified: ingest → dbt (66/66) → forecast → export — 59.4s, unified run_id
-- [~] **Phase 6 Marimo-native dashboard**: Page 1 complete (KPI cards, trend chart, buy signals, YoY table). Pages 2-4 placeholders. Architecture blueprint in `HANDOFF-dashboard-marimo-rewrite.md`. Page 1 rebuild plan in `HANDOFF-page1-rebuild-plan.md`.
+- [x] **Phase 6 Marimo-native dashboard**: Page 1 complete (KPI cards, trend chart, buy signals, YoY table). Pages 2-4 placeholders.
+- [x] **Phase 6 UX audit (2026-06-08)**: 18 issues identified — all high-priority resolved: dead Island Group control removed, stub tabs hidden, commodity filter merged, buy signal methodology disclosed, year slider defaults to last 5 years, unit labels on KPI prices, colour-blind safe signal icons, reactivity cells split, emoji removed from table. Remaining: hardcoded annotation (TODO'd), sparkline axis context (min/max labels added).
+- [x] **Phase 6 v2 regression fix**: Broken `mo.ui.button` (counter-based, locked slider) replaced with `mo.ui.checkbox` (boolean). Unused imports cleaned. YoY reconciling note added between KPI and table sections.
+- [x] **Phase 6 v3 fixes**: KPI layout hstack→vstack (no overflow), per-commodity sparkline window (Flour data ends 2020-03, global window had 0 records), `mo.stat()` HTML captions replaced with plain text + `direction` parameter.
+- [x] **LEARNINGS.md §106-111**: 6 new sections — button counter, hstack overflow, stat HTML captions, per-commodity sparkline window, reactivity cell split, filter override consistency.
 - [x] **Phase 6 architecture documented**: `HANDOFF-dashboard-marimo-rewrite.md` — data schemas, cross-cell scoping, dual-path resolution, Page 4 sync, failure-mode validation ✅ DONE
 - [x] **Phase 6 `marimo check`**: ✅ PASS — `dashboard/app.py` valid Marimo notebook (PEP 723 header warning only)
 - [x] **Phase 6 `ruff check dashboard/`**: ✅ Clean — E501 only, 0 F821/B018/E702
@@ -840,3 +844,5 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | 2026-06-05→08 | **Marimo-native dashboard rewrite** — replaced both Vizro and Dash approaches with single `dashboard/app.py` Marimo notebook (static JSON, no DuckDB runtime). 4 pages, `mo.stat()`, `mo.callout()`, `mo.ui.table()`, `mo.ui.tabs()`. | ✅ Blueprint complete. Code deleted 2026-06-08 for clean rebuild. Architecture preserved in `docs/handoffs/HANDOFF-dashboard-marimo-rewrite.md`. Rebuild pending. |
 | 2026-06-08 | **Dashboard code deleted for clean rebuild** — `dashboard/` directory removed entirely. All pipeline layers (dbt marts, forecast, export) remain intact. Handoff document preserved as rebuild blueprint. | Accepted — clean slate for Marimo rebuild from handoff. Will regenerate JSON exports + GeoJSON as part of rebuild. |
 | 2026-06-08 | **Page 1 rebuild complete** — `dashboard/app.py` rebuilt as Marimo notebook with `mo.stat()` KPI cards (4 commodities), trend+forecast chart with CI overlay, buy signal monitor (3-tier: BUY/HOLD/WATCH), YoY annual price table, `mo.ui.tabs()` navigation. `data_static.py` rewritten with dual-path helpers. 11 Vizro-era chart files + `data_access.py` deleted. `kpi_sparklines.py` simplified to single `sparkline_chart()`. `build.py` simplified. AGENTS.md updated (Marimo conventions, lint baseline). LEARNINGS §102-105 added. `HANDOFF-page1-rebuild-plan.md` created. All JSON data files re-exported. `mart_price_trends_national.sql` WHERE clause updated. `profiles.yml` DuckDB path normalized. | Pages 2-4 are "Coming soon" placeholders. GeoJSON will be re-vendord for Page 3. WASM export test pending. |
+| 2026-06-08 | **UX audit of Page 1** — 18 issues identified across 8 categories. All high-priority resolved: dead controls removed, stub tabs hidden, filters merged, buy signal methodology disclosed, year slider default, unit labels, colour-blind icons, reactivity split, emoji sort fix. 3 remaining (low-priority): hardcoded annotation (TODO'd), sparkline axis context (min/max labels added), YoY reconciling note between KPI/table sections. | 3 v2 regression fixes applied: broken button→checkbox, unused imports cleaned, single-tab wrapper preserved. v3: hstack overflow→vstack, per-commodity sparkline window, HTML captions→plain text. LEARNINGS.md §106-111 added. |
+
