@@ -25,11 +25,11 @@ def _():
     import plotly.express as px
     import plotly.graph_objects as go
 
-    return go, json, mo, np, pd, px, Path
+    return go, mo, pd
 
 
 @app.cell
-def _(mo, pd):
+def _(pd):
     from data_static import load_csv, load_json, load_json_envelope
 
     price_trends_df = pd.DataFrame(load_json("price_trends.json"))
@@ -47,17 +47,7 @@ def _(mo, pd):
     commodity_correlation_df = pd.DataFrame(load_json("commodity_correlation.json"))
     correlation_summary_df = pd.DataFrame(load_json("correlation_summary.json"))
     islamic_calendar_df = load_csv("islamic_calendar.csv")
-
-    return (
-        commodity_correlation_df,
-        correlation_summary_df,
-        forecast_df,
-        geographic_disparity_df,
-        islamic_calendar_df,
-        price_national_df,
-        price_trends_df,
-        seasonal_patterns_df,
-    )
+    return forecast_df, price_national_df
 
 
 @app.cell
@@ -67,30 +57,29 @@ def _(mo):
         value="All",
         label="Commodity",
     )
-    island_dd = mo.ui.dropdown(
-        options=[
-            "All",
-            "Java",
-            "Sumatera",
-            "Kalimantan",
-            "Sulawesi",
-            "Eastern Indonesia",
-        ],
-        value="All",
-        label="Island Group",
-    )
     year_slider = mo.ui.range_slider(
         start=2007,
         stop=2024,
-        value=[2007, 2024],
+        value=[2019, 2024],
         step=1,
-        label="Year Range",
+        label="Year range",
     )
-    return commodity_dd, island_dd, year_slider
+    show_all_years = mo.ui.button(
+        label="Show all history",
+        kind="neutral",
+    )
+    return commodity_dd, show_all_years, year_slider
 
 
 @app.cell
-def _(commodity_dd, forecast_df, pd, price_national_df, year_slider):
+def _(show_all_years, year_slider):
+    if show_all_years.value:
+        year_slider.value = [2007, 2024]
+    return
+
+
+@app.cell
+def _(commodity_dd, price_national_df, year_slider):
     _yr_lo, _yr_hi = year_slider.value
     filtered_df = price_national_df[
         (price_national_df["month"].dt.year >= _yr_lo)
@@ -98,10 +87,14 @@ def _(commodity_dd, forecast_df, pd, price_national_df, year_slider):
     ].copy()
 
     if commodity_dd.value != "All":
-        filtered_df = filtered_df[
-            filtered_df["commodity_consolidated"] == commodity_dd.value
-        ]
+        filtered_df = filtered_df[filtered_df["commodity_consolidated"] == commodity_dd.value]
 
+    max_month = price_national_df["month"].max()
+    return filtered_df, max_month
+
+
+@app.cell
+def _(pd, price_national_df):
     latest_prices_df = (
         price_national_df.sort_values("month")
         .groupby("commodity_consolidated")
@@ -110,9 +103,7 @@ def _(commodity_dd, forecast_df, pd, price_national_df, year_slider):
         .copy()
     )
     latest_prices_df.columns = ["commodity_consolidated", "month", "latest_price"]
-    latest_prices_df["prev_month"] = (
-        latest_prices_df["month"] - pd.DateOffset(years=1)
-    )
+    latest_prices_df["prev_month"] = latest_prices_df["month"] - pd.DateOffset(years=1)
     prev_prices = price_national_df[["commodity_consolidated", "month", "avg_price_idr"]].copy()
     prev_prices.columns = ["commodity_consolidated", "prev_month", "prev_price"]
     latest_prices_df = latest_prices_df.merge(
@@ -123,36 +114,31 @@ def _(commodity_dd, forecast_df, pd, price_national_df, year_slider):
         / latest_prices_df["prev_price"]
         * 100
     )
+    return (latest_prices_df,)
 
+
+@app.cell
+def _(price_national_df):
     annual_df = price_national_df.copy()
     annual_df["year"] = annual_df["month"].dt.year
     annual_avg = (
-        annual_df.groupby(["year", "commodity_consolidated"])["avg_price_idr"]
-        .mean()
-        .reset_index()
+        annual_df.groupby(["year", "commodity_consolidated"])["avg_price_idr"].mean().reset_index()
     )
     annual_avg = annual_avg.sort_values(["commodity_consolidated", "year"])
     annual_avg["yoy_pct"] = (
-        annual_avg.groupby("commodity_consolidated")["avg_price_idr"].pct_change()
-        * 100
+        annual_avg.groupby("commodity_consolidated")["avg_price_idr"].pct_change() * 100
     )
     yoy_df = annual_avg.pivot(
         index="year", columns="commodity_consolidated", values="yoy_pct"
     ).reset_index()
     yoy_df.columns.name = None
+    return (yoy_df,)
 
-    def _fmt(v):
-        if pd.isna(v):
-            return "—"
-        sign = "🔴" if v > 0 else "🟢"
-        return f"{sign} {v:+.1f}%"
 
-    for col in ["Rice", "Cooking Oil", "Sugar", "Flour"]:
-        if col in yoy_df.columns:
-            yoy_df[col] = yoy_df[col].apply(_fmt)
-
+@app.cell
+def _(forecast_df, price_national_df):
     latest_actual = (
-        forecast_df[forecast_df["actual_price"].notna()]
+        forecast_df[(forecast_df["actual_price"].notna()) & (forecast_df["scenario"].isna())]
         .sort_values("date")
         .groupby("commodity")
         .last()
@@ -161,72 +147,74 @@ def _(commodity_dd, forecast_df, pd, price_national_df, year_slider):
     forecast_only = forecast_df[
         (forecast_df["forecast_price"].notna()) & (forecast_df["scenario"].isna())
     ].copy()
-    forecast_avg = (
-        forecast_only.groupby("commodity")["forecast_price"].mean().reset_index()
-    )
-    buy_signals_df = latest_actual.merge(
-        forecast_avg, on="commodity", suffixes=("", "_avg")
-    )
-    buy_signals_df["ratio"] = (
-        buy_signals_df["forecast_price"] / buy_signals_df["actual_price"]
-    )
+    forecast_avg = forecast_only.groupby("commodity")["forecast_price"].mean().reset_index()
+    buy_signals_df = latest_actual.merge(forecast_avg, on="commodity", suffixes=("", "_avg"))
+    buy_signals_df["ratio"] = buy_signals_df["forecast_price"] / buy_signals_df["actual_price"]
     buy_signals_df["signal"] = buy_signals_df["ratio"].apply(
         lambda r: "BUY NOW" if r < 0.98 else ("WATCH" if r > 1.02 else "HOLD")
     )
     buy_signals_df["color"] = buy_signals_df["signal"].map(
-        {"BUY NOW": "green", "HOLD": "gray", "WATCH": "orange"}
+        {"BUY NOW": "#2e7d32", "HOLD": "#757575", "WATCH": "#ed6c02"}
     )
-    fc_ranges = forecast_only.groupby("commodity").agg(
-        fc_start=("date", "min"), fc_end=("date", "max")
-    ).reset_index()
+    buy_signals_df["icon"] = buy_signals_df["signal"].map(
+        {"BUY NOW": "\u2705", "HOLD": "\u23f8\ufe0f", "WATCH": "\U0001f7e1"}
+    )
+    fc_ranges = (
+        forecast_only.groupby("commodity")
+        .agg(fc_start=("date", "min"), fc_end=("date", "max"))
+        .reset_index()
+    )
     buy_signals_df = buy_signals_df.merge(fc_ranges, on="commodity", how="left")
     buy_signals_df["reason"] = buy_signals_df.apply(
         lambda r: (
             f"Forecast avg ({r['forecast_price']:,.0f}) "
-            f"vs current ({r['actual_price']:,.0f}) · "
-            f"covers {r['fc_start'].strftime('%b %Y')}–{r['fc_end'].strftime('%b %Y')}"
+            f"vs current ({r['actual_price']:,.0f}) \u00b7 "
+            f"covers {r['fc_start'].strftime('%b %Y')}\u2013{r['fc_end'].strftime('%b %Y')}"
         ),
         axis=1,
     )
 
-    max_month = price_national_df["month"].max()
-    sparkline_df = price_national_df[
-        price_national_df["month"] >= max_month - pd.DateOffset(months=24)
-    ].copy()
-
-    return (
-        buy_signals_df,
-        filtered_df,
-        latest_prices_df,
-        sparkline_df,
-        yoy_df,
-    )
+    max_data_month = price_national_df["month"].max()
+    return buy_signals_df, max_data_month
 
 
 @app.cell
-def _(latest_prices_df, mo, pd, sparkline_df):
+def _(latest_prices_df, mo, pd, price_national_df):
     from charts.kpi_sparklines import sparkline_chart
+
+    _max_month = price_national_df["month"].max()
+    sparkline_df = price_national_df[
+        price_national_df["month"] >= _max_month - pd.DateOffset(months=24)
+    ].copy()
+
+    UNIT_MAP = {
+        "Rice": "/kg",
+        "Cooking Oil": "/L",
+        "Sugar": "/kg",
+        "Flour": "/kg",
+    }
 
     cards = []
     for _, row in latest_prices_df.iterrows():
         comm = row["commodity_consolidated"]
         price = row["latest_price"]
         yoy = row["yoy_pct"]
+        unit = UNIT_MAP.get(comm, "")
         if pd.isna(yoy):
             caption = "No YoY data"
         else:
-            arrow = "↑" if yoy > 0 else "↓"
+            arrow = "\u2191" if yoy > 0 else "\u2193"
             color = "#d32f2f" if yoy > 0 else "#2e7d32"
-            caption = f"<span style='color:{color}'>{arrow} {yoy:+.1f}% YoY</span>"
+            caption = (
+                f"<span style='color:{color}'>{arrow} {yoy:+.1f}% vs. same month last year</span>"
+            )
 
-        comm_data = sparkline_df[
-            sparkline_df["commodity_consolidated"] == comm
-        ]
+        comm_data = sparkline_df[sparkline_df["commodity_consolidated"] == comm]
         spark_fig = sparkline_chart(comm_data["avg_price_idr"])
         spark_widget = mo.ui.plotly(spark_fig)
 
         card = mo.stat(
-            value=f"Rp {price:,.0f}",
+            value=f"Rp {price:,.0f} {unit}",
             label=comm,
             caption=caption,
             bordered=True,
@@ -235,27 +223,16 @@ def _(latest_prices_df, mo, pd, sparkline_df):
         cards.append(card)
 
     kpi_cards_output = mo.hstack(cards, gap="0.5rem")
-    return kpi_cards_output,
+    return (kpi_cards_output,)
 
 
 @app.cell
-def _(mo):
-    chart_commodity_radio = mo.ui.radio(
-        options=["Rice", "Cooking Oil", "Sugar", "Flour", "All"],
-        value="All",
-        label="Show commodity",
-    )
-    return chart_commodity_radio,
-
-
-@app.cell
-def _(chart_commodity_radio, filtered_df, forecast_df, go, mo, pd):
+def _(commodity_dd, filtered_df, forecast_df, go, mo, pd):
     fig = go.Figure()
-    commodities = (
-        ["Rice", "Cooking Oil", "Sugar", "Flour"]
-        if chart_commodity_radio.value == "All"
-        else [chart_commodity_radio.value]
-    )
+    if commodity_dd.value == "All":
+        commodities = ["Rice", "Cooking Oil", "Sugar", "Flour"]
+    else:
+        commodities = [commodity_dd.value]
 
     forecast_primary = forecast_df[
         (forecast_df["forecast_price"].notna()) & (forecast_df["scenario"].isna())
@@ -271,9 +248,7 @@ def _(chart_commodity_radio, filtered_df, forecast_df, go, mo, pd):
                 y=sub["avg_price_idr"],
                 mode="lines",
                 name=c,
-                hovertemplate=(
-                    "%{x|%b %Y}<br>Price: Rp %{y:,.0f}<extra>" + c + "</extra>"
-                ),
+                hovertemplate=("%{x|%b %Y}<br>Price: Rp %{y:,.0f}<extra>" + c + "</extra>"),
             )
         )
 
@@ -286,9 +261,7 @@ def _(chart_commodity_radio, filtered_df, forecast_df, go, mo, pd):
                     mode="lines",
                     name=f"{c} (forecast)",
                     line=dict(dash="dash"),
-                    hovertemplate=(
-                        "%{x|%b %Y}<br>Forecast: Rp %{y:,.0f}<extra></extra>"
-                    ),
+                    hovertemplate=("%{x|%b %Y}<br>Forecast: Rp %{y:,.0f}<extra></extra>"),
                 )
             )
             ci_x = pd.concat([fc["date"], fc["date"][::-1]])
@@ -301,7 +274,7 @@ def _(chart_commodity_radio, filtered_df, forecast_df, go, mo, pd):
                     fillcolor="rgba(100,100,200,0.15)",
                     line=dict(color="rgba(0,0,0,0)"),
                     name="95% CI",
-                    showlegend=(c == commodities[0]),
+                    showlegend=True,
                 )
             )
 
@@ -323,7 +296,7 @@ def _(chart_commodity_radio, filtered_df, forecast_df, go, mo, pd):
                 x=sep_date,
                 y=1,
                 yref="paper",
-                text="Forecast →",
+                text="Forecast \u2192",
                 showarrow=False,
                 font=dict(size=11, color="gray"),
                 yshift=5,
@@ -337,107 +310,123 @@ def _(chart_commodity_radio, filtered_df, forecast_df, go, mo, pd):
             showarrow=True,
             arrowhead=2,
             font=dict(size=11),
+            ayref="y",
+            ay=-30,
         )
     fig.update_layout(
-        height=360,
-        yaxis_title="IDR per KG / L",
+        height=480,
+        yaxis_title="IDR per kg / L",
         yaxis_tickformat=",d",
         template="plotly_white",
         legend=dict(orientation="h", y=-0.2),
         margin=dict(l=60, r=20, t=40, b=80),
     )
     trend_chart_output = mo.ui.plotly(fig)
-    return trend_chart_output,
+    return (trend_chart_output,)
 
 
 @app.cell
-def _(buy_signals_df, mo):
+def _(buy_signals_df, max_data_month, mo):
+    _month_str = max_data_month.strftime("%B %Y")
+    _methodology = mo.accordion(
+        {
+            "How are buy signals calculated?": (
+                "The signal compares the **forecast average price** over the next 6 months "
+                "against the **most recent actual price**. A ratio below 0.98 means the model "
+                "expects prices to fall (potential buy opportunity). A ratio above 1.02 means "
+                "prices are expected to rise (watch for cost increases). Between 0.98\u20131.02 is "
+                " Hold \u2014 no strong directional signal."
+            )
+        },
+        multiple=False,
+    )
+
     rows = []
     for _, r in buy_signals_df.iterrows():
         rows.append(
             mo.md(
                 f"**{r['commodity']}** &nbsp; "
-                f"<span style='color:{r['color']}'>● {r['signal']}</span>  \n"
+                f"<span style='color:{r['color']}'>{r['icon']} {r['signal']}</span>  \n"
                 f"_{r['reason']}_"
             )
         )
 
     buy_signal_output = mo.vstack(
-        [mo.md("## Buy Signal Monitor"), *rows], gap="0.5rem"
+        [
+            mo.md("## Buy Signal Monitor"),
+            mo.md(f"_As of {_month_str}_"),
+            _methodology,
+            *rows,
+        ],
+        gap="0.5rem",
     )
-    return buy_signal_output,
+    return (buy_signal_output,)
 
 
 @app.cell
 def _(mo, year_slider, yoy_df):
     _yr_lo, _yr_hi = year_slider.value
-    table_data = yoy_df[
-        (yoy_df["year"] >= _yr_lo) & (yoy_df["year"] <= _yr_hi)
-    ].sort_values("year", ascending=False)
+    table_data = yoy_df[(yoy_df["year"] >= _yr_lo) & (yoy_df["year"] <= _yr_hi)].sort_values(
+        "year", ascending=False
+    )
+
+    _numeric_cols = ["Rice", "Cooking Oil", "Sugar", "Flour"]
 
     yoy_table_output = mo.vstack(
         [
             mo.md("## Annual Price Change"),
+            mo.md("_Sorted by most recent year. Values show full-year average change._"),
             mo.ui.table(
-                table_data[
-                    ["year", "Rice", "Cooking Oil", "Sugar", "Flour"]
-                ],
+                table_data[["year", *_numeric_cols]],
                 page_size=10,
             ),
         ],
         gap="0.5rem",
     )
-    return yoy_table_output,
+    return (yoy_table_output,)
 
 
 @app.cell
 def _(mo):
     footnote_output = mo.callout(
         mo.md(
-            "**Forecast limitations:** This model describes historical price patterns. "
+            "**Forecast note:** This model describes historical price patterns. "
             "It cannot anticipate government price controls, import tariff changes, or "
             "weather events. Confidence intervals widen significantly beyond 3 months. "
-            "1–2 month forecasts are more reliable than 5–6 month projections."
+            "1\u20132 month forecasts are more reliable than 5\u20136 month projections."
         ),
         kind="info",
     )
-    return footnote_output,
+    return (footnote_output,)
 
 
 @app.cell
 def _(
     buy_signal_output,
-    chart_commodity_radio,
     commodity_dd,
     footnote_output,
-    island_dd,
     kpi_cards_output,
+    max_month,
     mo,
+    show_all_years,
     trend_chart_output,
     year_slider,
     yoy_table_output,
 ):
-    island_note = mo.callout(
-        mo.md(
-            "**Note:** Island Group filter has no effect on this page. "
-            "Price trends and forecasts are at the national level for all commodities."
-        ),
-        kind="info",
-    )
+    _date_label = max_month.strftime("%b %Y")
 
     page1_content = mo.vstack(
         [
             mo.md("# Price Trends & Forecast"),
             mo.md(
-                "_Indonesian Staple Commodities · "
-                "Jan 2007 – May 2024 + 6-Month Forecast_"
+                f"_Indonesian Staple Commodities \u00b7 "
+                f"Jan 2007\u2013{_date_label} + 6-Month Forecast_"
             ),
             mo.hstack(
-                [commodity_dd, island_dd, year_slider, island_note],
+                [commodity_dd, year_slider, show_all_years],
                 gap="1rem",
             ),
             kpi_cards_output,
-            chart_commodity_radio,
             trend_chart_output,
             mo.hstack(
                 [buy_signal_output, yoy_table_output],
@@ -447,55 +436,17 @@ def _(
         ],
         gap="1.5rem",
     )
-    return page1_content,
+    return (page1_content,)
 
 
 @app.cell
-def _(mo):
-    page2_content = mo.vstack(
-        [
-            mo.md("## Seasonal Patterns"),
-            mo.md("_Coming soon — Page 2_"),
-        ],
-        gap="1rem",
-    )
-    return page2_content,
-
-
-@app.cell
-def _(mo):
-    page3_content = mo.vstack(
-        [
-            mo.md("## Geographic Disparity"),
-            mo.md("_Coming soon — Page 3_"),
-        ],
-        gap="1rem",
-    )
-    return page3_content,
-
-
-@app.cell
-def _(mo):
-    page4_content = mo.vstack(
-        [
-            mo.md("## Commodity Signals"),
-            mo.md("_Coming soon — Page 4_"),
-        ],
-        gap="1rem",
-    )
-    return page4_content,
-
-
-@app.cell
-def _(mo, page1_content, page2_content, page3_content, page4_content):
+def _(mo, page1_content):
     mo.ui.tabs(
         {
             "Price Trends": page1_content,
-            "Seasonal": page2_content,
-            "Geographic": page3_content,
-            "Commodity Signals": page4_content,
         }
     )
+    return
 
 
 if __name__ == "__main__":
