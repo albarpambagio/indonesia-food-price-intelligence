@@ -4,7 +4,6 @@
 #     "marimo",
 #     "pandas",
 #     "plotly",
-#     "numpy",
 # ]
 # ///
 
@@ -16,13 +15,8 @@ app = marimo.App(width="full")
 
 @app.cell
 def _():
-    import json
-    from pathlib import Path
-
     import marimo as mo
-    import numpy as np
     import pandas as pd
-    import plotly.express as px
     import plotly.graph_objects as go
 
     return go, mo, pd
@@ -30,10 +24,7 @@ def _():
 
 @app.cell
 def _(pd):
-    from data_static import load_csv, load_json, load_json_envelope
-
-    price_trends_df = pd.DataFrame(load_json("price_trends.json"))
-    price_trends_df["month"] = pd.to_datetime(price_trends_df["month"])
+    from data_static import load_json, load_json_envelope
 
     price_national_df = pd.DataFrame(load_json("price_trends_national.json"))
     price_national_df["month"] = pd.to_datetime(price_national_df["month"])
@@ -42,11 +33,6 @@ def _(pd):
     forecast_df = pd.DataFrame(forecast_raw)
     forecast_df["date"] = pd.to_datetime(forecast_df["date"])
 
-    seasonal_patterns_df = pd.DataFrame(load_json("seasonal_patterns.json"))
-    geographic_disparity_df = pd.DataFrame(load_json("geographic_disparity.json"))
-    commodity_correlation_df = pd.DataFrame(load_json("commodity_correlation.json"))
-    correlation_summary_df = pd.DataFrame(load_json("correlation_summary.json"))
-    islamic_calendar_df = load_csv("islamic_calendar.csv")
     return forecast_df, price_national_df
 
 
@@ -64,18 +50,7 @@ def _(mo):
         step=1,
         label="Year range",
     )
-    show_all_years = mo.ui.button(
-        label="Show all history",
-        kind="neutral",
-    )
-    return commodity_dd, show_all_years, year_slider
-
-
-@app.cell
-def _(show_all_years, year_slider):
-    if show_all_years.value:
-        year_slider.value = [2007, 2024]
-    return
+    return commodity_dd, year_slider
 
 
 @app.cell
@@ -408,7 +383,6 @@ def _(
     kpi_cards_output,
     max_month,
     mo,
-    show_all_years,
     trend_chart_output,
     year_slider,
     yoy_table_output,
@@ -423,7 +397,7 @@ def _(
                 f"Jan 2007\u2013{_date_label} + 6-Month Forecast_"
             ),
             mo.hstack(
-                [commodity_dd, year_slider, show_all_years],
+                [commodity_dd, year_slider],
                 gap="1rem",
             ),
             kpi_cards_output,
@@ -431,6 +405,10 @@ def _(
             mo.hstack(
                 [buy_signal_output, yoy_table_output],
                 gap="2rem",
+            ),
+            mo.md(
+                "_KPI cards show the latest month vs. the same month last year. "
+                "The table shows the change in full-year average prices._"
             ),
             footnote_output,
         ],
