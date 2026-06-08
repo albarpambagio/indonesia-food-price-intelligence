@@ -1,10 +1,10 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#     "marimo>=0.23.0",
-#     "pandas>=2.2.0",
-#     "plotly>=6.7.0",
-#     "numpy>=1.26.0",
+#     "marimo",
+#     "pandas",
+#     "plotly",
+#     "numpy",
 # ]
 # ///
 
@@ -15,326 +15,488 @@ app = marimo.App(width="full")
 
 
 @app.cell
-def setup():
-    import sys
+def _():
+    import json
     from pathlib import Path
 
-    _project_root = Path(__file__).resolve().parent.parent
-    if str(_project_root) not in sys.path:
-        sys.path.insert(0, str(_project_root))
-
     import marimo as mo
+    import numpy as np
     import pandas as pd
     import plotly.express as px
     import plotly.graph_objects as go
 
-    from dashboard.charts.action_cards import action_cards
-    from dashboard.charts.correlation_charts import (
-        correlation_heatmap,
-        pair_scatter,
-        pre_post_comparison_table,
-        rolling_correlation,
-    )
-    from dashboard.charts.geo_charts import (
-        geo_choropleth,
-        geo_comparison_scatter,
-        geo_province_table,
-    )
-    from dashboard.charts.harvest_chart import harvest_chart
-    from dashboard.charts.kpi_sparklines import kpi_sparklines
-    from dashboard.charts.ramadan_overlay import ramadan_overlay
-    from dashboard.charts.seasonal_heatmap import seasonal_heatmap
-    from dashboard.charts.seasonal_summary_table import seasonal_summary_table
-    from dashboard.charts.signal_badges import signal_badges
-    from dashboard.charts.trend_forecast import trend_forecast
-    from dashboard.charts.yearend_chart import yearend_chart
-    from dashboard.charts.yoy_bar import yoy_bar
-    from dashboard.data_access import (
-        compute_action_windows,
-        compute_heatmap_matrix,
-        compute_ramadan_overlay,
-        compute_yoy_delta,
-        get_latest_prices,
-    )
-    from dashboard.data_static import load_json
+    return go, json, mo, np, pd, px, Path
 
-    COMMODITIES = ["All", "Rice", "Cooking Oil", "Sugar", "Flour"]
-    ISLAND_GROUPS = ["All", "Java", "Sumatera", "Kalimantan", "Sulawesi", "Eastern Indonesia"]
+
+@app.cell
+def _(mo, pd):
+    from data_static import load_csv, load_json, load_json_envelope
+
+    price_trends_df = pd.DataFrame(load_json("price_trends.json"))
+    price_trends_df["month"] = pd.to_datetime(price_trends_df["month"])
+
+    price_national_df = pd.DataFrame(load_json("price_trends_national.json"))
+    price_national_df["month"] = pd.to_datetime(price_national_df["month"])
+
+    forecast_raw = load_json_envelope("forecast.json")
+    forecast_df = pd.DataFrame(forecast_raw)
+    forecast_df["date"] = pd.to_datetime(forecast_df["date"])
+
+    seasonal_patterns_df = pd.DataFrame(load_json("seasonal_patterns.json"))
+    geographic_disparity_df = pd.DataFrame(load_json("geographic_disparity.json"))
+    commodity_correlation_df = pd.DataFrame(load_json("commodity_correlation.json"))
+    correlation_summary_df = pd.DataFrame(load_json("correlation_summary.json"))
+    islamic_calendar_df = load_csv("islamic_calendar.csv")
 
     return (
-        mo, pd, px, go,
-        load_json,
-        compute_action_windows, compute_heatmap_matrix, compute_ramadan_overlay,
-        compute_yoy_delta, get_latest_prices,
-        trend_forecast, kpi_sparklines, yoy_bar, signal_badges,
-        seasonal_heatmap, ramadan_overlay, harvest_chart, yearend_chart,
-        action_cards, seasonal_summary_table,
-        geo_choropleth, geo_comparison_scatter, geo_province_table,
-        correlation_heatmap, pair_scatter, rolling_correlation, pre_post_comparison_table,
-        COMMODITIES, ISLAND_GROUPS,
+        commodity_correlation_df,
+        correlation_summary_df,
+        forecast_df,
+        geographic_disparity_df,
+        islamic_calendar_df,
+        price_national_df,
+        price_trends_df,
+        seasonal_patterns_df,
     )
 
 
 @app.cell
-def load_data(load_json):
-    price_trends = load_json("price_trends")
-    price_trends_national = load_json("price_trends_national")
-    forecast_raw = load_json("forecast", key="data")
-    forecast_meta = load_json("forecast", key="metadata")
-    seasonal_patterns = load_json("seasonal_patterns")
-    geographic_disparity = load_json("geographic_disparity")
-    commodity_correlation = load_json("commodity_correlation")
-    correlation_summary = load_json("correlation_summary")
-
-    return (
-        price_trends, price_trends_national, forecast_raw, forecast_meta,
-        seasonal_patterns, geographic_disparity, commodity_correlation, correlation_summary,
-    )
-
-
-@app.cell
-def global_filters(mo, COMMODITIES, ISLAND_GROUPS):
-    commodity = mo.ui.dropdown(
-        options=COMMODITIES,
+def _(mo):
+    commodity_dd = mo.ui.dropdown(
+        options=["All", "Rice", "Cooking Oil", "Sugar", "Flour"],
         value="All",
         label="Commodity",
     )
-    island = mo.ui.dropdown(
-        options=ISLAND_GROUPS,
+    island_dd = mo.ui.dropdown(
+        options=[
+            "All",
+            "Java",
+            "Sumatera",
+            "Kalimantan",
+            "Sulawesi",
+            "Eastern Indonesia",
+        ],
         value="All",
         label="Island Group",
     )
-    year_range = mo.ui.range_slider(
+    year_slider = mo.ui.range_slider(
         start=2007,
         stop=2024,
-        step=1,
         value=[2007, 2024],
+        step=1,
         label="Year Range",
     )
-    return commodity, island, year_range
+    return commodity_dd, island_dd, year_slider
 
 
 @app.cell
-def apply_filters(commodity, island, year_range,
-                  price_trends_national, forecast_raw, correlation_summary,
-                  geographic_disparity, commodity_correlation):
-    def _filter_year(df, col="month"):
-        if df.empty:
-            return df
-        lo, hi = year_range.value
-        if col in df.columns:
-            return df[(df[col].astype(str).str[:4].astype(int) >= lo) & (df[col].astype(str).str[:4].astype(int) <= hi)]
-        if "year" in df.columns:
-            return df[(df["year"] >= lo) & (df["year"] <= hi)]
-        return df
+def _(commodity_dd, forecast_df, pd, price_national_df, year_slider):
+    _yr_lo, _yr_hi = year_slider.value
+    filtered_df = price_national_df[
+        (price_national_df["month"].dt.year >= _yr_lo)
+        & (price_national_df["month"].dt.year <= _yr_hi)
+    ].copy()
 
-    trends_nat = price_trends_national.copy()
-    if commodity.value != "All":
-        trends_nat = trends_nat[trends_nat["commodity_consolidated"] == commodity.value]
-    trends_nat = _filter_year(trends_nat)
+    if commodity_dd.value != "All":
+        filtered_df = filtered_df[
+            filtered_df["commodity_consolidated"] == commodity_dd.value
+        ]
 
-    forecast = forecast_raw.copy()
-    if commodity.value != "All":
-        forecast = forecast[forecast["commodity"] == commodity.value]
-
-    geo = geographic_disparity.copy()
-    if commodity.value != "All":
-        geo = geo[geo["commodity_consolidated"] == commodity.value]
-    if island.value != "All":
-        geo = geo[geo["island_group"] == island.value]
-    geo = _filter_year(geo, "year")
-
-    corr_summary = correlation_summary.copy()
-
-    pair_df = commodity_correlation.copy()
-    pair_df = _filter_year(pair_df)
-
-    return trends_nat, forecast, geo, corr_summary, pair_df
-
-
-@app.cell
-def tab_trends(mo, trends_nat, forecast, commodity,
-               kpi_sparklines, trend_forecast, yoy_bar, signal_badges):
-    _commodity_val = commodity.value
-    _kpi_fig = kpi_sparklines(trends_nat, commodity_filter=_commodity_val)
-    _trend_fig = trend_forecast(trends_nat, forecast, commodity_filter=_commodity_val)
-    _yoy_fig = yoy_bar(trends_nat, commodity_filter=_commodity_val)
-    _signal_fig = signal_badges(trends_nat, forecast, commodity_filter=_commodity_val)
-
-    trends_content = mo.vstack([
-        mo.md("## Price Trends & Forecast"),
-        mo.md("Is now a good time to lock in bulk purchase contracts?"),
-        mo.ui.plotly(_kpi_fig),
-        mo.ui.plotly(_trend_fig),
-        mo.ui.plotly(_yoy_fig),
-        mo.ui.plotly(_signal_fig),
-        mo.md(
-            "> **Model Limitations:** Forecast uses AutoARIMA/AutoETS with 6-month horizon. "
-            "95% confidence intervals widen at 5-6 months. "
-            "Cooking Oil post-2022 structural break reduces reliability. "
-            "No volume weighting \u2014 all markets equal weight."
-        ),
-    ], gap="1rem")
-
-    return (trends_content,)
-
-
-@app.cell
-def seasonal_controls(mo):
-    driver = mo.ui.radio(
-        options=["All", "Ramadan", "Harvest", "Year-End"],
-        value="All",
-        label="Seasonal Driver",
+    latest_prices_df = (
+        price_national_df.sort_values("month")
+        .groupby("commodity_consolidated")
+        .last()
+        .reset_index()[["commodity_consolidated", "month", "avg_price_idr"]]
+        .copy()
     )
-    return (driver,)
-
-
-@app.cell
-def tab_seasonal(mo, pd, trends_nat, commodity, driver,
-                 seasonal_heatmap, ramadan_overlay, harvest_chart, yearend_chart,
-                 action_cards, seasonal_summary_table):
-    _commodity_val = commodity.value
-
-    _islamic_cal = pd.DataFrame()
-
-    _heatmap_fig = seasonal_heatmap(trends_nat, commodity_filter=_commodity_val)
-    _ramadan_fig = ramadan_overlay(trends_nat, _islamic_cal, commodity_filter=_commodity_val, driver=driver.value)
-    _harvest_fig = harvest_chart(trends_nat, commodity_filter=_commodity_val, driver=driver.value)
-    _yearend_fig = yearend_chart(trends_nat, commodity_filter=_commodity_val, driver=driver.value)
-    _cards_fig = action_cards(trends_nat, _islamic_cal, commodity_filter=_commodity_val, driver=driver.value)
-    _summary_df = seasonal_summary_table(trends_nat, _islamic_cal, commodity_filter=_commodity_val)
-
-    _seasonal_table = mo.ui.table(_summary_df) if not _summary_df.empty else mo.md("_No seasonal data available_")
-
-    seasonal_content = mo.vstack([
-        mo.md("## Seasonal Patterns"),
-        mo.md("When should we increase stock for each commodity?"),
-        driver,
-        mo.ui.plotly(_cards_fig),
-        mo.md(
-            "> Seasonal analysis uses national-level data for Rice, Sugar, Flour. "
-            "Island-level breakdown available for Cooking Oil only."
-        ),
-        mo.ui.plotly(_heatmap_fig),
-        mo.ui.plotly(_ramadan_fig),
-        mo.ui.plotly(_harvest_fig),
-        mo.ui.plotly(_yearend_fig),
-        _seasonal_table,
-    ], gap="1rem")
-
-    return (seasonal_content,)
-
-
-@app.cell
-def tab_geographic(mo, geo, commodity, island,
-                   geo_choropleth, geo_comparison_scatter, geo_province_table):
-    _commodity_val = commodity.value
-    _island_val = island.value
-
-    _geo_data = geo.copy()
-    if _commodity_val != "All":
-        _geo_data = _geo_data[_geo_data["commodity_consolidated"] == _commodity_val]
-    if _island_val != "All":
-        _geo_data = _geo_data[_geo_data["island_group"] == _island_val]
-
-    _choropleth_fig = geo_choropleth(_geo_data)
-    _comparison_fig = geo_comparison_scatter(_geo_data)
-    _province_df = geo_province_table(_geo_data)
-
-    _geo_table = mo.ui.table(_province_df) if not _province_df.empty else mo.md("_No geographic data available_")
-
-    geo_content = mo.vstack([
-        mo.md("## Geographic Disparity"),
-        mo.md("Which island group offers the best sourcing price?"),
-        mo.md(
-            "> Geographic analysis is limited to Cooking Oil. Rice, Sugar, and Flour "
-            "have no market-level actual prices in the WFP dataset."
-        ),
-        mo.ui.plotly(_choropleth_fig),
-        mo.ui.plotly(_comparison_fig),
-        mo.md("### Province Detail"),
-        _geo_table,
-    ], gap="1rem")
-
-    return (geo_content,)
-
-
-@app.cell
-def signal_controls(mo):
-    lag = mo.ui.radio(
-        options=[0, 1, 2, 3],
-        value=1,
-        label="Lag (months)",
+    latest_prices_df.columns = ["commodity_consolidated", "month", "latest_price"]
+    latest_prices_df["prev_month"] = (
+        latest_prices_df["month"] - pd.DateOffset(years=1)
+    )
+    prev_prices = price_national_df[["commodity_consolidated", "month", "avg_price_idr"]].copy()
+    prev_prices.columns = ["commodity_consolidated", "prev_month", "prev_price"]
+    latest_prices_df = latest_prices_df.merge(
+        prev_prices, on=["commodity_consolidated", "prev_month"], how="left"
+    )
+    latest_prices_df["yoy_pct"] = (
+        (latest_prices_df["latest_price"] - latest_prices_df["prev_price"])
+        / latest_prices_df["prev_price"]
+        * 100
     )
 
-    pair = mo.ui.dropdown(
-        options=[
-            "Rice \u2194 Oil",
-            "Rice \u2194 Sugar",
-            "Rice \u2194 Flour",
-            "Oil \u2194 Sugar",
-            "Oil \u2194 Flour",
-            "Sugar \u2194 Flour",
-        ],
-        value="Rice \u2194 Oil",
-        label="Commodity Pair",
+    annual_df = price_national_df.copy()
+    annual_df["year"] = annual_df["month"].dt.year
+    annual_avg = (
+        annual_df.groupby(["year", "commodity_consolidated"])["avg_price_idr"]
+        .mean()
+        .reset_index()
+    )
+    annual_avg = annual_avg.sort_values(["commodity_consolidated", "year"])
+    annual_avg["yoy_pct"] = (
+        annual_avg.groupby("commodity_consolidated")["avg_price_idr"].pct_change()
+        * 100
+    )
+    yoy_df = annual_avg.pivot(
+        index="year", columns="commodity_consolidated", values="yoy_pct"
+    ).reset_index()
+    yoy_df.columns.name = None
+
+    def _fmt(v):
+        if pd.isna(v):
+            return "—"
+        sign = "🔴" if v > 0 else "🟢"
+        return f"{sign} {v:+.1f}%"
+
+    for col in ["Rice", "Cooking Oil", "Sugar", "Flour"]:
+        if col in yoy_df.columns:
+            yoy_df[col] = yoy_df[col].apply(_fmt)
+
+    latest_actual = (
+        forecast_df[forecast_df["actual_price"].notna()]
+        .sort_values("date")
+        .groupby("commodity")
+        .last()
+        .reset_index()
+    )
+    forecast_only = forecast_df[
+        (forecast_df["forecast_price"].notna()) & (forecast_df["scenario"].isna())
+    ].copy()
+    forecast_avg = (
+        forecast_only.groupby("commodity")["forecast_price"].mean().reset_index()
+    )
+    buy_signals_df = latest_actual.merge(
+        forecast_avg, on="commodity", suffixes=("", "_avg")
+    )
+    buy_signals_df["ratio"] = (
+        buy_signals_df["forecast_price"] / buy_signals_df["actual_price"]
+    )
+    buy_signals_df["signal"] = buy_signals_df["ratio"].apply(
+        lambda r: "BUY NOW" if r < 0.98 else ("WATCH" if r > 1.02 else "HOLD")
+    )
+    buy_signals_df["color"] = buy_signals_df["signal"].map(
+        {"BUY NOW": "green", "HOLD": "gray", "WATCH": "orange"}
+    )
+    fc_ranges = forecast_only.groupby("commodity").agg(
+        fc_start=("date", "min"), fc_end=("date", "max")
+    ).reset_index()
+    buy_signals_df = buy_signals_df.merge(fc_ranges, on="commodity", how="left")
+    buy_signals_df["reason"] = buy_signals_df.apply(
+        lambda r: (
+            f"Forecast avg ({r['forecast_price']:,.0f}) "
+            f"vs current ({r['actual_price']:,.0f}) · "
+            f"covers {r['fc_start'].strftime('%b %Y')}–{r['fc_end'].strftime('%b %Y')}"
+        ),
+        axis=1,
     )
 
-    return lag, pair
+    max_month = price_national_df["month"].max()
+    sparkline_df = price_national_df[
+        price_national_df["month"] >= max_month - pd.DateOffset(months=24)
+    ].copy()
+
+    return (
+        buy_signals_df,
+        filtered_df,
+        latest_prices_df,
+        sparkline_df,
+        yoy_df,
+    )
 
 
 @app.cell
-def tab_signals(mo, pair_df, corr_summary, lag, pair,
-                correlation_heatmap, pair_scatter, rolling_correlation,
-                pre_post_comparison_table):
-    _pair_val = pair.value.lower().replace(" \u2194 ", "-")
-    _corr_heatmap_fig = correlation_heatmap(corr_summary, lag=lag.value)
-    _scatter_fig = pair_scatter(pair_df, _pair_val)
-    _rolling_fig = rolling_correlation(pair_df, _pair_val)
-    _comparison_df = pre_post_comparison_table(corr_summary)
+def _(latest_prices_df, mo, pd, sparkline_df):
+    from charts.kpi_sparklines import sparkline_chart
 
-    _strongest_row = None
-    if not corr_summary.empty:
-        _lag_df = corr_summary[corr_summary["lag_months"] == lag.value].copy()
-        if not _lag_df.empty:
-            _lag_df["abs_r"] = _lag_df["pearson_r"].abs()
-            _strongest_row = _lag_df.nlargest(1, "abs_r").iloc[0]
+    cards = []
+    for _, row in latest_prices_df.iterrows():
+        comm = row["commodity_consolidated"]
+        price = row["latest_price"]
+        yoy = row["yoy_pct"]
+        if pd.isna(yoy):
+            caption = "No YoY data"
+        else:
+            arrow = "↑" if yoy > 0 else "↓"
+            color = "#d32f2f" if yoy > 0 else "#2e7d32"
+            caption = f"<span style='color:{color}'>{arrow} {yoy:+.1f}% YoY</span>"
 
-    if _strongest_row is not None:
-        _pair_label = _strongest_row["commodity_pair"].replace("-", " \u2194 ").title()
-        _r_val = _strongest_row["pearson_r"]
-        implication = (
-            f"The strongest leading relationship at {lag.value}-month lag is "
-            f"{_pair_label} (r = {_r_val:.3f}). "
-            f"Procurement teams should monitor this pair as an early warning signal."
+        comm_data = sparkline_df[
+            sparkline_df["commodity_consolidated"] == comm
+        ]
+        spark_fig = sparkline_chart(comm_data["avg_price_idr"])
+        spark_widget = mo.ui.plotly(spark_fig)
+
+        card = mo.stat(
+            value=f"Rp {price:,.0f}",
+            label=comm,
+            caption=caption,
+            bordered=True,
+            slot=spark_widget,
         )
-    else:
-        implication = ""
+        cards.append(card)
 
-    signals_content = mo.vstack([
-        mo.md("## Commodity Signals"),
-        mo.md("Which commodities to monitor as early warning indicators?"),
-        lag,
-        mo.ui.plotly(_corr_heatmap_fig),
-        pair,
-        mo.ui.plotly(_scatter_fig),
-        mo.ui.plotly(_rolling_fig),
-        mo.md("### Pre/Post 2022 Comparison"),
-        mo.ui.table(_comparison_df) if not _comparison_df.empty else mo.md("_No comparison data available_"),
-        mo.md(f"_Procurement Implication:_ {implication}") if implication else mo.md(""),
-    ], gap="1rem")
-
-    return (signals_content,)
+    kpi_cards_output = mo.hstack(cards, gap="0.5rem")
+    return kpi_cards_output,
 
 
 @app.cell
-def dashboard(mo, commodity, island, year_range,
-              trends_content, seasonal_content, geo_content, signals_content):
-    mo.hstack([commodity, island, year_range], gap="1rem")
-    mo.ui.tabs({
-        "Price Trends": trends_content,
-        "Seasonal Patterns": seasonal_content,
-        "Geographic Disparity": geo_content,
-        "Commodity Signals": signals_content,
-    })
-    return
+def _(mo):
+    chart_commodity_radio = mo.ui.radio(
+        options=["Rice", "Cooking Oil", "Sugar", "Flour", "All"],
+        value="All",
+        label="Show commodity",
+    )
+    return chart_commodity_radio,
+
+
+@app.cell
+def _(chart_commodity_radio, filtered_df, forecast_df, go, mo, pd):
+    fig = go.Figure()
+    commodities = (
+        ["Rice", "Cooking Oil", "Sugar", "Flour"]
+        if chart_commodity_radio.value == "All"
+        else [chart_commodity_radio.value]
+    )
+
+    forecast_primary = forecast_df[
+        (forecast_df["forecast_price"].notna()) & (forecast_df["scenario"].isna())
+    ]
+
+    for c in commodities:
+        sub = filtered_df[filtered_df["commodity_consolidated"] == c]
+        if sub.empty:
+            continue
+        fig.add_trace(
+            go.Scatter(
+                x=sub["month"],
+                y=sub["avg_price_idr"],
+                mode="lines",
+                name=c,
+                hovertemplate=(
+                    "%{x|%b %Y}<br>Price: Rp %{y:,.0f}<extra>" + c + "</extra>"
+                ),
+            )
+        )
+
+        fc = forecast_primary[forecast_primary["commodity"] == c]
+        if not fc.empty:
+            fig.add_trace(
+                go.Scatter(
+                    x=fc["date"],
+                    y=fc["forecast_price"],
+                    mode="lines",
+                    name=f"{c} (forecast)",
+                    line=dict(dash="dash"),
+                    hovertemplate=(
+                        "%{x|%b %Y}<br>Forecast: Rp %{y:,.0f}<extra></extra>"
+                    ),
+                )
+            )
+            ci_x = pd.concat([fc["date"], fc["date"][::-1]])
+            ci_y = pd.concat([fc["upper_95"], fc["lower_95"][::-1]])
+            fig.add_trace(
+                go.Scatter(
+                    x=ci_x,
+                    y=ci_y,
+                    fill="toself",
+                    fillcolor="rgba(100,100,200,0.15)",
+                    line=dict(color="rgba(0,0,0,0)"),
+                    name="95% CI",
+                    showlegend=(c == commodities[0]),
+                )
+            )
+
+    if not forecast_primary.empty:
+        first_fc = forecast_primary.groupby("commodity")["date"].min()
+        vis = [c for c in commodities if c in first_fc.index]
+        if vis:
+            sep_date = first_fc[vis].min()
+            fig.add_shape(
+                type="line",
+                x0=sep_date,
+                x1=sep_date,
+                y0=0,
+                y1=1,
+                yref="paper",
+                line=dict(dash="dash", color="gray", width=1.5),
+            )
+            fig.add_annotation(
+                x=sep_date,
+                y=1,
+                yref="paper",
+                text="Forecast →",
+                showarrow=False,
+                font=dict(size=11, color="gray"),
+                yshift=5,
+            )
+
+    if fig.data:
+        fig.add_annotation(
+            x=pd.Timestamp("2022-04-01"),
+            y=fig.data[0].y.max() * 0.9,
+            text="2022 Export Ban",
+            showarrow=True,
+            arrowhead=2,
+            font=dict(size=11),
+        )
+    fig.update_layout(
+        height=360,
+        yaxis_title="IDR per KG / L",
+        yaxis_tickformat=",d",
+        template="plotly_white",
+        legend=dict(orientation="h", y=-0.2),
+        margin=dict(l=60, r=20, t=40, b=80),
+    )
+    trend_chart_output = mo.ui.plotly(fig)
+    return trend_chart_output,
+
+
+@app.cell
+def _(buy_signals_df, mo):
+    rows = []
+    for _, r in buy_signals_df.iterrows():
+        rows.append(
+            mo.md(
+                f"**{r['commodity']}** &nbsp; "
+                f"<span style='color:{r['color']}'>● {r['signal']}</span>  \n"
+                f"_{r['reason']}_"
+            )
+        )
+
+    buy_signal_output = mo.vstack(
+        [mo.md("## Buy Signal Monitor"), *rows], gap="0.5rem"
+    )
+    return buy_signal_output,
+
+
+@app.cell
+def _(mo, year_slider, yoy_df):
+    _yr_lo, _yr_hi = year_slider.value
+    table_data = yoy_df[
+        (yoy_df["year"] >= _yr_lo) & (yoy_df["year"] <= _yr_hi)
+    ].sort_values("year", ascending=False)
+
+    yoy_table_output = mo.vstack(
+        [
+            mo.md("## Annual Price Change"),
+            mo.ui.table(
+                table_data[
+                    ["year", "Rice", "Cooking Oil", "Sugar", "Flour"]
+                ],
+                page_size=10,
+            ),
+        ],
+        gap="0.5rem",
+    )
+    return yoy_table_output,
+
+
+@app.cell
+def _(mo):
+    footnote_output = mo.callout(
+        mo.md(
+            "**Forecast limitations:** This model describes historical price patterns. "
+            "It cannot anticipate government price controls, import tariff changes, or "
+            "weather events. Confidence intervals widen significantly beyond 3 months. "
+            "1–2 month forecasts are more reliable than 5–6 month projections."
+        ),
+        kind="info",
+    )
+    return footnote_output,
+
+
+@app.cell
+def _(
+    buy_signal_output,
+    chart_commodity_radio,
+    commodity_dd,
+    footnote_output,
+    island_dd,
+    kpi_cards_output,
+    mo,
+    trend_chart_output,
+    year_slider,
+    yoy_table_output,
+):
+    island_note = mo.callout(
+        mo.md(
+            "**Note:** Island Group filter has no effect on this page. "
+            "Price trends and forecasts are at the national level for all commodities."
+        ),
+        kind="info",
+    )
+
+    page1_content = mo.vstack(
+        [
+            mo.md("# Price Trends & Forecast"),
+            mo.md(
+                "_Indonesian Staple Commodities · "
+                "Jan 2007 – May 2024 + 6-Month Forecast_"
+            ),
+            mo.hstack(
+                [commodity_dd, island_dd, year_slider, island_note],
+                gap="1rem",
+            ),
+            kpi_cards_output,
+            chart_commodity_radio,
+            trend_chart_output,
+            mo.hstack(
+                [buy_signal_output, yoy_table_output],
+                gap="2rem",
+            ),
+            footnote_output,
+        ],
+        gap="1.5rem",
+    )
+    return page1_content,
+
+
+@app.cell
+def _(mo):
+    page2_content = mo.vstack(
+        [
+            mo.md("## Seasonal Patterns"),
+            mo.md("_Coming soon — Page 2_"),
+        ],
+        gap="1rem",
+    )
+    return page2_content,
+
+
+@app.cell
+def _(mo):
+    page3_content = mo.vstack(
+        [
+            mo.md("## Geographic Disparity"),
+            mo.md("_Coming soon — Page 3_"),
+        ],
+        gap="1rem",
+    )
+    return page3_content,
+
+
+@app.cell
+def _(mo):
+    page4_content = mo.vstack(
+        [
+            mo.md("## Commodity Signals"),
+            mo.md("_Coming soon — Page 4_"),
+        ],
+        gap="1rem",
+    )
+    return page4_content,
+
+
+@app.cell
+def _(mo, page1_content, page2_content, page3_content, page4_content):
+    mo.ui.tabs(
+        {
+            "Price Trends": page1_content,
+            "Seasonal": page2_content,
+            "Geographic": page3_content,
+            "Commodity Signals": page4_content,
+        }
+    )
+
+
+if __name__ == "__main__":
+    app.run()

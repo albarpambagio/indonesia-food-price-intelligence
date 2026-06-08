@@ -7,9 +7,10 @@ SELECT
   MIN(price_idr) AS min_price_idr,
   MAX(price_idr) AS max_price_idr
 FROM {{ ref('int_prices_normalised') }}
-WHERE filter_out = FALSE
-  AND price_flag = 'actual'
-  AND commodity_consolidated IS NOT NULL
+WHERE commodity_consolidated IS NOT NULL
+  AND price_idr > 0
+  AND unit IS NOT NULL
+  AND EXTRACT(YEAR FROM month) BETWEEN 2007 AND 2024
 GROUP BY
   month,
   commodity_consolidated

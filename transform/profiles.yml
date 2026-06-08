@@ -3,6 +3,6 @@ wfp_duckdb:
   outputs:
     dev:
       type: duckdb
-      path: ..\data\wfp.duckdb
+      path: ../data/wfp.duckdb
       schema: wfp
       threads: 4

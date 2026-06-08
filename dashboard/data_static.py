@@ -1,26 +1,27 @@
-"""Static JSON data loader for Marimo dashboard.
-
-Reads JSON files from public/data/ via filesystem.
-"""
-
-import json
 from pathlib import Path
 
-import pandas as pd
 
-DATA_DIR = Path(__file__).resolve().parent / "public" / "data"
+def _get_data_dir() -> Path:
+    local_path = Path(__file__).resolve().parent / "public" / "data"
+    if local_path.exists():
+        return local_path
+    return Path("data")
 
 
-def load_json(name: str, key: str | None = None) -> pd.DataFrame:
-    path = DATA_DIR / f"{name}.json"
-    if not path.exists():
-        return pd.DataFrame()
-    with open(path, encoding="utf-8") as f:
-        raw = json.load(f)
-    if key is not None and isinstance(raw, dict):
-        raw = raw.get(key, {})
-    if isinstance(raw, list):
-        return pd.DataFrame(raw)
-    if isinstance(raw, dict):
-        return pd.DataFrame([raw])
-    return pd.DataFrame()
+DATA_DIR = _get_data_dir()
+
+
+def load_json(filename: str) -> list[dict]:
+    import json
+    return json.loads((DATA_DIR / filename).read_text(encoding="utf-8"))
+
+
+def load_json_envelope(filename: str, key: str = "data") -> list[dict]:
+    import json
+    raw = json.loads((DATA_DIR / filename).read_text(encoding="utf-8"))
+    return raw[key]
+
+
+def load_csv(filename: str):
+    import pandas as pd
+    return pd.read_csv(DATA_DIR / filename)

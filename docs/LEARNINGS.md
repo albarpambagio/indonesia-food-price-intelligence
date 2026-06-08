@@ -62,6 +62,10 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 99 | [`mart_seasonal_patterns` Has 35 Rows (Cooking Oil Only, 7 Months) — Use `mart_price_trends_national` for Cross-Commodity Seasonal Analysis](#99-mart_seasonal_patterns-has-35-rows-cooking-oil-only-7-months--use-mart_price_trends_national-for-cross-commodity-seasonal-analysis) |
 | 100 | [Source Data Is Monthly — Page 2 (Seasonal Patterns) Ramadan `month_relative` Is T-2 to T+1, Not `week_relative` T-8 to T+6](#100-source-data-is-monthly--page-2-seasonal-patterns-ramadan-month_relative-is-t-2-to-t1-not-week_relative-t-8-to-t6) |
 | 101 | [`@capture("ag_grid")` Functions Must Return `dag.AgGrid`, Not `pd.DataFrame`](#101-captureag_grid-functions-must-return-dagaggrid-not-pddataframe) |
+| 102 | [Marimo-Native Rewrite: `mo.stat()` Over Plotly Annotation Hacks](#102-marimo-native-rewrite-mostat-over-plotly-annotation-hacks) |
+| 103 | [`mo.state()` Two-Sink Pattern for Cross-Filter State](#103-mostate-two-sink-pattern-for-cross-filter-state) |
+| 104 | [Data Reality vs Wireframe Assumptions in Dashboard Design](#104-data-reality-vs-wireframe-assumptions-in-dashboard-design) |
+| 105 | [Duplicate Variable Names Across Marimo Cells Cause Critical Errors](#105-duplicate-variable-names-across-marimo-cells-cause-critical-errors) |
 
 ---
 
@@ -2569,5 +2573,94 @@ def seasonal_summary_table(
 - `vizro/tables/_dash_ag_grid.py` — Vizro's built-in implementation showing the correct pattern
 - `vizro/models/_components/ag_grid.py:160` — `AgGrid.__call__` wraps return in `html.Div([figure, dcc.Store(...)])`
 - LEARNINGS.md §88 — Vizro `custom_charts` wrapper pattern (companion for `@capture("graph")`)
+
+---
+
+## 102: Marimo-Native Rewrite: `mo.stat()` Over Plotly Annotation Hacks
+
+### Context
+
+The original dashboard (Vizro era) used Plotly `make_subplots` with annotation text overlays for KPI cards, signal badges as annotations on invisible charts, and action cards via Plotly annotations with background/border colors.
+
+### Solution
+
+Replaced with proper Marimo UI components:
+
+| Old (Vizro) | New (Marimo-native) |
+|-------------|-------------------|
+| `make_subplots` + annotation text for KPI cards | `mo.stat(value=..., label=..., caption=..., bordered=True, slot=sparkline)` |
+| Plotly annotations for signal badges | `mo.md("<span>...</span>")` with inline colored dots |
+| Plotly annotations for action cards | `mo.stat()` in `mo.hstack()` |
+| `px.imshow(RdBu_r)` for seasonal heatmap | `go.Heatmap(colorscale="Blues", zmid=0)` |
+| `mo.md("> ...")` blockquotes | `mo.callout(kind="info"/"warn")` |
+
+### Files Affected
+
+- `dashboard/charts/kpi_sparklines.py` — rewritten from `make_subplots` to single-trace
+- `dashboard/charts/seasonal_heatmap.py` — rewritten from `px.imshow` to `go.Heatmap`
+- `dashboard/charts/signal_badges.py`, `action_cards.py`, `yoy_bar.py` — deleted
+
+---
+
+## 103: `mo.state()` Two-Sink Pattern for Cross-Filter State
+
+### Context
+
+Two features required multiple independent UI elements writing to a single shared state:
+- Page 3 Geographic: 5 KPI buttons → province drill-down table
+- Page 4 Signals: matrix click, pair dropdowns, table row click → scatter/stability chart
+
+### Solution
+
+`mo.state()` created in its own cell, never inside an assembly cell:
+
+```python
+selected_island, set_selected_island = mo.state("All")
+```
+
+Each source calls `set_selected_island(value)` via `on_click`:
+
+```python
+mo.ui.button(on_click=lambda _n=name: set_selected_island(_n))
+```
+
+---
+
+## 104: Data Reality vs Wireframe Assumptions
+
+### Context
+
+Wireframes in `docs/wireframes/` were designed before actual JSON data structures were finalized.
+
+| Assumption | Reality |
+|-----------|---------|
+| `seasonal_patterns.json` nested with all 4 commodities | Flat 35 rows, Cooking Oil only |
+| `geographic_disparity.json` has multi-year data | 2024 only (34 rows) |
+| `forecast.json` has `signals` key | No signals key; mix of `actual_price` and `forecast_price` rows |
+| `commodity_correlation.json` is 4×4 leader×follower | 6 pairs × 4 lags in flat format |
+
+### Mitigation
+
+`dashboard/data_access.py` compute functions wrap flat JSON into needed shapes. Use these functions rather than assuming raw JSON paths.
+
+---
+
+## 105: Duplicate Variable Names Across Marimo Cells
+
+### Context
+
+`marimo check` reported `critical[multiple-definitions]` because `content`, `latest`, `yoy` were defined in multiple cell functions. Marimo enforces globally unique non-private variable names.
+
+### Fix
+
+Use unique names for exported variables (`page1_output`, `page2_output`, etc.) and `_`-prefixed names for cell-private variables.
+
+### Rule
+
+Every variable returned from a cell must have a globally unique name. Cell-private variables should be `_`-prefixed.
+
+### Cross-Reference
+
+- LEARNINGS.md §69 — Marimo module-level `__` variables
 
 ---

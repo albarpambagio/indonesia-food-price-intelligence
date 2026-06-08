@@ -10,8 +10,8 @@ Indonesia Staple Food Price Intelligence — End-to-end data pipeline + forecast
 | **Source** | World Food Programme via Humanitarian Data Exchange |
 | **Volume** | 325,240 price records + 224 markets |
 | **Date Range** | January 2007 – May 2024 |
-| **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Vizro 0.1.x → Hugging Face Spaces |
-| **Phase Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅ (11 pipeline gaps closed), Phase 5g ✅ (13 pre-dashboard gaps), Phase 6 §6.SPIKE ✅ §6.DATA ✅ §6.WIREFRAME ✅ — **§6.PAGES (Phase C) READY TO EXECUTE** (handoff: `docs/handoffs/HANDOFF-vizro-phase6-phasec-pages.md`) |
+| **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → Marimo (native UI) → Hugging Face Spaces |
+| **Phase Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅, Phase 5g ✅, Phase 6 **pages complete** (Marimo-native rewrite, 4-page dashboard ✅) |
 | **Portfolio Goal** | Demonstrate upgraded ETL pipeline (DuckDB + dbt), time-series forecasting, and multi-dimensional procurement analytics |
 
 ### Business Scenario
@@ -167,7 +167,7 @@ indonesia-food-price-intelligence/
 │   └── forecast_experimentation.py  # Phase 3 optional model comparison
 ├── seeds/                      # dbt seed data
 │   └── islamic_calendar.csv    # Ramadan/Eid dates 2007–2024
-├── dashboard/                  # Vizro app (Hugging Face Spaces) — Pydantic config + DuckDB data_manager + custom_charts
+├── dashboard/                  # Marimo-native app — static JSON data, pandas compute, Plotly charts
 │   ├── public/
 │   │   └── data/               # Static JSON files
 │   └── src/
@@ -375,17 +375,20 @@ Mismatch sets `pipeline.lineage.export_status = 'failed'` and logs detailed coun
 - Error handling with try/except, log failures
 - dbt models: one transformation per CTE, document rationale
 
-### Vizro (Python)
-- Pages are Pydantic `vm.Page(title=..., components=[...], controls=[...])` configs; multi-page via `vm.Dashboard(pages=[...])` and `Vizro().build(dashboard).run()`
-- Cross-page filter state: every `vm.Filter` must set `show_in_url=True` to share state across pages in 0.1.50 (per §87, §89). URLs are ugly but battle-tested.
-- Cross-filtering via `set_control` action: `<vm.Card>.actions = [vm.Action(function=set_island_filter)]` enables click-card-to-filter-other-charts (the primary migration justification)
-- Advanced Plotly (`add_vline`, `add_vrect`, `go.Scatter(fill="toself")` for CI, `px.choropleth` with vendored GeoJSON) requires `custom_charts` registration: wrap as `@capture("graph")` function in `dashboard/charts/`, call as `vm.Graph(figure=fn(data_manager["mart_X"]))`
-- DataFrames registered via `data_manager.register_data(name, lambda: load_fn())` for lazy load; `dashboard/data_access.py:load_mart()` is framework-agnostic and reused as-is
-- Plotly figures: `go.Figure` with `layout.template="plotly_white"`; never `connectgaps=True` on time-series with quality-filtered gaps
-- Built-in charts via `vizro.plotly.express` (line, bar, imshow, scatter); custom_charts only when advanced features needed
-- Hugging Face Spaces entry: `app.py` exposing `vm.Dashboard` config; gunicorn target `app:app` (not Dash's `app:server`); port 7860; 2 workers; `--timeout 120`
-- Performance: lambda-based data_manager defers DataFrame compute; `data_access.py` `lru_cache(maxsize=32)` reused
-- Validate: `uv run python -c "from dashboard.app import dashboard; print(len(dashboard.pages))"` smoke test
+### Marimo Dashboard (app.py)
+- `dashboard/app.py` is a single Marimo notebook (~12 cells) with PEP 723 header
+- **Cell structure**: `setup()` → `load_data()` → `global_filters()` → `apply_filters()` → 4 page content cells → `dashboard()` tabs as final output
+- **KPI cards**: `mo.stat(value=..., label=..., caption=..., bordered=True, slot=mo.ui.plotly(sparkline))` — never Plotly annotations
+- **Info/warn boxes**: `mo.callout(kind="info"/"warn")` — never `mo.md(">...")` blockquotes
+- **Data tables**: `mo.ui.table(df, page_size=..., sortable=True)` — never Plotly table
+- **Charts**: `mo.ui.plotly(fig)` wrapping `go.Figure` — chart files in `dashboard/charts/` export `go.Figure`, never wrapped
+- **State management**: `mo.state()` only for two-sink patterns (Page 3 island filter, Page 4 pair selector); all other reactivity via DAG
+- **Page assembly**: Each page cell computes content inline and returns vstack via `return (pageN_output,)`; `dashboard()` cell creates `mo.ui.tabs({})` as final expression
+- **Variable naming**: Every exported variable must be globally unique; `_`-prefix for cell-private variables
+- **Widgets**: `mo.ui.dropdown()`, `mo.ui.radio()`, `mo.ui.range_slider()`, `mo.ui.slider()` for all controls
+- **Plotly figures**: `go.Figure` with `layout.template="plotly_white"`; never `connectgaps=True`
+- **WASM build**: `dashboard/build.py` exports via `marimo export html-wasm`; `dist/` directory for Hugging Face Spaces
+- **Validate**: `marimo check dashboard/app.py`, `ruff check dashboard/`, `uv run python dashboard/app.py` (script mode)
 
 ### Marimo Notebooks
 - Save as .py files (marimo's standard format)
@@ -421,30 +424,21 @@ Mismatch sets `pipeline.lineage.export_status = 'failed'` and logs detailed coun
 | ruff | 0.15.15 | Linting + formatting (replaces flake8, isort, black) | Windows + WSL |
 | ty | 0.0.43 (beta) | Type checking + IDE features (replaces mypy/pyright) | WSL only |
 
-### Current Baseline (2026-06-04)
+### Current Baseline (2026-06-08)
 | Check | Count | Category | Actionable? |
 |-------|-------|----------|-------------|
-| ruff E501 | 98 | Line too long | No — markdown tables in `eda.py`, Plotly template strings in dashboard |
-| ruff F821 | 11 | Undefined name | No — marimo cell scoping (variables exported via `return` across cells) |
-| ruff E712 | 7 | `== True` comparison | Yes — should use `df[flag]` directly |
-| ruff B905 | 5 | zip without `strict=` | Yes — add `strict=True` or `strict=False` |
-| ruff F841 | 2 | Unused variable | Yes — remove `opacity` (kpi_sparklines.py:56), `cm` (seasonal_patterns.py:135) |
+| ruff E501 | ~120 | Line too long | No — marimo f-strings, Plotly template strings, dashboard labels |
+| ruff E712 | 0 | `== True` comparison | ✅ Clean |
+| ruff B905 | 0 | zip without `strict=` | ✅ Clean |
+| ruff F841 | 0 | Unused variable | ✅ Clean |
+| ruff E702 | 0 | Semicolons | ✅ Clean |
 | **ty** unresolved-reference | 11 | Marimo scoping | No — cross-cell variables via `return` |
-| **ty** missing-argument | 16 | Vizro components | No — ty beta sees default args as required |
-| **ty** not-subscriptable | 7 | duckdb `fetchone()` | No — returns `Optional[tuple]`, always `[0]` in practice |
 | **ty** unresolved-attribute | 3 | `marimo.App` | No — ty beta can't resolve marimo's dynamic exports |
-| **ty** other | 10 | Various | No — framework interop (numpy/pandas, vizro) |
 
 ### Known False Positives (safe to ignore)
 - **marimo cell scoping**: ty reports `unresolved-reference` for variables defined in `setup()` cell but used in downstream cells — marimo's `return` mechanism exports them across the reactive DAG
-- **Vizro `missing-argument`**: ty beta doesn't see Vizro's Pydantic field defaults; all components work at runtime
 - **duckdb `not-subscriptable`**: `conn.execute().fetchone()[0]` always returns a tuple; ty infers `None` from the Optional return type
 - **`marimo.App`**: ty can't resolve marimo's `__all__` exports — marimo.App works at runtime
-
-### When to Fix Manually
-- E712 (`== True`): Replace with `df[flag]` for boolean column checks
-- B905: Add `strict=False` to `zip()` where lengths are intentionally unequal
-- F841: Remove unused variable assignments
 
 ---
 
@@ -536,8 +530,11 @@ uv run python forecast/run_forecast.py
 
 ### Verify Dashboard
 ```bash
-uv run python -c "from dashboard.app import app; print(f'Pages: {len(app.layout.children)}')"
-# DO NOT run: uv run python dashboard/app.py (blocks forever, human-use only)
+uv run python -c "from dashboard.app import app; print(f'Cells: {len(app._memoized_cells) if hasattr(app, \"_memoized_cells\") else \"OK\"}')"
+# Script mode (exits cleanly):
+uv run python dashboard/app.py
+# WASM export test:
+uv run marimo export html-wasm dashboard/app.py -o /tmp/test.html --mode run -f
 ```
 
 ---

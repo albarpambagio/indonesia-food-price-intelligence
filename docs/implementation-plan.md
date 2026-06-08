@@ -19,7 +19,7 @@
 | §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
 
 **Sequential chain** (must wait): Phase 0 → 1 → 2 → 2.5 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
-> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ → Phase 3f ✅ → Phase 5g ✅ → **Phase 6 ⬜ (architecture blueprint ready, code deleted for clean rebuild — rebuild pending)**
+> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ → Phase 3f ✅ → Phase 5g ✅ → **Phase 6 🟡 (Page 1 complete, Pages 2-4 pending)**
 
 ---
 
@@ -338,13 +338,13 @@
 
 ---
 
-## Phase 6 — Dashboard (Marimo-native, static JSON, 4 pages) [BLUEPRINT READY — CODE DELETED FOR CLEAN REBUILD 2026-06-08]
-> **Phase 6 is PENDING REBUILD.** The Marimo-native rewrite was completed 2026-06-08 (`dashboard/app.py`, all 4 pages, WASM export verified) and then **deleted by the user on 2026-06-08 for a clean rebuild**. The architecture blueprint is preserved in `docs/handoffs/HANDOFF-dashboard-marimo-rewrite.md` (data schemas, cross-cell scoping, dual-path resolution, Page 4 sync, failure-mode validation). All dbt marts, forecast JSONs, and export pipeline remain intact — only the frontend code was removed.
+## Phase 6 — Dashboard (Marimo-native, static JSON, 4 pages) [PAGE 1 COMPLETE, PAGES 2-4 PENDING]
+> **Phase 6 REBUILD: Page 1 complete (2026-06-08).** The Marimo-native rewrite was completed 2026-06-08, deleted for clean rebuild, and **rebuilt** with Page 1 (Price Trends & Forecast) fully implemented: `mo.stat()` KPI cards, trend+forecast chart with CI, buy signal monitor, YoY annual table. Pages 2–4 are placeholders (`mo.md("Coming soon")`). Architecture blueprint preserved in `docs/handoffs/HANDOFF-dashboard-marimo-rewrite.md`. Rebuild handoff for Page 1 in `docs/handoffs/HANDOFF-page1-rebuild-plan.md`. All dbt marts, forecast JSONs, and export pipeline remain intact.
 >
 > **Why Marimo over Vizro/Dash:** Vizro's cross-filtering promise was compelling on paper but its Pydantic configuration model made it hard to iterate on chart layout and impossible to fix Vizro-specific rendering bugs without framework patches. Marimo's reactive DAG provides equivalent cross-filter behavior (commodity/island filters propagate to all charts on the same page) without a framework abstraction layer — every chart is plain `go.Figure` inside `mo.ui.plotly()`.
 
-### §6.MARIMO — Marimo-native Dashboard Blueprint (2026-06-05 → 2026-06-08, handoff refined 2026-06-08)
-> ⚠ **Code deleted 2026-06-08 for clean rebuild.** This section documents the architecture of the previous implementation. The handoff document is the rebuild blueprint.
+### §6.MARIMO — Marimo-native Dashboard (Page 1 complete 2026-06-08, Pages 2-4 pending)
+> ✅ **Page 1 rebuilt and working.** Pages 2-4 have "Coming soon" placeholders. The handoff documents are the rebuild blueprints.
 
 **Decision rationale:** After the Vizro spike passed (§6.SPIKE), implementing the full 4-page Vizro dashboard revealed recurring pattern friction:
 1. Vizro's `vm.Graph(figure=fn(...))` first-render timing bug required sidebar toggle workarounds (§98)
@@ -737,19 +737,19 @@ pinned: false
 - [x] Phase 8: insights_log.md verified — 13 findings, all 3 insight types
 - [x] Phase 3f: 11 pipeline gaps closed (ramadan cross-year, hardcoded dates, run_id, dbt log, func split, docs, pins, lineage DDL)
 - [x] Full pipeline end-to-end verified: ingest → dbt (66/66) → forecast → export — 59.4s, unified run_id
-- [~] **Phase 6 Marimo-native dashboard**: Code **deleted 2026-06-08 for clean rebuild**. Architecture blueprint in `HANDOFF-dashboard-marimo-rewrite.md` ✅ DONE (rebuild pending)
+- [~] **Phase 6 Marimo-native dashboard**: Page 1 complete (KPI cards, trend chart, buy signals, YoY table). Pages 2-4 placeholders. Architecture blueprint in `HANDOFF-dashboard-marimo-rewrite.md`. Page 1 rebuild plan in `HANDOFF-page1-rebuild-plan.md`.
 - [x] **Phase 6 architecture documented**: `HANDOFF-dashboard-marimo-rewrite.md` — data schemas, cross-cell scoping, dual-path resolution, Page 4 sync, failure-mode validation ✅ DONE
-- [~] **Phase 6 `marimo check`**: Stale — `dashboard/app.py` deleted, will verify on rebuild
-- [~] **Phase 6 `ruff check dashboard/`**: Stale — `dashboard/` deleted, will re-check on rebuild
-- [~] **Phase 6 script mode**: Stale — `dashboard/app.py` deleted, will verify on rebuild
-- [~] **Phase 6 WASM export**: Stale — `dashboard/app.py` deleted, will re-test on rebuild
-- [ ] **Phase 6 WASM deploy**: `dist/` folder served via HF Spaces (static HTML, no Docker) — pending rebuild + HF Spaces WASM config
-- [ ] **DEFERRED**: HF Spaces live URL + dbt lineage screenshot + dashboard screenshots — pending rebuild
+- [x] **Phase 6 `marimo check`**: ✅ PASS — `dashboard/app.py` valid Marimo notebook (PEP 723 header warning only)
+- [x] **Phase 6 `ruff check dashboard/`**: ✅ Clean — E501 only, 0 F821/B018/E702
+- [x] **Phase 6 script mode**: ✅ PASS — `uv run python dashboard/app.py` exits cleanly
+- [ ] **Phase 6 WASM export**: Pending — needs `marimo export html-wasm` test after Pages 2-4 complete
+- [ ] **Phase 6 WASM deploy**: `dist/` folder served via HF Spaces (static HTML, no Docker) — pending Pages 2-4 + HF Spaces WASM config
+- [ ] **DEFERRED**: HF Spaces live URL + dbt lineage screenshot + dashboard screenshots — pending Pages 2-4 completion
 - [x] **Vizro history preserved**: §6.SPIKE/§6.DATA/§6.WIREFRAME collapsed into §6.HISTORY details block ✅ DONE
 - [x] **Dash scaffolding preserved**: §6.6-§6.8 collapsed into §6.HISTORY details block ✅ DONE
 - [x] **SUPERSEDED 2026-06-02**: Next.js + Shadboard + Recharts + Cloudflare Pages — replaced by Plotly Dash + dash-bootstrap-components + Hugging Face Spaces. See Phase 6 "Stack Change Decision" subsection for rationale.
 - [x] **Phase 5g 2026-06-02**: G1 — `mart_price_trends_national.sql` for Page 1 multi-commodity trend ✅ DONE (preserved in dbt)
-- [~] **Phase 5g 2026-06-02**: G2 — Indonesia provinces GeoJSON vendored at `dashboard/assets/` ✅ DONE **FILE DELETED 2026-06-08** — will re-vendor on rebuild
+- [~] **Phase 5g 2026-06-02**: G2 — Indonesia provinces GeoJSON vendored at `dashboard/assets/` ✅ DONE **FILE DELETED 2026-06-08** — will re-vendor when Page 3 (Geographic Disparity) is built
 - [x] **Phase 5g 2026-06-02**: G3 — `pearson_r_pre_2022` + `pearson_r_post_2022` columns in `mart_correlation_summary` ✅ DONE (preserved in dbt)
 - [x] **Phase 5g 2026-06-02**: G4 — Cooking Oil dual-forecast (primary + `post2022_robustness` toggle) documented in `forecast.json` metadata + §6.1.2 wireframe ✅ DONE (preserved in forecast.json)
 - [x] **Phase 5g 2026-06-02**: G5 — AGENTS.md stack sweep (6 sections: L13, L70-73, L93, L338, L388, L495) ✅ DONE
@@ -799,7 +799,7 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 3d | `docs: forecasting methodology` | `model_methodology.md` |
 | Phase 3e | `fix: phase 3 bugfix — 7 gaps from pipeline audit` | Error handler, lineage DDL, metadata, skips, connection, t_minus_3, status value |
 | Phase 6 blueprint | `docs: marimo handoff — data schemas, cross-cell scoping, dual-path, Page 4 sync, failure modes` | Architecture reference: 8 DataFrame schemas, 40+ cross-cell variable exports, three-source mo.state() mechanism, validation diagnosis table |
-| Phase 6 rebuild | `feat: Marimo-native dashboard — static JSON, mo.ui, 4 tabs` | Frontend — Marimo notebook with `mo.stat()`, `mo.callout()`, `mo.ui.table()`, `mo.ui.tabs()`. Rebuild from handoff blueprint. |
+| Phase 6 rebuild | `feat: Marimo dashboard rebuild — Page 1 complete, Pages 2-4 placeholders` | `app.py` (mo.stat KPIs, trend chart, buy signals, YoY table), `data_static.py` rewritten, 11 chart files deleted, `kpi_sparklines.py` simplified, `build.py` simplified, AGENTS.md + LEARNINGS updated, all JSON re-exported |
 | Phase 7 | `docs: forecasting methodology` | `model_methodology.md` + `forecast_runbook.md` |
 | Phase 8 | `docs: README, insights, recommendations` | Final packaging — README, insights_log verified |
 | Phase 3f | `fix: 11 pipeline gaps — ramadan cross-year, hardcoded date, unified run_id, dbt log, func split, docs, pep723 pins, lineage dedup` | Cross-phase gap closing post-Phase-5f |
@@ -839,3 +839,4 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | 2026-06-03/04 | **Page 1 Vizro build + 4 bugfix sessions** (historical — superseded by Marimo). Built `dashboard/app.py` (Vizro entry) + 4 chart files + `vm.Page` registered. 4 handoff-documented bugfix sessions. LEARNINGS §97-§100 added. | All Vizro work superseded by Marimo-native rewrite (2026-06-05→2026-06-08). Preserved in git history. |
 | 2026-06-05→08 | **Marimo-native dashboard rewrite** — replaced both Vizro and Dash approaches with single `dashboard/app.py` Marimo notebook (static JSON, no DuckDB runtime). 4 pages, `mo.stat()`, `mo.callout()`, `mo.ui.table()`, `mo.ui.tabs()`. | ✅ Blueprint complete. Code deleted 2026-06-08 for clean rebuild. Architecture preserved in `docs/handoffs/HANDOFF-dashboard-marimo-rewrite.md`. Rebuild pending. |
 | 2026-06-08 | **Dashboard code deleted for clean rebuild** — `dashboard/` directory removed entirely. All pipeline layers (dbt marts, forecast, export) remain intact. Handoff document preserved as rebuild blueprint. | Accepted — clean slate for Marimo rebuild from handoff. Will regenerate JSON exports + GeoJSON as part of rebuild. |
+| 2026-06-08 | **Page 1 rebuild complete** — `dashboard/app.py` rebuilt as Marimo notebook with `mo.stat()` KPI cards (4 commodities), trend+forecast chart with CI overlay, buy signal monitor (3-tier: BUY/HOLD/WATCH), YoY annual price table, `mo.ui.tabs()` navigation. `data_static.py` rewritten with dual-path helpers. 11 Vizro-era chart files + `data_access.py` deleted. `kpi_sparklines.py` simplified to single `sparkline_chart()`. `build.py` simplified. AGENTS.md updated (Marimo conventions, lint baseline). LEARNINGS §102-105 added. `HANDOFF-page1-rebuild-plan.md` created. All JSON data files re-exported. `mart_price_trends_national.sql` WHERE clause updated. `profiles.yml` DuckDB path normalized. | Pages 2-4 are "Coming soon" placeholders. GeoJSON will be re-vendord for Page 3. WASM export test pending. |

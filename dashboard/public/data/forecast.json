@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-05-26T05:20:21.915008+00:00",
+    "generated_at": "2026-06-08T04:19:46.651335+00:00",
     "data_start": "2007-01-01",
     "data_end": "2024-12-01",
     "forecast_horizon": "6_months",
@@ -51,7 +51,12 @@
       }
     },
     "data_source_note": "Forecast aggregates ALL price data (including 'aggregate' flag) to maximize training data for Rice/Sugar/Flour where actual market-level prices end ~2020. Dashboard historical trends use 'actual' prices only. Forecast trend line may diverge slightly from dashboard's actual-only history.",
-    "limitations": "Forecast assumes no structural breaks (policy interventions, import tariff changes, El Nino cycles). 1-2 month forecasts more reliable than 5-6 month. Confidence intervals widen explicitly with horizon. Cooking Oil includes a post-2022 robustness check due to the 2022 price shock."
+    "limitations": "Forecast assumes no structural breaks (policy interventions, import tariff changes, El Nino cycles). 1-2 month forecasts more reliable than 5-6 month. Confidence intervals widen explicitly with horizon. Cooking Oil includes a post-2022 robustness check due to the 2022 price shock.",
+    "cooking_oil_forecast_behavior": {
+      "primary": "Full-history AutoARIMA (default trace on Page 1)",
+      "secondary": "Post-2022 AutoARIMA robustness check (toggleable via Page 1 checkbox)",
+      "rationale": "2022 cooking oil price shock creates a structural break. Primary model uses all history for trend context; secondary model retrained on post-2022 data to show structural-break sensitivity."
+    }
   },
   "data": [
     {
@@ -2220,90 +2225,90 @@
     {
       "date": "2025-01-01",
       "commodity": "Cooking Oil",
-      "forecast_price": 21210.47,
-      "lower_95": 20430.44,
-      "upper_95": 21990.51,
+      "forecast_price": 21210.4,
+      "lower_95": 20430.37,
+      "upper_95": 21990.43,
       "model_used": "AutoARIMA"
     },
     {
       "date": "2025-02-01",
       "commodity": "Cooking Oil",
-      "forecast_price": 21222.05,
-      "lower_95": 19932.44,
-      "upper_95": 22511.67,
+      "forecast_price": 21222.17,
+      "lower_95": 19932.59,
+      "upper_95": 22511.74,
       "model_used": "AutoARIMA"
     },
     {
       "date": "2025-03-01",
       "commodity": "Cooking Oil",
-      "forecast_price": 21301.42,
-      "lower_95": 19713.37,
-      "upper_95": 22889.47,
+      "forecast_price": 21301.58,
+      "lower_95": 19713.56,
+      "upper_95": 22889.6,
       "model_used": "AutoARIMA"
     },
     {
       "date": "2025-04-01",
       "commodity": "Cooking Oil",
-      "forecast_price": 21353.27,
-      "lower_95": 19493.75,
-      "upper_95": 23212.78,
+      "forecast_price": 21353.55,
+      "lower_95": 19494.07,
+      "upper_95": 23213.02,
       "model_used": "AutoARIMA"
     },
     {
       "date": "2025-05-01",
       "commodity": "Cooking Oil",
-      "forecast_price": 21416.29,
-      "lower_95": 19327.75,
-      "upper_95": 23504.82,
+      "forecast_price": 21416.65,
+      "lower_95": 19328.16,
+      "upper_95": 23505.14,
       "model_used": "AutoARIMA"
     },
     {
       "date": "2025-06-01",
       "commodity": "Cooking Oil",
-      "forecast_price": 21474.77,
-      "lower_95": 19177.16,
-      "upper_95": 23772.37,
+      "forecast_price": 21475.23,
+      "lower_95": 19177.68,
+      "upper_95": 23772.79,
       "model_used": "AutoARIMA"
     },
     {
       "date": "2025-01-01",
       "commodity": "Cooking Oil",
-      "forecast_price": 20840.3,
+      "forecast_price": 20840.15,
       "model_used": "AutoARIMA",
       "scenario": "post2022_robustness"
     },
     {
       "date": "2025-02-01",
       "commodity": "Cooking Oil",
-      "forecast_price": 20471.14,
+      "forecast_price": 20470.82,
       "model_used": "AutoARIMA",
       "scenario": "post2022_robustness"
     },
     {
       "date": "2025-03-01",
       "commodity": "Cooking Oil",
-      "forecast_price": 20101.57,
+      "forecast_price": 20101.13,
       "model_used": "AutoARIMA",
       "scenario": "post2022_robustness"
     },
     {
       "date": "2025-04-01",
       "commodity": "Cooking Oil",
-      "forecast_price": 19803.35,
+      "forecast_price": 19802.84,
       "model_used": "AutoARIMA",
       "scenario": "post2022_robustness"
     },
     {
       "date": "2025-05-01",
       "commodity": "Cooking Oil",
-      "forecast_price": 19591.72,
+      "forecast_price": 19591.17,
       "model_used": "AutoARIMA",
       "scenario": "post2022_robustness"
     },
     {
       "date": "2025-06-01",
       "commodity": "Cooking Oil",
-      "forecast_price": 19456.08,
+      "forecast_price": 19455.53,
       "model_used": "AutoARIMA",
       "scenario": "post2022_robustness"
     },
