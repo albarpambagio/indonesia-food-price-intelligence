@@ -50,12 +50,18 @@ def _(mo):
         step=1,
         label="Year range",
     )
-    return commodity_dd, year_slider
+    show_all_years = mo.ui.checkbox(
+        label="Show full history (2007\u20132024)",
+    )
+    return commodity_dd, show_all_years, year_slider
 
 
 @app.cell
-def _(commodity_dd, price_national_df, year_slider):
-    _yr_lo, _yr_hi = year_slider.value
+def _(commodity_dd, price_national_df, show_all_years, year_slider):
+    if show_all_years.value:
+        _yr_lo, _yr_hi = 2007, 2024
+    else:
+        _yr_lo, _yr_hi = year_slider.value
     filtered_df = price_national_df[
         (price_national_df["month"].dt.year >= _yr_lo)
         & (price_national_df["month"].dt.year <= _yr_hi)
@@ -157,11 +163,6 @@ def _(forecast_df, price_national_df):
 def _(latest_prices_df, mo, pd, price_national_df):
     from charts.kpi_sparklines import sparkline_chart
 
-    _max_month = price_national_df["month"].max()
-    sparkline_df = price_national_df[
-        price_national_df["month"] >= _max_month - pd.DateOffset(months=24)
-    ].copy()
-
     UNIT_MAP = {
         "Rice": "/kg",
         "Cooking Oil": "/L",
@@ -177,27 +178,32 @@ def _(latest_prices_df, mo, pd, price_national_df):
         unit = UNIT_MAP.get(comm, "")
         if pd.isna(yoy):
             caption = "No YoY data"
+            direction = None
         else:
-            arrow = "\u2191" if yoy > 0 else "\u2193"
-            color = "#d32f2f" if yoy > 0 else "#2e7d32"
-            caption = (
-                f"<span style='color:{color}'>{arrow} {yoy:+.1f}% vs. same month last year</span>"
-            )
+            sign = "+" if yoy > 0 else ""
+            caption = f"{sign}{yoy:.1f}% vs. same month last year"
+            direction = "increase" if yoy > 0 else "decrease"
 
-        comm_data = sparkline_df[sparkline_df["commodity_consolidated"] == comm]
+        comm_all = price_national_df[price_national_df["commodity_consolidated"] == comm]
+        comm_max = comm_all["month"].max()
+        comm_data = comm_all[comm_all["month"] >= comm_max - pd.DateOffset(months=24)]
         spark_fig = sparkline_chart(comm_data["avg_price_idr"])
         spark_widget = mo.ui.plotly(spark_fig)
 
-        card = mo.stat(
+        stat_kwargs = dict(
             value=f"Rp {price:,.0f} {unit}",
             label=comm,
             caption=caption,
             bordered=True,
             slot=spark_widget,
         )
+        if direction is not None:
+            stat_kwargs["direction"] = direction
+            stat_kwargs["target_direction"] = "decrease"
+        card = mo.stat(**stat_kwargs)
         cards.append(card)
 
-    kpi_cards_output = mo.hstack(cards, gap="0.5rem")
+    kpi_cards_output = mo.vstack(cards, gap="0.5rem")
     return (kpi_cards_output,)
 
 
@@ -278,6 +284,7 @@ def _(commodity_dd, filtered_df, forecast_df, go, mo, pd):
             )
 
     if fig.data:
+        # TODO: Extract to event data structure if more annotations are added
         fig.add_annotation(
             x=pd.Timestamp("2022-04-01"),
             y=fig.data[0].y.max() * 0.9,
@@ -339,8 +346,11 @@ def _(buy_signals_df, max_data_month, mo):
 
 
 @app.cell
-def _(mo, year_slider, yoy_df):
-    _yr_lo, _yr_hi = year_slider.value
+def _(mo, show_all_years, year_slider, yoy_df):
+    if show_all_years.value:
+        _yr_lo, _yr_hi = 2007, 2024
+    else:
+        _yr_lo, _yr_hi = year_slider.value
     table_data = yoy_df[(yoy_df["year"] >= _yr_lo) & (yoy_df["year"] <= _yr_hi)].sort_values(
         "year", ascending=False
     )
@@ -383,6 +393,7 @@ def _(
     kpi_cards_output,
     max_month,
     mo,
+    show_all_years,
     trend_chart_output,
     year_slider,
     yoy_table_output,
@@ -397,7 +408,7 @@ def _(
                 f"Jan 2007\u2013{_date_label} + 6-Month Forecast_"
             ),
             mo.hstack(
-                [commodity_dd, year_slider],
+                [commodity_dd, year_slider, show_all_years],
                 gap="1rem",
             ),
             kpi_cards_output,

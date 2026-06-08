@@ -66,6 +66,12 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 103 | [`mo.state()` Two-Sink Pattern for Cross-Filter State](#103-mostate-two-sink-pattern-for-cross-filter-state) |
 | 104 | [Data Reality vs Wireframe Assumptions in Dashboard Design](#104-data-reality-vs-wireframe-assumptions-in-dashboard-design) |
 | 105 | [Duplicate Variable Names Across Marimo Cells Cause Critical Errors](#105-duplicate-variable-names-across-marimo-cells-cause-critical-errors) |
+| 106 | [`mo.ui.button.value` Is a Click Counter, Not Boolean](#106-mouibuttonvalue-is-a-click-counter-not-boolean) |
+| 107 | [`mo.hstack` Doesn't Wrap — Use `mo.vstack` for Overflow-Prone Layouts](#107-mohstack-doesnt-wrap--use-movstack-for-overflow-prone-layouts) |
+| 108 | [`mo.stat()` Caption Does Not Render HTML](#108-mostat-caption-does-not-render-html) |
+| 109 | [Per-Commodity Sparkline Window for Sparse Data](#109-per-commodity-sparkline-window-for-sparse-data) |
+| 110 | [Separate Reactivity Cells to Avoid Unnecessary Re-execution](#110-separate-reactivity-cells-to-avoid-unnecessary-re-execution) |
+| 111 | [Filter Overrides Must Apply Consistently Across All Downstream Cells](#111-filter-overrides-must-apply-consistently-across-all-downstream-cells) |
 
 ---
 
@@ -2664,3 +2670,248 @@ Every variable returned from a cell must have a globally unique name. Cell-priva
 - LEARNINGS.md §69 — Marimo module-level `__` variables
 
 ---
+
+## 106. `mo.ui.button.value` Is a Click Counter, Not Boolean
+
+### The Problem
+
+A "Show all history" button was implemented as:
+
+```python
+show_all_years = mo.ui.button(label="Show all history", kind="neutral")
+
+@app.cell
+def _(show_all_years, year_slider):
+    if show_all_years.value:
+        year_slider.value = [2007, 2024]
+```
+
+After the first click, `show_all_years.value` becomes `1` (truthy). On every subsequent marimo re-execution, the condition remains true, permanently locking the slider to `[2007, 2024]`. The user cannot narrow the range again without reloading the notebook.
+
+### Root Cause
+
+`mo.ui.button.value` is an **integer counter** that increments on each click. It does not return `True`/`False`. Once incremented, it stays truthy forever — marimo never resets it.
+
+### Solution
+
+Use `mo.ui.checkbox` instead. Its `.value` is a proper boolean that toggles on each click:
+
+```python
+show_all_years = mo.ui.checkbox(label="Show full history (2007–2024)")
+
+@app.cell
+def _(show_all_years, year_slider, price_national_df):
+    if show_all_years.value:
+        _yr_lo, _yr_hi = 2007, 2024
+    else:
+        _yr_lo, _yr_hi = year_slider.value
+    filtered_df = price_national_df[
+        (price_national_df["month"].dt.year >= _yr_lo)
+        & (price_national_df["month"].dt.year <= _yr_hi)
+    ]
+```
+
+### Rule
+
+Never use `mo.ui.button` for toggle-like behavior. Use `mo.ui.checkbox` for on/off states. Reserve `mo.ui.button` for one-shot actions (e.g., "Run analysis") where the click counter is not used for conditional logic.
+
+### Cross-Reference
+
+- LEARNINGS.md §103 — `mo.state()` two-sink pattern (another state management pattern)
+
+---
+
+## 107. `mo.hstack` Doesn't Wrap — Use `mo.vstack` for Overflow-Prone Layouts
+
+### The Problem
+
+Four `mo.stat` cards (each containing a Plotly sparkline) were arranged in a single `mo.hstack`:
+
+```python
+kpi_cards_output = mo.hstack(cards, gap="0.5rem")
+```
+
+On narrower viewports, the third and fourth cards overflowed and became invisible. Even a 2x2 grid (`mo.vstack([mo.hstack(cards[:2]), mo.hstack(cards[2:])])`) still overflowed because `mo.hstack` does not support responsive wrapping — it assigns equal width to children regardless of content.
+
+### Root Cause
+
+`mo.hstack` renders children in a single horizontal row with no CSS flex-wrap. Each `mo.stat` with a Plotly sparkline is ~200px wide. Four cards need ~800px + gaps — exceeding typical viewport widths.
+
+### Solution
+
+Stack all cards vertically:
+
+```python
+kpi_cards_output = mo.vstack(cards, gap="0.5rem")
+```
+
+Each card gets full width, sparklines render at their natural size, and vertical scrolling handles overflow naturally.
+
+### Rule
+
+When layout children contain Plotly charts (which have minimum width requirements), prefer `mo.vstack` over `mo.hstack` unless the container is guaranteed to be wide enough. `mo.hstack` is safe for text-only or icon-only children.
+
+---
+
+## 108. `mo.stat()` Caption Does Not Render HTML
+
+### The Problem
+
+KPI card captions used inline HTML for colored text:
+
+```python
+caption = f"<span style='color:#d32f2f'>↑ +21.5% vs. same month last year</span>"
+card = mo.stat(value="Rp 14,500 /kg", caption=caption)
+```
+
+The raw HTML tags `<span style='...'>` were displayed as literal text, not rendered.
+
+### Root Cause
+
+`mo.stat()` treats the `caption` parameter as **plain text**, not markdown or HTML. Unlike `mo.md()`, it does not interpret HTML tags.
+
+### Solution
+
+Use plain text for captions and leverage marimo's built-in `direction` parameter for visual cues:
+
+```python
+card = mo.stat(
+    value=f"Rp {price:,.0f} {unit}",
+    label=comm,
+    caption=f"+21.5% vs. same month last year",
+    direction="increase",  # marimo renders native colored arrow
+    target_direction="decrease",  # price increase = bad (red)
+    bordered=True,
+    slot=spark_widget,
+)
+```
+
+### Rule
+
+`mo.stat()` caption is plain text only. For styled text, use `mo.md()` as a standalone element instead. For directional indicators, use the `direction` and `target_direction` parameters — marimo handles the color semantics natively.
+
+---
+
+## 109. Per-Commodity Sparkline Window for Sparse Data
+
+### The Problem
+
+Sparklines used a global 24-month window from the dataset's max date:
+
+```python
+_max_month = price_national_df["month"].max()  # 2024-12
+sparkline_df = price_national_df[
+    price_national_df["month"] >= _max_month - pd.DateOffset(months=24)
+]
+```
+
+Flour data ends at 2020-03. The global window (2022-12 to 2024-12) contained **zero** Flour records → empty sparkline chart.
+
+### Root Cause
+
+Different commodities have different data end dates. Flour stopped in 2020-03, Rice in 2024-05, Cooking Oil in 2024-12. A single global window excludes commodities whose data ended before the window starts.
+
+### Solution
+
+Compute each commodity's sparkline from its own last 24 months:
+
+```python
+for _, row in latest_prices_df.iterrows():
+    comm = row["commodity_consolidated"]
+    comm_all = price_national_df[
+        price_national_df["commodity_consolidated"] == comm
+    ]
+    comm_max = comm_all["month"].max()
+    comm_data = comm_all[comm_all["month"] >= comm_max - pd.DateOffset(months=24)]
+    spark_fig = sparkline_chart(comm_data["avg_price_idr"])
+```
+
+Flour now shows its own last 24 months (2018-03 to 2020-03), Rice shows (2022-05 to 2024-05), etc.
+
+### Rule
+
+When a visualization applies to multiple entities with different data ranges (commodities, regions, time series with gaps), compute per-entity windows instead of a global window. A global window silently drops sparse entities.
+
+---
+
+## 110. Separate Reactivity Cells to Avoid Unnecessary Re-execution
+
+### The Problem
+
+A single cell computed both `filtered_df` (depends on year slider + commodity dropdown) and `latest_prices_df` (depends only on raw data):
+
+```python
+@app.cell
+def _(commodity_dd, price_national_df, year_slider):
+    filtered_df = price_national_df[...]  # depends on year_slider
+    latest_prices_df = price_national_df.sort_values("month").groupby(...).last()  # no year dependency
+```
+
+Changing the year slider recomputed `latest_prices_df` even though it doesn't use the filtered data.
+
+### Solution
+
+Split into two cells:
+
+```python
+@app.cell
+def _(commodity_dd, price_national_df, year_slider):
+    filtered_df = price_national_df[...]
+    return filtered_df, max_month
+
+@app.cell
+def _(price_national_df):
+    latest_prices_df = price_national_df.sort_values("month").groupby(...).last()
+    return latest_prices_df
+```
+
+Marimo's DAG now only reruns `latest_prices_df` when `price_national_df` changes — not on slider interaction.
+
+### Rule
+
+Each cell should depend on the minimal set of inputs it actually uses. Bundling unrelated computations in one cell forces unnecessary re-execution when any input changes. Split by dependency, not by output proximity.
+
+---
+
+## 111. Filter Overrides Must Apply Consistently Across All Downstream Cells
+
+### The Problem
+
+A checkbox ("Show full history") overrode the year slider in the chart filter cell:
+
+```python
+@app.cell
+def _(show_all_years, year_slider):
+    if show_all_years.value:
+        _yr_lo, _yr_hi = 2007, 2024
+    else:
+        _yr_lo, _yr_hi = year_slider.value
+```
+
+But the Annual Price Change table cell read `year_slider.value` directly — ignoring the checkbox. The chart showed 2007–2024 when checkbox was checked, but the table still filtered to 2019–2024.
+
+### Root Cause
+
+The override logic was implemented in one cell but not propagated to all cells that consume the same filter. Each cell independently reads widget values — there is no automatic "filter override" propagation in marimo.
+
+### Solution
+
+Apply the same override logic in every cell that uses the year range:
+
+```python
+# Chart filter cell
+if show_all_years.value:
+    _yr_lo, _yr_hi = 2007, 2024
+else:
+    _yr_lo, _yr_hi = year_slider.value
+
+# Table cell (same logic)
+if show_all_years.value:
+    _yr_lo, _yr_hi = 2007, 2024
+else:
+    _yr_lo, _yr_hi = year_slider.value
+```
+
+### Rule
+
+When a UI control overrides another control's value (checkbox overrides slider, radio overrides dropdown), every cell that consumes the overridden value must apply the same override logic. Marimo has no concept of "filter scope" — each cell reads widget values independently. DRY violation is acceptable here because consistency matters more than DRY.
