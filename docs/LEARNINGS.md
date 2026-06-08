@@ -6,11 +6,16 @@ This document captures key technical learnings, bugs encountered, and solutions 
 
 ## Table of Contents
 
+### Analytics Engineering & dbt Pipeline
 | # | Section |
 |---|---------|
 | 36 | [Quote-Wrapping SQL Column Names in Dynamic UPDATE](#36-quote-wrapping-sql-column-names-in-dynamic-update-statements) |
 | 37 | [Idempotent Data Loads: DROP TABLE Before CREATE TABLE AS](#37-idempotent-data-loads-drop-table-before-create-table-as) |
 | 38 | [Pipeline Orchestration with Per-Layer Row-Count Reconciliation](#38-pipeline-orchestration-with-per-layer-row-count-reconciliation) |
+| 39 | [Mart Model Scope Creep — Plan Says ✅, Code Lacks 3 Features](#39-mart-model-scope-creep--plan-says--code-lacks-3-features) |
+| 40 | [Built-in Unit Consistency Avoids Unnecessary Normalisation](#40-built-in-unit-consistency-avoids-unnecessary-normalisation) |
+| 41 | [Pipeline Status Column — Don't Repurpose Per-Phase Fields](#41-pipeline-status-column--dont-repurpose-per-phase-fields) |
+| 42 | [Data Validation Doc Must Reflect Actual Data, Not Memory](#42-data-validation-doc-must-reflect-actual-data-not-memory) |
 | 49 | [Source Freshness Catches Stale Data Early](#49-source-freshness-catches-stale-data-early) |
 | 50 | [Separate Source YAMLs from Model YAMLs](#50-separate-source-yamls-from-model-yamls) |
 | 51 | [`_layer__models.yml` Naming Avoids Ambiguity](#51-_layer__modelsyml-naming-avoids-ambiguity) |
@@ -19,6 +24,10 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 54 | [dbt build Over Separate dbt run + dbt test](#54-dbt-build-over-separate-dbt-run--dbt-test) |
 | 55 | [generate_schema_name Enables Multi-Env Isolation](#55-generate_schema_name-enables-multi-env-isolation) |
 | 56 | [dbt Audit: Critical Gaps Closed](#56-dbt-audit-critical-gaps-found-and-closed-across-6-dimensions) |
+
+### EDA & Marimo Notebook Practices
+| # | Section |
+|---|---------|
 | 57 | [EDA Notebooks Must Query Marts, Not Duplicate Pipeline Logic](#57-eda-notebooks-must-query-marts-not-duplicate-pipeline-logic) |
 | 58 | [mo.persistent_cache + Named Cells for Marimo Quality](#58-mopersistent_cache--named-cells-for-marimo-notebook-quality) |
 | 59 | [Interactive Filters in Marimo Turn Static EDA Into Self-Service](#59-interactive-filters-in-marimo-turn-static-eda-into-self-service) |
@@ -33,20 +42,22 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 68 | [Don't Parse Values Out of Formatted Strings — Keep Structured Data](#68-dont-parse-values-out-of-formatted-strings--keep-structured-data) |
 | 69 | [Marimo Module-Level `__` Variables Are Filtered From Cell Namespaces](#69-marimo-module-level-__-variables-are-filtered-from-cell-namespaces) |
 | 70 | [`pyproject.toml` Dependencies Must Cover Notebook Imports](#70-pyprojecttoml-dependencies-must-cover-notebook-imports) |
+
+### Forecasting Pipeline
+| # | Section |
+|---|---------|
 | 71 | [Ramadan Cross-Year JOIN: `BOOL_OR()` with Multi-Year Matching](#71-ramadan-cross-year-join-bool_or-with-multi-year-matching) |
 | 72 | [Hardcoded Reference Dates: Compute from Data, Not Calendar](#72-hardcoded-reference-dates-compute-from-data-not-calendar) |
 | 73 | [Unified Pipeline `run_id` Across Subprocesses](#73-unified-pipeline-run_id-across-subprocesses) |
 | 74 | [DRY: Importable Pipeline Helpers Over Duplicated DDL](#74-dry-importable-pipeline-helpers-over-duplicated-ddl) |
+
+### Framework Evaluation & Dashboard Architecture
+| # | Section |
+|---|---------|
 | 75 | [Cloudflare Pages Constraint Hard-Blocks All Python Server Frameworks](#75-cloudflare-pages-constraint-hard-blocks-all-python-server-frameworks) |
 | 76 | [Weighted Decision Matrix Prevents Vibes-Based Stack Choices](#76-weighted-decision-matrix-prevents-vibes-based-stack-choices) |
 | 77 | [Framework Maturity Is a Hidden Tax, Not Just a Number](#77-framework-maturity-is-a-hidden-tax-not-just-a-number) |
 | 78 | [Pipeline Reuse Beats LOC Savings — Don't Trade Built Data Layer for Faster Framework](#78-pipeline-reuse-beats-loc-savings--dont-trade-built-data-layer-for-faster-framework) |
-| 81 | [Dash Pages Routing: `dash.register_page` + `use_pages=True`](#81-dash-pages-routing-dashregister_page--use_pagestrue) |
-| 82 | [DuckDB Read-Only Connections + `@functools.lru_cache` for Dashboard Data Access](#82-duckdb-read-only-connections--functoolslru_cache-for-dashboard-data-access) |
-| 83 | [`dcc.Store` for Cross-Page Filter State (Alternative: Query String)](#83-dccstore-for-cross-page-filter-state-alternative-query-string) |
-| 84 | [HF Spaces Docker Packaging: Port 7860, `gunicorn`, Layer Optimization](#84-hf-spaces-docker-packaging-port-7860-gunicorn-layer-optimization) |
-| 85 | [Callback Output Declaration: All Outputs Must Be Declared in Signature](#85-callback-output-declaration-all-outputs-must-be-declared-in-signature) |
-| 86 | [Plotly Figure Specs Port Verbatim from Marimo EDA to Dash `dcc.Graph`](#86-plotly-figure-specs-port-verbatim-from-marimo-eda-to-dash-dccgraph) |
 | 87 | [Vizro `vm.Filter` is Per-Page, Not Cross-Page](#87-vizro-vmfilter-is-per-page-not-cross-page) |
 | 88 | [Vizro `custom_charts` Wrapper for Advanced Plotly](#88-vizro-custom_charts-wrapper-for-advanced-plotly-vline-vrect-ci-area-vendored-geojson-choropleth) |
 | 89 | [Cross-Page Filter Workaround: URL State vs Custom Action](#89-cross-page-filter-workaround-url-state-vs-custom-action) |
@@ -62,6 +73,10 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 99 | [`mart_seasonal_patterns` Has 35 Rows (Cooking Oil Only, 7 Months) — Use `mart_price_trends_national` for Cross-Commodity Seasonal Analysis](#99-mart_seasonal_patterns-has-35-rows-cooking-oil-only-7-months--use-mart_price_trends_national-for-cross-commodity-seasonal-analysis) |
 | 100 | [Source Data Is Monthly — Page 2 (Seasonal Patterns) Ramadan `month_relative` Is T-2 to T+1, Not `week_relative` T-8 to T+6](#100-source-data-is-monthly--page-2-seasonal-patterns-ramadan-month_relative-is-t-2-to-t1-not-week_relative-t-8-to-t6) |
 | 101 | [`@capture("ag_grid")` Functions Must Return `dag.AgGrid`, Not `pd.DataFrame`](#101-captureag_grid-functions-must-return-dagaggrid-not-pddataframe) |
+
+### Marimo-Native Dashboard
+| # | Section |
+|---|---------|
 | 102 | [Marimo-Native Rewrite: `mo.stat()` Over Plotly Annotation Hacks](#102-marimo-native-rewrite-mostat-over-plotly-annotation-hacks) |
 | 103 | [`mo.state()` Two-Sink Pattern for Cross-Filter State](#103-mostate-two-sink-pattern-for-cross-filter-state) |
 | 104 | [Data Reality vs Wireframe Assumptions in Dashboard Design](#104-data-reality-vs-wireframe-assumptions-in-dashboard-design) |
@@ -72,6 +87,12 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 109 | [Per-Commodity Sparkline Window for Sparse Data](#109-per-commodity-sparkline-window-for-sparse-data) |
 | 110 | [Separate Reactivity Cells to Avoid Unnecessary Re-execution](#110-separate-reactivity-cells-to-avoid-unnecessary-re-execution) |
 | 111 | [Filter Overrides Must Apply Consistently Across All Downstream Cells](#111-filter-overrides-must-apply-consistently-across-all-downstream-cells) |
+| 112 | [Inline Explainer Icons Cause Layout Noise — Consolidate Into Single Accordion Card](#112-inline-explainer-icons-cause-layout-noise--consolidate-into-single-accordion-card) |
+
+### Superseded
+| # | Section |
+|---|---------|
+| 81–86 | [Dash Implementation (collapsed)](#81-86-dash-implementation-collapsed) |
 
 ---
 
@@ -1590,328 +1611,13 @@ Before evaluating a new framework, list the artifacts already built that the cur
 
 
 
-## 81. Dash Pages Routing: `dash.register_page` + `use_pages=True`
-
-> **SUPERSEDED 2026-06-02** — Dash was the chosen dashboard framework for ~1 day; replaced by Vizro. §81 pattern does not apply to Vizro (which uses `vm.Page` registration in `vm.Dashboard(pages=[...])`). Pattern preserved for git history + cross-reference. See §87 for Vizro equivalent.
-
-### The Problem
-
-Multi-page Dash apps historically required manual URL routing via `app.layout` callbacks and `dcc.Location` triggers. Each page needed explicit `Input("url", "pathname")` callbacks to conditionally render content. This produces verbose boilerplate and makes adding pages a multi-file operation.
-
-### Solution: Dash Pages Plugin
-
-Dash 3.x provides a built-in multi-page pattern via `use_pages=True`:
-
-```python
-# app.py
-app = dash.Dash(__name__, use_pages=True, ...)
-app.layout = dbc.Container([
-    dbc.NavbarSimple(children=[
-        dbc.NavItem(dbc.NavLink("Page 1", href="/")),
-        dbc.NavItem(dbc.NavLink("Page 2", href="/page2")),
-    ]),
-    dash.page_container,  # Auto-renders the matched page
-])
-```
-
-Each page file self-registers:
-```python
-# pages/price_trends.py
-dash.register_page(__name__, path="/", name="Price Trends")
-
-def layout():
-    return dbc.Container([...])
-```
-
-### Key Design Decisions
-
-| Decision | Rationale |
-|----------|-----------|
-| `layout()` as function, not module-level | Allows dynamic layout per request; required for filter-dependent content |
-| `suppress_callback_exceptions=True` | Pages load lazily — callbacks reference IDs not yet in DOM during initial load |
-| One callback per page in the page module | Keeps callbacks co-located with the layout they update |
-| `dash.page_container` in app.layout | Single insertion point — all page content renders inside this wrapper |
-
-### Files Affected
-
-- `dashboard/app.py` — `use_pages=True`, `page_container`
-- `dashboard/pages/price_trends.py` — `register_page`, `layout()`, callbacks
-- `dashboard/pages/seasonal_patterns.py` — same pattern
-- `dashboard/pages/geographic_disparity.py` — same pattern
-- `dashboard/pages/commodity_signals.py` — same pattern
-
-### Rule
-
-Use `dash.register_page(__name__, path=..., name=...)` at the top of each page file. Keep `layout()` as a function (not a variable). Place one callback per page in the same file. The app layout only needs `dash.page_container` — no manual URL routing.
-
----
-
-## 82. DuckDB Read-Only Connections + `@functools.lru_cache` for Dashboard Data Access
-
-> **SUPERSEDED 2026-06-02** — Dash was the chosen dashboard framework for ~1 day; replaced by Vizro. `@lru_cache` on `load_mart()` is framework-agnostic and **preserved** in `dashboard/data_access.py`; the Vizro equivalent wraps it via `data_manager.register_data()`. See §90 for Vizro-specific pattern.
-
-### The Problem
-
-Dash callbacks fire on every filter change. Without caching, each callback execution opens a new DuckDB connection, runs the query, and closes it. With 4 pages × 3 filters each, this produces dozens of short-lived connections per user session.
-
-### Solution: Centralized Data Access with `lru_cache`
-
-```python
-# dashboard/data_access.py
-import functools
-
-@functools.lru_cache(maxsize=32)
-def load_mart(name: str, **filters: str) -> pd.DataFrame:
-    conn = duckdb.connect(DB_PATH, read_only=True)
-    try:
-        df = conn.execute(query, values).fetchdf()
-    finally:
-        conn.close()
-    return df
-```
-
-Key design choices:
-
-| Decision | Rationale |
-|----------|-----------|
-| `read_only=True` | Prevents accidental writes from dashboard; avoids DuckDB file locks between dashboard + pipeline |
-| `@functools.lru_cache(maxsize=32)` | In-process cache — same query with same filters returns cached DataFrame; 32 entries covers all filter combos across 4 pages |
-| `try/finally: conn.close()` | Guarantees connection cleanup even on query failure |
-| Centralized module | Pages import `load_mart` — never open their own DuckDB connections |
-
-### Cache Invalidation
-
-`lru_cache` persists for the process lifetime. For dashboard use (read-only analytics), this is correct — data only changes when the pipeline re-runs. For development with live data changes, call `load_mart.cache_clear()` in a debug callback.
-
-### Files Affected
-
-- `dashboard/data_access.py` — `load_mart()`, `load_forecast_data()`, `load_forecast_metadata()`
-
-### Rule
-
-All DuckDB queries for the dashboard go through a single `data_access.py` module with `@functools.lru_cache`. Never open DuckDB connections directly in page callbacks. Use `read_only=True` to prevent accidental writes and file-lock conflicts with the pipeline.
-
----
-
-## 83. `dcc.Store` for Cross-Page Filter State (Alternative: Query String)
-
-> **SUPERSEDED 2026-06-02** — Dash was the chosen dashboard framework for ~1 day; replaced by Vizro. Vizro's `vm.Filter` is per-page by default; cross-page filter state requires URL `show_in_url=True` or custom action. See §89 for Vizro cross-page filter pattern.
-
-### The Problem
-
-Global filters (commodity, island group, year range) need to be shared across all 4 pages. When the user changes a filter on Page 1, navigating to Page 2 should reflect the same filter state.
-
-### Two Approaches
-
-| Approach | Mechanism | Pros | Cons |
-|----------|-----------|------|------|
-| `dcc.Store` | Client-side JSON state in browser memory | Fast, no URL pollution | State lost on page reload; not shareable via URL |
-| `dcc.Location` query string | Filters encoded in `?commodity=Rice&island=Java` | Shareable URLs, survives reload | More verbose callback wiring |
-
-### Chosen: `dcc.Store` (per §6.6.6 plan)
-
-```python
-# components/filters.py
-dcc.Store(id="filters-store")  # Shared state
-
-# In callbacks, read from Store:
-Input("global-commodity", "value"),
-Input("global-island", "value"),
-Input("global-year-range", "value"),
-```
-
-Since Dash Pages with `use_pages=True` shares the same layout, filter IDs are global — callbacks on any page can read `Input("global-commodity", "value")` directly without an intermediate Store. The Store becomes necessary only if filter state needs to persist across full page reloads.
-
-### Files Affected
-
-- `dashboard/components/filters.py` — filter bar with global IDs
-- All 4 page callbacks — `Input("global-commodity", "value")` etc.
-
-### Rule
-
-For Dash Pages apps, prefer global filter IDs (same ID across all pages) over `dcc.Store` for filter state. The `dcc.Store` pattern is needed when state must survive page reloads or be shared between non-parent components. Always declare all callback `Output`/`Input` IDs in the signature — missing outputs raise `InvalidCallback` at startup.
-
----
-
-## 84. HF Spaces Docker Packaging: Port 7860, `gunicorn`, Layer Optimization
-
-> **PARTIALLY SUPERSEDED 2026-06-02** — Port 7860, layer ordering, and `--timeout 120` carry over to Vizro (same HF Spaces target). The gunicorn target changes from `app:server` (Dash exposes Flask server) to `app:app` (Vizro exposes its own Flask handle). See §91 for updated Dockerfile.
-
-### The Problem
-
-HF Spaces free tier expects a Dockerfile that exposes port 7860 (not 8050 or 5000). The Docker image must be lean enough to fit within free-tier memory limits (~2 GB). Cold starts must be fast (< 30s).
-
-### Solution: Three-Layer Dockerfile
-
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-
-# Layer 1: deps (cached unless pyproject.toml changes)
-COPY pyproject.toml uv.lock ./
-RUN pip install uv && uv sync --frozen --no-dev
-
-# Layer 2: dashboard code
-COPY dashboard/app.py dashboard/
-COPY dashboard/pages/ dashboard/pages/
-COPY dashboard/components/ dashboard/components/
-COPY dashboard/data_access.py dashboard/
-
-# Layer 3: runtime data
-COPY data/wfp.duckdb data/wfp.duckdb
-
-EXPOSE 7860
-CMD ["gunicorn", "app:server", "--bind", "0.0.0.0:7860", "--workers", "2", "--timeout", "120"]
-```
-
-### Key Decisions
-
-| Decision | Rationale |
-|----------|-----------|
-| Port 7860 | HF Spaces standard — changing it requires Space config changes |
-| `gunicorn` with 2 workers | Free tier CPU limit; 2 workers handle concurrent requests without OOM |
-| `--timeout 120` | Cold-start DuckDB connection + first query may take 15-30s |
-| Layer order: deps → code → data | `pyproject.toml` changes rarely; data changes per pipeline run. Docker layer caching means only changed layers rebuild. |
-| `--frozen --no-dev` | Reproducible installs; no dev tools (ruff) in production |
-
-### Local vs Production
-
-| Aspect | Local | HF Spaces |
-|--------|-------|-----------|
-| Port | 7860 (configured) | 7860 (HF default) |
-| Server | Flask dev (1 worker) | gunicorn (2 workers) |
-| Cold start | Instant | 15-30s (first request after sleep) |
-| Hot reload | Auto (debug=True) | `hf spaces hot-reload` |
-
-### Files Affected
-
-- `dashboard/Dockerfile` — created per above spec
-- `dashboard/.dockerignore` — excludes `.venv/`, `__pycache__/`, `analysis/`, `transform/`, `forecast/`, `logs/`, `docs/`, `.git/`, `data/raw/`
-- `dashboard/README_HF.md` — HF Spaces metadata header (YAML)
-
-### Rule
-
-HF Spaces expects port 7860, gunicorn, and a Dockerfile at the Space root. Order Docker layers by change frequency: deps (rare) → code (medium) → data (frequent). Use `--timeout 120` for cold-start tolerance. Always test locally with `uv run python dashboard/app.py` before pushing.
-
----
-
-## 85. Callback Output Declaration: All Outputs Must Be Declared in Signature
-
-> **SUPERSEDED 2026-06-02** — Dash was the chosen dashboard framework for ~1 day; replaced by Vizro. Vizro does not use Dash callbacks; cross-component reactivity is handled via `vm.Filter` (data) and `vm.Parameter` (configuration) automatically. No explicit `@callback` decorator.
-
-### The Problem
-
-Dash 3.x raises `InvalidCallback` at startup if a callback's `Output` references an ID that isn't declared in the function signature. Unlike Dash 2.x (which silently ignored missing outputs), Dash 3.x enforces strict declaration:
-
-```python
-# BUG — Dash 3.x raises InvalidCallback
-@callback(
-    Output("chart-1", "figure"),
-    Input("filter", "value"),
-)
-def update(filter_val):
-    return fig  # Missing output for "chart-2"
-```
-
-### Solution
-
-Declare all outputs in the `@callback` decorator, even if some are conditionally returned:
-
-```python
-@callback(
-    Output("chart-1", "figure"),
-    Output("chart-2", "figure"),
-    Output("table-1", "children"),
-    Input("filter", "value"),
-)
-def update(filter_val):
-    if not data:
-        empty = go.Figure()
-        return empty, empty, []
-    return fig1, fig2, table_children
-```
-
-### Key Difference from Dash 2.x
-
-| Behavior | Dash 2.x | Dash 3.x |
-|----------|----------|----------|
-| Missing output in callback | Silently ignored | `InvalidCallback` at startup |
-| `prevent_initial_call` | Optional | Required on heavy callbacks to avoid render-on-load |
-| Multi-output return | Tuple/list | Must match `Output` count exactly |
-
-### Files Affected
-
-- All 4 page callbacks — all outputs declared in `@callback` decorator
-
-### Rule
-
-Dash 3.x requires all callback outputs to be declared in the `@callback` decorator. Every `Output()` must have a corresponding return value. Use `prevent_initial_call=True` on heavy callbacks (DuckDB queries + chart rendering) to avoid unnecessary initial renders. Return empty `go.Figure()` or `[]` for no-data states instead of `None`.
-
----
-
-## 86. Plotly Figure Specs Port Verbatim from Marimo EDA to Dash `dcc.Graph`
-
-> **PARTIALLY SUPERSEDED 2026-06-02** — Chart engine parity (Plotly everywhere) is preserved. The verbatim-port pattern carries over to Vizro's `custom_charts` registration: wrap `go.Figure()` builders as `@capture("graph")` functions and call them in `vm.Graph(figure=...)`. Same chart code, different registration ceremony. See §88.
-
-### The Problem
-
-The original plan (Next.js + Recharts) would have required translating every Plotly chart spec from `analysis/eda.py` into Recharts JSX components — different API, different event model, different tooltip configuration. For 15+ analytical charts with `add_vline`, `add_vrect`, `make_subplots`, CI shaded areas, and `px.imshow` heatmaps, the translation cost was estimated at 2-3 days.
-
-### Solution: Plotly EDA → Dash Parity
-
-With Dash using Plotly natively, chart specs drop into `dcc.Graph(figure=fig)` verbatim:
-
-```python
-# EDA notebook (analysis/eda.py)
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=sub["month"], y=sub["avg_price_idr"], name=commodity))
-fig.add_vline(x="2022-01-15", line_dash="dash", annotation_text="Cooking oil export ban")
-fig.add_vrect(x0="2022-01-01", x1="2022-12-31", fillcolor="red", opacity=0.1)
-
-# Dashboard page (pages/price_trends.py) — same code, zero translation
-dcc.Graph(figure=fig)
-```
-
-### What Ports Verbatim
-
-| EDA Feature | Dash Equivalent | LOC Saved |
-|------------|-----------------|-----------|
-| `go.Figure()` + `add_trace()` | Same | 0 (verbatim) |
-| `add_vline(x=..., line_dash="dash")` | Same | ~5 per annotation |
-| `add_vrect(fillcolor=..., opacity=...)` | Same | ~3 per band |
-| `make_subplots(rows=2, cols=2)` | Same | ~10 |
-| `px.imshow(matrix, color_continuous_scale=...)` | Same | ~8 |
-| `go.Scatter(fill="toself")` for CI area | Same | ~15 per CI overlay |
-
-### Files Affected
-
-- `dashboard/pages/price_trends.py` — forecast CI overlay from EDA Q1
-- `dashboard/pages/seasonal_patterns.py` — heatmap from EDA A3
-- `dashboard/pages/commodity_signals.py` — correlation heatmap from EDA A5b
-
-### Rule
-
-When the EDA notebook and dashboard use the same chart library (Plotly), chart specs are copy-paste portable. The only adaptation needed is wrapping in `dcc.Graph(figure=fig)` and ensuring the figure is built inside a callback (not at module level). This parity is the single largest time-saver in the Phase 5g→6 transition.
-
----
-
-## Updated Decision Log
-
-| Decision | Rationale |
-|----------|-----------|
-| `BOOL_OR()` with multi-year `IN` join over single-year `=` | Single-year join for Ramadan proximity flags miss cross-year `t_plus_1` cases (Dec Eid → Jan next year). Multi-year `IN` + `BOOL_OR()` handles all boundary cases without double-counting. |
-| Computed `forecast_start` over hardcoded `"2024-06-01"` | Per-commodity end dates differ (Flour: 2020-03, Rice: 2024-05). A single hardcoded date is wrong for all but one commodity. |
-| CLI-passed `run_id` over per-script auto-generation | Forecast and export must share the pipeline's `run_id` for end-to-end auditability. Auto-generated IDs create orphan lineage rows with no parent pipeline link. |
-| Importable `ensure_lineage_table()` over duplicated DDL | 59-line schema DDL duplicated in 2 scripts guaranteed drift on schema changes. A single importable function eliminates the copy-paste risk. |
-| Deployment target as the first framework filter | Cloudflare Pages static hosting disqualifies every Python server framework (Vizro, Streamlit, Dash, Gradio, Reflex) on first principles. Only Panel can attempt a static export (via Pyodide). A framework that doesn't deploy to the target host is a much worse fit than its feature set suggests. |
-| Weighted decision matrix over vibes-based framework choice | "Vizro is low code" vs. "Next.js is familiar" are vibes, not decisions. A 12-15 criterion weighted matrix forces articulation of what the project actually values (deployment fit, pipeline reuse, LOC, etc.) and produces defensible preferences with explicit weights. |
-| Framework version ≥1.0 for production | 0.x versions signal breaking API changes are still expected. Vizro at 0.1.56 (3 years old) is the least mature option on any reasonable Python dashboard list. Mature frameworks (Next.js 15, Dash 4, Streamlit 1.55) hit 1.0+ years ago and have stable, documented patterns. |
-| Pipeline reuse scored at 10+ in framework comparison | Switching from Next.js (consumes 5 static JSONs) to a Python server framework (queries DuckDB) discards the export pipeline. For a 4-page dashboard, 500 LOC of UI is one week of work — rebuilding the data layer is two weeks minimum and adds a new failure mode. |
-| Dash Pages over manual URL routing | `use_pages=True` + `dash.register_page` eliminates per-page URL callback boilerplate. One `page_container` in app layout replaces manual `dcc.Location` + pathname matching. |
-| `lru_cache` over per-callback DuckDB connections | 4 pages × 3 filters = 12+ connections per user session. `lru_cache(maxsize=32)` serves repeated queries from in-process memory; `read_only=True` prevents accidental writes. |
-| Global filter IDs over `dcc.Store` for filter state | Dash Pages shares the same layout across pages — global filter IDs work without intermediate Store. `dcc.Store` only needed for cross-reload persistence. |
-| Port 7860 for HF Spaces | HF Spaces standard port; changing requires Space config update. Local dev matches production port for parity. |
-| Dash 3.x strict output declaration | Dash 3.x raises `InvalidCallback` for undeclared outputs (Dash 2.x silently ignored). All `@callback` outputs must be declared and returned. |
+## 81–86. Dash Implementation (collapsed)
+
+> **ALL SUPERSEDED 2026-06-02** — The dashboard transitioned from Dash → Vizro → Marimo-native. These sections are preserved for git history. Key patterns that carried forward:
+>
+> - `@functools.lru_cache` for DuckDB queries (§82) — preserved in `dashboard/data_access.py`; used by Marimo dashboard
+> - Port 7860 + Docker layer ordering (§84) — carried to Vizro Dockerfile (§91)
+> - Plotly verbatim-port principle (§86) — EDA → dashboard chart reuse applies to Marimo-native as it did to Dash/Vizro
 
 ---
 
@@ -2915,3 +2621,56 @@ else:
 ### Rule
 
 When a UI control overrides another control's value (checkbox overrides slider, radio overrides dropdown), every cell that consumes the overridden value must apply the same override logic. Marimo has no concept of "filter scope" — each cell reads widget values independently. DRY violation is acceptable here because consistency matters more than DRY.
+
+---
+
+## 112. Inline Explainer Icons Cause Layout Noise — Consolidate Into Single Accordion Card
+
+### The Problem
+
+Each dashboard element (trend chart, Buy Signal Monitor, YoY table, footnote callout) was wrapped with a helper function that added an inline ⓘ accordion icon next to it:
+
+```python
+def with_explainer(content, explainer_text):
+    return mo.hstack(
+        [content, mo.accordion({"\u2139\ufe0f": mo.md(explainer_text)})],
+        align="start",
+    )
+
+trend_chart_output = with_explainer(trend_chart_output, EXPLAINERS["trend_chart"])
+buy_signal_output = with_explainer(buy_signal_output, EXPLAINERS["buy_signal"])
+yoy_table_output = with_explainer(yoy_table_output, EXPLAINERS["yoy_table"])
+footnote_output = with_explainer(mo.callout(...), EXPLAINERS["forecast_note"])
+```
+
+This created two problems:
+1. **Layout noise** — four separate ⓘ icons scattered across the page, each expanding independently, competing for attention
+2. **Overflow** — `mo.hstack` wrapping a full-width chart with an accordion pushed the chart to ~80% width, causing secondary content (Buy Signal, YoY table) to overflow
+
+Additionally, the `with_explainer` function was defined outside cells but imported into cells — marimo flagged this because it referenced `mo` at module scope, requiring a lazy `import marimo as _mo` inside the function body.
+
+### Solution
+
+Replace all inline `with_explainer` wrapping with a single consolidated `mo.accordion` card at the bottom of the page:
+
+```python
+@app.cell
+def _(EXPLAINERS, mo):
+    explainer_card = mo.accordion(
+        {
+            "KPI Cards — how to read": EXPLAINERS["kpi_cards"],
+            "Trend Chart — how to read": EXPLAINERS["trend_chart"],
+            "Buy Signals — how they work": EXPLAINERS["buy_signal"],
+            "YoY Table — how to read": EXPLAINERS["yoy_table"],
+            "Forecast Reliability": EXPLAINERS["forecast_note"],
+        },
+        multiple=True,  # allow multiple sections open
+    )
+    return (explainer_card,)
+```
+
+Each element cell now returns its content bare (no wrapping), and the assembly cell places `explainer_card` at the bottom of the page vstack. The `with_explainer` function and its import are removed entirely.
+
+### Rule
+
+When a dashboard has multiple explanatory notes (methodology, calculation details, data limitations), collect them into a single collapsible card at the bottom of the page rather than scattering ⓘ icons inline with each element. `mo.accordion({...})` with `multiple=True` is the idiomatic marimo pattern — users expand only the sections they need, and the page layout stays clean. Inline explainers work for single-element tooltips but create visual noise at scale.

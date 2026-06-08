@@ -18,8 +18,9 @@ def _():
     import marimo as mo
     import pandas as pd
     import plotly.graph_objects as go
+    from explainer_copy import EXPLAINERS
 
-    return go, mo, pd
+    return EXPLAINERS, go, mo, pd
 
 
 @app.cell
@@ -57,7 +58,7 @@ def _(mo):
 
 
 @app.cell
-def _(commodity_dd, price_national_df, show_all_years, year_slider):
+def _(commodity_dd, mo, price_national_df, show_all_years, year_slider):
     if show_all_years.value:
         _yr_lo, _yr_hi = 2007, 2024
     else:
@@ -69,6 +70,8 @@ def _(commodity_dd, price_national_df, show_all_years, year_slider):
 
     if commodity_dd.value != "All":
         filtered_df = filtered_df[filtered_df["commodity_consolidated"] == commodity_dd.value]
+
+    mo.stop(filtered_df.empty, mo.md("_No data available for the selected filters._"))
 
     max_month = price_national_df["month"].max()
     return filtered_df, max_month
@@ -203,7 +206,7 @@ def _(latest_prices_df, mo, pd, price_national_df):
         card = mo.stat(**stat_kwargs)
         cards.append(card)
 
-    kpi_cards_output = mo.vstack(cards, gap="0.5rem")
+    kpi_cards_output = mo.vstack(cards, gap="1rem")
     return (kpi_cards_output,)
 
 
@@ -296,7 +299,7 @@ def _(commodity_dd, filtered_df, forecast_df, go, mo, pd):
             ay=-30,
         )
     fig.update_layout(
-        height=480,
+        height=560,
         yaxis_title="IDR per kg / L",
         yaxis_tickformat=",d",
         template="plotly_white",
@@ -310,18 +313,6 @@ def _(commodity_dd, filtered_df, forecast_df, go, mo, pd):
 @app.cell
 def _(buy_signals_df, max_data_month, mo):
     _month_str = max_data_month.strftime("%B %Y")
-    _methodology = mo.accordion(
-        {
-            "How are buy signals calculated?": (
-                "The signal compares the **forecast average price** over the next 6 months "
-                "against the **most recent actual price**. A ratio below 0.98 means the model "
-                "expects prices to fall (potential buy opportunity). A ratio above 1.02 means "
-                "prices are expected to rise (watch for cost increases). Between 0.98\u20131.02 is "
-                " Hold \u2014 no strong directional signal."
-            )
-        },
-        multiple=False,
-    )
 
     rows = []
     for _, r in buy_signals_df.iterrows():
@@ -337,7 +328,6 @@ def _(buy_signals_df, max_data_month, mo):
         [
             mo.md("## Buy Signal Monitor"),
             mo.md(f"_As of {_month_str}_"),
-            _methodology,
             *rows,
         ],
         gap="0.5rem",
@@ -360,7 +350,6 @@ def _(mo, show_all_years, year_slider, yoy_df):
     yoy_table_output = mo.vstack(
         [
             mo.md("## Annual Price Change"),
-            mo.md("_Sorted by most recent year. Values show full-year average change._"),
             mo.ui.table(
                 table_data[["year", *_numeric_cols]],
                 page_size=10,
@@ -372,24 +361,25 @@ def _(mo, show_all_years, year_slider, yoy_df):
 
 
 @app.cell
-def _(mo):
-    footnote_output = mo.callout(
-        mo.md(
-            "**Forecast note:** This model describes historical price patterns. "
-            "It cannot anticipate government price controls, import tariff changes, or "
-            "weather events. Confidence intervals widen significantly beyond 3 months. "
-            "1\u20132 month forecasts are more reliable than 5\u20136 month projections."
-        ),
-        kind="info",
+def _(EXPLAINERS, mo):
+    explainer_card = mo.accordion(
+        {
+            "KPI Cards \u2014 how to read": EXPLAINERS["kpi_cards"],
+            "Trend Chart \u2014 how to read": EXPLAINERS["trend_chart"],
+            "Buy Signals \u2014 how they work": EXPLAINERS["buy_signal"],
+            "YoY Table \u2014 how to read": EXPLAINERS["yoy_table"],
+            "Forecast Reliability": EXPLAINERS["forecast_note"],
+        },
+        multiple=True,
     )
-    return (footnote_output,)
+    return (explainer_card,)
 
 
 @app.cell
 def _(
     buy_signal_output,
     commodity_dd,
-    footnote_output,
+    explainer_card,
     kpi_cards_output,
     max_month,
     mo,
@@ -411,31 +401,28 @@ def _(
                 [commodity_dd, year_slider, show_all_years],
                 gap="1rem",
             ),
+            mo.md("_Checkbox overrides the year slider._"),
             kpi_cards_output,
-            trend_chart_output,
             mo.hstack(
                 [buy_signal_output, yoy_table_output],
                 gap="2rem",
+                align="start",
             ),
-            mo.md(
-                "_KPI cards show the latest month vs. the same month last year. "
-                "The table shows the change in full-year average prices._"
+            trend_chart_output,
+            mo.callout(
+                mo.md(
+                    "**Forecast note:** This model describes historical price patterns. "
+                    "It cannot anticipate government price controls, import tariff changes, or "
+                    "weather events. Confidence intervals widen significantly beyond 3 months. "
+                    "1\u20132 month forecasts are more reliable than 5\u20136 month projections."
+                ),
+                kind="info",
             ),
-            footnote_output,
+            explainer_card,
         ],
         gap="1.5rem",
     )
-    return (page1_content,)
-
-
-@app.cell
-def _(mo, page1_content):
-    mo.ui.tabs(
-        {
-            "Price Trends": page1_content,
-        }
-    )
-    return
+    page1_content  # noqa: B018 \u2014 marimo renders last expression as cell output
 
 
 if __name__ == "__main__":
