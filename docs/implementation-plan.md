@@ -8,8 +8,8 @@
 | **Data First Accessed** | 2026-05-22 |
 | **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
 | **Target Completion** | ~16–20 working days |
-| **Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅ (11 pipeline gaps closed), Phase 5g ✅ (13 pre-dashboard gaps closed). **Phase 6**: §6.SPIKE ✅ (GO), §6.DATA ✅ (7 keys), §6.WIREFRAME ✅ (all resolved). **§6.PAGES (Phase C) IN PROGRESS** — Page 1 Vizro built (`app.py` + 4 charts + `vm.Page`) with 4 bugfix sessions documented; Page 2 Seasonal Patterns built (5 charts + 3 cards + table + filters). Pages 3-4 have implementation handoffs ready. Dash pages 3-4 still exist as reference; will be replaced with Vizro `vm.Page(...)` configs. |
-| **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → **Vizro 0.1.x + DuckDB read-only data_manager** → **Hugging Face Spaces** |
+| **Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅, Phase 5g ✅. **Phase 6**: Marimo-native dashboard **code deleted for clean rebuild** — architecture blueprint preserved in `docs/handoffs/HANDOFF-dashboard-marimo-rewrite.md` (data schemas, cross-cell scoping, dual-path resolution, Page 4 sync, failure modes). Rebuild will produce single `dashboard/app.py` Marimo notebook with static JSON + `mo.ui` components. |
+| **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → **Marimo (native UI, mo.ui + mo.state)** → **Hugging Face Spaces (WASM)** |
 
 ### Parallelization Opportunities
 | Phase | Can Start After | Runs Parallel With | Saves |
@@ -19,7 +19,7 @@
 | §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
 
 **Sequential chain** (must wait): Phase 0 → 1 → 2 → 2.5 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
-> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ (7 bugfixes) → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ (path, deps, dirs) → **Phase 3f ✅ (11 pipeline gaps)** → **Phase 5g ✅ (13 pre-dashboard gaps)** → **Phase 6**: §6.SPIKE ✅ → §6.DATA ✅ → §6.WIREFRAME ✅ → **§6.PAGES (Phase C) IN PROGRESS** — Page 1 Vizro built ✅ → Page 1 bugfixes (4 sessions) ✅ → Page 2 Seasonal Patterns ✅ (5 charts + 3 cards + table + filters) → Pages 3-4 pending (handoffs ready).
+> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ → Phase 3f ✅ → Phase 5g ✅ → **Phase 6 ⬜ (architecture blueprint ready, code deleted for clean rebuild — rebuild pending)**
 
 ---
 
@@ -27,10 +27,10 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 0.1 | Create folder structure | ✅ | `data/raw/`, `ingest/`, `transform/`, `forecast/`, `export/`, `analysis/`, `logs/`, `dashboard/public/data/` |
+| 0.1 | Create folder structure | ✅ | `data/raw/`, `ingest/`, `transform/`, `forecast/`, `export/`, `analysis/`, `logs/`, `dashboard/public/data/` (dashboard/ deleted 2026-06-08, will re-create on rebuild) |
 | 0.2 | Create `pyproject.toml` + `uv sync` | ✅ | uv-native: duckdb, dbt-duckdb, statsforecast, marimo, pandas, plotly |
 | 0.3 | Init dbt project in `/transform` | ✅ | `dbt init`, configure profiles.yml for DuckDB |
-| 0.4 | Init Dash app skeleton in `/dashboard` (`app.py`, `pages/`, `components/`, `data_access.py`, `_data/snapshot.py`, `Dockerfile`, `README_HF.md`, `.dockerignore`) | ⬜ | **DEFERRED** to Phase 6 — plan documented 2026-06-02 (see Phase 6 Stack Change section) |
+| 0.4 | Init Dash app skeleton in `/dashboard` (`app.py`, `pages/`, `components/`, `data_access.py`, `_data/snapshot.py`, `Dockerfile`, `README_HF.md`, `.dockerignore`) | ⬜ | **DEFERRED** to Phase 6 — plan documented 2026-06-02. **SUPERSEDED 2026-06-08** — rebuild as Marimo notebook (no Dash, no Docker). See §6.MARIMO. |
 | 0.5 | Create **`analysis/data_validation.py`** (marimo notebook) | ✅ | Interactive validation: commodity coverage, provincial coverage, priceflag distribution, unit consistency, sugar split, oil split, FX enrichment decision |
 | 0.6 | Write `docs/data_validation.md` from notebook findings | ✅ | Document all 7 validation checks, scoping decisions confirmed |
 | 0.7 | Load raw CSVs into `data/raw/` | ✅ | `wfp_food_prices_idn.csv` (325,240 rows), `wfp_markets_idn.csv` (224 markets) |
@@ -338,232 +338,73 @@
 
 ---
 
-## Phase 6 — Dashboard (Vizro 0.1.x + DuckDB read-only + Hugging Face Spaces) (6–7 days) [PLANNING 2026-06-02]
-> **🚧 Migration in progress.** Dash-based dashboard from earlier 2026-06-02 decision is being replaced with Vizro. See §6.STACK for the new decision rationale and §6.HISTORY for the full superseded Dash plan.
-> **Sequential with decision gate** — Phase A (spike) is the gate. If spike ≤ 0.5 day, proceed; otherwise revert to Dash per §6.HISTORY.
-
-### §6.STACK — Vizro Stack Decision (2026-06-02)
-
-The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with **Vizro 0.1.50 + vizro-ai 0.3.8 + DuckDB read-only data manager + Hugging Face Spaces Docker**. The §6.HISTORY block at the end of this section preserves the full Dash plan as superseded reference material.
-
-**Trigger for re-decision:** Cross-filtering requirement. The 4-page dashboard implicitly needs chart-click-to-filter-other-charts behavior (e.g. click an island group on the choropleth → all charts on the page filter to that island). Dash has no native cross-filter primitive; this requires a custom callback per cross-filter pair. Vizro's `set_control` action makes cross-filter declarative.
-
-**Re-evaluated decision matrix (criterion 7, cross-filtering, weighted 8 — was zero in §76's first matrix):**
-
-| Criterion (weight) | Dash 3.x | Vizro 0.1.50 | Delta |
-|---|---:|---:|---:|
-| Cross-filtering (8) | Custom callbacks per pair (~80 LOC × 6 pairs) | Declarative `set_control` action | **Vizro +8** |
-| Maturity (8) | v3.x, 9 yrs, Plotly-backed | 0.1.50, 3.3 yrs, still 0.x | Dash +5 |
-| Pipeline reuse (12) | `data_access.load_mart()` lru_cache works as-is | Same module adapts to `data_manager.register_data()` | Dash +1 |
-| LOC for 4 pages (10) | ~10K bytes/page (4 explicit callbacks) | ~3-4K bytes/page (Pydantic declarative) | Vizro +6 |
-| Filter behavior correctness (10) | Manual `dcc.Store` + `dcc.Location`; documented in §83 | Built-in `vm.Filter`+`vm.Parameter`; cross-page needs workaround | Dash +3 |
-| Time-series viz (8) | `dcc.Graph(figure=go.Figure())` verbatim from EDA | `custom_charts` wrapper for `add_vline`/`vrect`/CI area | Dash +1 |
-| Hiring signal (8) | Plotly Dash widely recognized | Vizro niche on resumes | Dash +4 |
-| Migration sunk cost (6, NEW) | Page 1 (11.6K bytes) done; 2.5 days of work | Page 1 must be rebuilt | Dash +5 |
-| Bug-recovery cost (4, NEW) | §81-86 documented; not battle-tested | 35+ Next.js sections (§1-34) don't apply; new bugs need new fixes | Dash +3 |
-
-**Net: Dash +23 / Vizro +14. But cross-filtering (+8) is decisive — it enables the "click chart → filter all" UX that the 4 pages imply. The trade is acceptable.**
-
-**Why Vizro specifically (vs. staying on Dash or switching to Streamlit / Panel):**
-
-| Consideration | Outcome |
-|---|---|
-| Dash is already at "3-day finish" | Reverting to Dash after migrating 1 day of work to Vizro is cheap. The cross-filter +0 is worth 2-3 extra days. |
-| Streamlit | `st.session_state` quirks per §76 decision; rerun-everything model breaks `@lru_cache` pattern. Not viable. |
-| Panel | Bokeh/HoloViews chart engine; not Plotly-native; would require chart translation. Rejected. |
-| Vizro 0.x maturity (§77 concern) | Accepted as cost. Mitigation: 0.5-day Phase A spike tests the framework on real charts before committing. If spike fails, fall back to §6.HISTORY. |
-
-**What changes in the project (other than the dashboard code):**
-
-1. `pyproject.toml` — add `vizro>=0.1.50` to `dependencies`; keep Dash deps until Phase C complete
-2. `dashboard/app.py` — rewrite as `Vizro().build(dashboard).run()` entry; preserve `dashboard/data_access.py` with `data_manager.register_data()` wrapping
-3. `dashboard/pages/*.py` — rewrite as `vm.Page(...)` configs; `go.Figure` builders move into `custom_charts` functions
-4. `dashboard/components/*.py` — replaced by Vizro's `vm.Container` / `vm.Card` / `vm.Tabs`; only `filters.py` partials carry over as `vm.Filter` / `vm.Parameter` definitions
-5. `AGENTS.md` — Stack row updated, Phase 6 line updated, "Dash Conventions" block replaced with "Vizro Conventions"
-6. `docs/LEARNINGS.md` — mark §75, §81-86 superseded; add §87-91 (Vizro patterns)
-7. `docs/implementation-plan.md` — this section
-8. `docs/wfp-food-price-intelligence-project-plan.md` — mirror edits
-9. `requirements.txt` — auto-synced with pyproject
-
-**What does NOT change:** dbt models, mart SQL, forecast logic, lineage table, `run_pipeline.py` orchestration logic, all Marimo notebooks, `docs/data_validation.md`, `docs/forecast_runbook.md`, `docs/insights_log.md`, `docs/issues_log.md`, `docs/model_methodology.md`, the 5 JSON files in `dashboard/public/data/*.json` (kept as verifier per §78), `dashboard/data_access.py` core (DuckDB connection, `load_mart` function — wrapped, not rewritten).
-
-### §6.SPIKE — Phase A: 0.5-Day Feasibility Spike (decision gate)
-
-> **Sequential gate** — must complete and pass before any Phase C work begins. If spike takes > 0.5 day or reveals a Pydantic workaround > 50 LOC for one chart, fall back to §6.HISTORY (Dash).
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 6.A.1 | `uv add vizro`; verify version prints as `0.1.53` | ✅ | vizro 0.1.53 installed, within >=0.1.50 range. |
-| 6.A.2 | Create `dashboard/spike/` scratch dir; build minimal 1-page Vizro app: title, one chart | ✅ | `dashboard/spike/app.py` (24 LOC). Pydantic 2 + `Vizro().build(dashboard).run()` validated. |
-| 6.A.3 | Wrap `px.imshow` lag heatmap from `analysis/eda.py` A5b as `custom_charts` function | ✅ | `dashboard/spike/custom_charts.py` (18 LOC). Under 50 LOC threshold. |
-| 6.A.4 | Wire to DuckDB via `data_manager["key"] = lambda: load_mart(name)` | ✅ | `data_manager["mart_correlation_summary"]` wired. DataFrame → Vizro flow validated. |
-| 6.A.5 | `Vizro().build(dashboard).run(port=7860)`; load `http://localhost:7860`; verify chart renders | ✅ | Build OK, server serves 200 OK (16KB page), real DuckDB data loaded. |
-| 6.A.6 | Decision: continue to Phase C OR revert to §6.HISTORY (Dash) | ✅ | **GO.** Logged in `logs/migration.log`. Key learning: `@capture("graph")` must be called, not passed as ref. |
-
-### §6.DATA — Phase B: Data Layer Port (0.5 day)
-
-> **Sequential** — depends on §6.SPIKE passing.
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 6.B.1 | Wrap `load_mart()` calls in `data_manager["mart_X"] = lambda: load_mart(name)` for all 6 marts | ✅ | `dashboard/data_manager.py` (25 LOC). `data_access.py:load_mart()` unchanged. |
-| 6.B.2 | Wrap `load_forecast_data()` as `data_manager["forecast"] = load_forecast_data` | ✅ | Same module. 7 keys total (6 marts + forecast). |
-| 6.B.3 | Verify `export_json.py` + `verify_export()` unchanged and still log to `pipeline.lineage.export_status` | ✅ | Export pipeline PASS — all 6 marts verified, 0 row count mismatches. |
-| 6.B.4 | Smoke test: verify 7 keys in data_manager | ✅ | 7 keys: 6 marts + forecast. |
-
-### §6.WIREFRAME — Phase B1: Wireframe Evaluation Resolution (0.5 day)
-
-> **Sequential** — depends on §6.DATA. Resolves all open items in `docs/wireframes/wfp-vizro-wireframe-evaluation.md` before passing wireframes to §6.PAGES build phase.
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 6.W.1 | Component mismatch assessment: map every wireframe element to Vizro native vs extension | ✅ | Added to evaluation §2.1/§2.2 and LEARNINGS.md §92. |
-| 6.W.2 | Interaction pattern mapping: Source→Control→Target for all 9 interactions | ✅ | Added to evaluation §7.8 and LEARNINGS.md §94. Critical: `vm.Figure` cannot be `set_control` source (§95). |
-| 6.W.3 | GeoJSON path correction: `/dashboard/public/` → `dashboard/assets/` | ✅ | Page 3 content spec + evaluation §5.3 updated. Property: `featureidkey="properties.island_group"`. |
-| 6.W.4 | Page 1 wireframe: filter persistence mechanism (`dcc.Store`), model selector relocated to filter row | ✅ | Annotations [3b] and [5] updated. |
-| 6.W.5 | Page 2 wireframe: TanStack→AG Grid, `week_relative` clarified as integer with formatted labels | ⚠ Partial | Annotation [9e] (TanStack→AG Grid) is correct. Annotation [6d] (`week_relative` integer) is **insufficient** — source data is monthly, so the build will use `month_relative` T-2 to T+1 (4 monthly buckets) instead of `week_relative` T-8 to T+6. This is a wireframe deviation; surface in PR description per Phase C handoff rule. See LEARNINGS §100, HANDOFF-page2 §2. |
-| 6.W.6 | Page 3 wireframe: TanStack→AG Grid, animate state machine (IDLE→PLAYING→COMPLETE), empty states | ✅ | States table expanded with 3 animate states + empty state row. |
-| 6.W.7 | Page 4 wireframe: TanStack→AG Grid, divergence threshold `abs(pre_2022_r - post_2022_r) > 0.2`, empty states | ✅ | Annotation [9c] and states table updated. |
-| 6.W.8 | Evaluation §7.7: CSS class reference table (8 classes) | ✅ | Classes for data banners, limitations footnotes, signal cards, KPI rows, driver toggle, empty states. |
-| 6.W.9 | Evaluation §7.8: Interaction pattern mapping table (9 patterns) | ✅ | Maps page interactions to Vizro Source→Control→Target model. |
-| 6.W.10 | Evaluation §10 restructure: 11 items resolved (§10.4), 3 items open (§10.3) | ✅ | §9.2 all gaps marked resolved. Page 3 friction reclassified "Highest"→"High". |
-| 6.W.11 | LEARNINGS.md §92-96: 5 new Vizro learnings added | ✅ | §92 component mismatch, §93 assets/ convention, §94 Source→Control→Target, §95 vm.Figure source limitation, §96 conditional visibility callback. |
-| 6.W.12 | LEARNINGS.md archive: sections 1-34 marked as React/Next.js (deprecated 2026-06-02) | ✅ | Archive heading added before §1. ToC updated with §92-96 entries. |
-
-### §6.PAGES — Phase C: Port 3 Pages + Rebuild Page 1 (3-4 days)
-
-> **Sequential** — depends on §6.DATA. Page 1 must be rewritten (was Dash); pages 2-4 are net-new in either stack.
-> **Handoff**: `docs/handoffs/HANDOFF-vizro-phase6-phasec-pages.md` — full execution plan, Vizro patterns, wireframe references, verification checklist, suggested skills.
-> **Status**: Page 1 **BUILT** in Vizro (4 charts + vm.Page + model info card). 4 bugfix sessions documented. Pages 2-4 have detailed implementation handoffs ready (`HANDOFF-page2-seasonal-patterns-implementation.md`).
-
-#### Page Explainer
-
-> **What this page conveys:** "Is now a good time to lock in bulk purchase contracts?"
+## Phase 6 — Dashboard (Marimo-native, static JSON, 4 pages) [BLUEPRINT READY — CODE DELETED FOR CLEAN REBUILD 2026-06-08]
+> **Phase 6 is PENDING REBUILD.** The Marimo-native rewrite was completed 2026-06-08 (`dashboard/app.py`, all 4 pages, WASM export verified) and then **deleted by the user on 2026-06-08 for a clean rebuild**. The architecture blueprint is preserved in `docs/handoffs/HANDOFF-dashboard-marimo-rewrite.md` (data schemas, cross-cell scoping, dual-path resolution, Page 4 sync, failure-mode validation). All dbt marts, forecast JSONs, and export pipeline remain intact — only the frontend code was removed.
 >
-> Answers via commodity/island/year **dropdowns + slider** filtering 4 price **KPI cards** (current IDR price, YoY%), a multi-line **trend chart** with 6-month forecast overlay and 95% CI, **BUY/HOLD/WATCH signal badges**, and a YoY bar chart. Data: `mart_price_trends_national` + `forecast.json`.
+> **Why Marimo over Vizro/Dash:** Vizro's cross-filtering promise was compelling on paper but its Pydantic configuration model made it hard to iterate on chart layout and impossible to fix Vizro-specific rendering bugs without framework patches. Marimo's reactive DAG provides equivalent cross-filter behavior (commodity/island filters propagate to all charts on the same page) without a framework abstraction layer — every chart is plain `go.Figure` inside `mo.ui.plotly()`.
 
-#### §6.C.1 — Page 1 (Price Trends & Forecast) — REBUILD
+### §6.MARIMO — Marimo-native Dashboard Blueprint (2026-06-05 → 2026-06-08, handoff refined 2026-06-08)
+> ⚠ **Code deleted 2026-06-08 for clean rebuild.** This section documents the architecture of the previous implementation. The handoff document is the rebuild blueprint.
 
-> **REBUILDS** Dash `dashboard/pages/price_trends.py` (11,620 bytes, 2026-06-02) in Vizro.
-> **Status: BUILT with known bugs** — 4 chart files + vm.Page registered. 4 bugfix sessions documented in handoffs.
+**Decision rationale:** After the Vizro spike passed (§6.SPIKE), implementing the full 4-page Vizro dashboard revealed recurring pattern friction:
+1. Vizro's `vm.Graph(figure=fn(...))` first-render timing bug required sidebar toggle workarounds (§98)
+2. Chart customization required `@capture("graph")` wrapper boilerplate for every `go.Figure`
+3. Cross-filtering was the sole reason for Vizro, but Marimo's DAG provides the same at zero framework cost
+4. Vizro is 0.x with no guarantee of API stability through project completion
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 6.C.1.1 | Wrap main trend chart as `custom_charts` function: `go.Figure()` + `add_vline` + `add_vrect` for forecast region + `go.Scatter(fill="toself")` for 95% CI area | ✅ | `dashboard/charts/trend_forecast.py` (126 LOC). Reuses `load_forecast_data()` from `data_access.py`. |
-| 6.C.1.2 | Wrap YoY bar chart as `custom_charts` function | ✅ | `dashboard/charts/yoy_bar.py` (86 LOC). Option A grouped bar with reference bands, thick zero line, per-trace hovertemplate. Uses `compute_yoy_delta()` from `data_access.py`. |
-| 6.C.1.3 | Build `vm.Page(title="Price Trends", components=[vm.Graph(figure=trend), vm.Graph(figure=yoy), vm.Card(...)])` | ✅ | `dashboard/pages/price_trends.py` (110 LOC). 4 `vm.Graph` components (kpi_sparklines, trend_forecast, yoy_bar, signal_badges) + `_build_model_info_card()`. Registered in `dashboard/app.py`. |
-| 6.C.1.4 | Add 2 `vm.Parameter`s (commodity, island) + 1 `vm.Filter` (year_range, numeric bounds) | ✅ | Commodity `vm.Parameter` + inert island `vm.Parameter` + `vm.Filter(column="month")`. Island filter inert with data-availability notice (`mart_price_trends_national` has no `island_group` column). |
-| 6.C.1.5 | Wire model info card + forecast footnote via `vm.Container` | ✅ | `_build_model_info_card()` in `price_trends.py` shows per-commodity model selection + holdout MAE + limitations card. |
-| 6.C.1.6 | Verify chart parity with original Dash Page 1: line shapes, colors, CI area, annotations | ⬜ | Visual regression check via side-by-side screenshot. |
-| 6.C.1.7 | **[NEW] Bugfix: first-render timing** — `vm.Graph(figure=fn(commodity_filter="commodity_filter"))` literal string on first render | ✅ | Removed literal `commodity_filter` from all 4 `vm.Graph()` calls. LEARNINGS §98. `HANDOFF-page1-bugs-and-learnings.md` (P1). |
-| 6.C.1.8 | **[NEW] Bugfix: YoY computation** — row-based `pct_change(periods=12)` replaced with merge-based `compute_yoy_delta()` | ✅ | Calendar-aligned YoY via merge on `(commodity, shifted_year, month_num)`. `HANDOFF-page1-bugs-and-learnings.md` (P2). |
-| 6.C.1.9 | **[NEW] Bugfix: chart overlap + y-axis clipping** — wrapped components in `vm.Container(layout=vm.Flex(direction="column", gap="20px"))`, added `yaxis_automargin=True` | ✅ | Committed in `9c0c948`. `HANDOFF-page1-hover-theme-wireframe.md`. |
-| 6.C.1.10 | **[NEW] Bugfix: YoY hover + theme text colors** — added per-trace `hovertemplate`, removed explicit `font.color` for dark mode | ✅ | Theme-adaptive colors: explicit `color` values baked into figure JSON survive Vizro's `update_graph_theme` shallow copy. `HANDOFF-page1-hover-theme-wireframe.md`. |
-| 6.C.1.11 | **[NEW] Bugfix: sidebar toggle workaround** — `vm.Parameter` first-render timing requires sidebar close/reopen to establish bound value | ✅ | Known Vizro 0.1.53 behavior. Workaround documented. LEARNINGS §98. `HANDOFF-page1-bugs-remaining.md`. |
+**Rebuild target:** Single `dashboard/app.py` Marimo notebook with:
+- Static JSON data loaded via `data_static.py` (`Path(__file__)` dual-path resolution — local dev reads `dashboard/public/data/`, WASM reads `dist/data/`)
+- `mo.stat()` KPI cards with Plotly sparklines
+- `mo.callout()` for info/warning callouts
+- `mo.ui.table()` for interactive data tables
+- `mo.ui.tabs()` for page navigation
+- `mo.state()` for two-sink patterns (Page 3 island filter from 2 sources, Page 4 pair selector from 3 sources)
+- `mo.ui.plotly(fig)` wrapping `go.Figure` from chart helper files in `dashboard/charts/`
+- All 4 commodities available in KPI cards regardless of global filter
+- PEP 723 header for `marimo run` + WASM export
 
-#### §6.C.2 — Page 2 (Seasonal Patterns) — NEW
+**Architecture documented in handoff** (`docs/handoffs/HANDOFF-dashboard-marimo-rewrite.md`):
+| Feature | What's documented |
+|---------|-------------------|
+| Data contract | All 8 DataFrame schemas: columns, types, sources, row counts (price_trends, forecast, seasonal_patterns, geographic_disparity, commodity_correlation, correlation_summary, action_windows, islamic_calendar) |
+| Dual-path resolution | Exact `Path(__file__)` resolution logic for local dev vs WASM — `_get_data_dir()` with `load_json()`/`load_csv()` helpers |
+| Cross-cell scoping model | Every exported variable name per cell — 40+ names that cross Marimo's reactive DAG boundaries |
+| Page 4 mo.state() sync | Five-step mechanism: state definition → 3 independent sources (matrix click, dropdown cell + downstream listener, table on_select) → 3 consumers (scatter, stability, implication) |
+| Validation failure modes | 10 checks with pass/fail criteria, what the failure looks like, and how to diagnose each one |
 
-> **NEW** in either stack. **Handoff (2026-06-04):** `docs/handoffs/HANDOFF-page2-seasonal-patterns-implementation.md` — full execution plan with corrected data sources, `month_relative` reframing, and Vizro patterns. **Source correction:** primary source is `mart_price_trends_national` (639 rows, all 4 commodities), not `mart_seasonal_patterns` (35 rows, Cooking Oil only, 7 months) — see LEARNINGS §99.
+**Verification targets for rebuild (with failure-mode diagnosis — see handoff for full table):**
+| Check | Expected | Failure mode |
+|-------|----------|-------------|
+| `marimo check dashboard/app.py` | ✅ Pass (PEP 723 header warning only) | SyntaxError or NameError → check cell function args match `return (x,)` names |
+| `ruff check dashboard/` | ✅ Clean (E501 only, 0 F821/B018/E702) | E999 syntax error → fix Python syntax; unexpected violations likely real |
+| `uv run python dashboard/app.py` | ✅ Script mode exits cleanly | ModuleNotFoundError → missing PEP 723 deps; NameError → undefined cross-cell ref |
+| `marimo export html-wasm -o /tmp/test.html --mode run -f` | ✅ Succeeds (60s) | Build timeout → inline data >50MB; file perm error → check output dir |
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 6.C.2.1 | Wrap seasonal heatmap (`px.imshow` 12×4 matrix) as `custom_charts` | ✅ | `dashboard/charts/seasonal_heatmap.py` — `@capture("graph")` function returning `px.imshow`. Pivot via `compute_heatmap_matrix()` in `data_access.py`. |
-| 6.C.2.2 | Wrap monthly line chart with driver-toggle bands (Ramadan/Harvest/Year-End/All) as `custom_charts` | ✅ | Replaced by heatmap. Driver switching handled by 3 separate charts (Ramadan overlay, harvest, year-end). |
-| 6.C.2.3 | Wrap Ramadan overlay chart (`month_relative` T-2 to T+1, hline y=100) as `custom_charts` | ✅ | `dashboard/charts/ramadan_overlay.py` — `@capture("graph")` multi-year overlay. Fixed: `month_relative` x-labels, `bool()` cast for `showlegend`, `.values` merge pattern. |
-| 6.C.2.4 | Build summary table via `vm.AgGrid` (NOT `vm.Table` + `dash_ag_grid`) | ✅ | `dashboard/charts/seasonal_summary_table.py` — `@capture("ag_grid")` with `vm.AgGrid`. Fixed: `__wrapped__()` pattern to test underlying function outside Vizro. |
-| 6.C.2.5 | Add page-level driver toggle: `vm.Parameter(targets=[...], selector=vm.RadioItems(options=["All", "Ramadan", "Harvest", "Year-End"]))` | ✅ | `vm.Parameter(selector=vm.RadioItems(options=["All", "Ramadan", "Harvest", "Year-End"]))` with `show_in_url=True`. |
-| 6.C.2.5b | Build action window cards (3 cards: Action Now / Upcoming Spikes / Safe to Lock) as `vm.Card` markdown components | ✅ | Replaced with dynamic `@capture("graph")` `action_cards()` in `dashboard/charts/action_cards.py`. Renders 3-panel figure driven by `compute_action_windows()`, reacts to commodity/island/driver filters. |
-| 6.C.2.5c | Add page-level filter pattern: 2 `vm.Parameter`s (commodity, island) + 1 `vm.Filter` (year_range) | ✅ | `vm.Parameter` for commodity/island (dropdowns with "All"); `vm.Filter(column="month")` for year_range. All `show_in_url=True`. Inert island filter on Page 1 with data-availability notice (national data). |
-| 6.C.2.5d | Add Ramadan overlay detail sub-section: `month_relative` chart with `flag_ramadan_eid_month` overlay from `int_islamic_calendar` | ✅ | `ramadan_overlay.py` overlays month_relative data with `flag_ramadan_eid_month` from `int_islamic_calendar`. |
-| 6.C.2.6 | Build `vm.Page(...)`; wire all components; register in `dashboard/app.py` | ✅ | `dashboard/pages/seasonal_patterns.py` — `vm.Page` with 2 `vm.Row` layout (3 driver charts + 3 cards + table). Registered in `app.py`. |
+### §6.HISTORY — Superseded Stack Plans
 
-#### Page Explainer
+> The Vizro feasibility spike (§6.SPIKE), data layer port (§6.DATA), wireframe evaluation (§6.WIREFRAME), the earlier Dash scaffolding (§6.6-§6.8), and the first Marimo attempt are all preserved below for git history. The Marimo-based approach (static JSON + reactive DAG) is the target architecture for rebuild — do not implement from the Dash/Vizro sections below. The Marimo blueprint is in §6.MARIMO above.
 
-> **What this page conveys:** "When should we increase stock for each commodity?"
->
-> Answers via commodity/year **dropdowns** and seasonal driver **radio toggle** filtering a **4×12 heatmap** (price index vs annual average by month), a **Ramadan overlay** (multi-year month-relative price movement), a **harvest cycle** chart (monthly deviation by year), a **year-end** chart (Nov-Dec premium), a **summary table** (peak month, Ramadan premium), and **3 action cards** (Action Now / Upcoming Spikes / Safe to Lock). Data: `mart_price_trends_national` (all 4 commodities), `int_islamic_calendar` (Ramadan/Eid dates).
+<details>
+<summary><b>⚠ SUPERSEDED 2026-06-08</b> — Click to expand Vizro-era planning and Dash scaffolding. For current architecture see §6.MARIMO above (blueprint ready, code deleted for clean rebuild).</summary>
 
-#### §6.C.3 — Page 3 (Geographic Disparity) — NEW
+#### Vizro Feasibility Spike, Data Port, and Wireframe Resolution
 
-> **NEW** in either stack.
+**Trigger for re-decision** and the full Vizro/Dash decision matrix are historical. The Marimo-native approach was chosen instead because:
+- Vizro's `vm.Graph(figure=fn(...))` first-render timing bug required sidebar toggle workarounds
+- Chart customization required `@capture("graph")` wrapper boilerplate
+- Marimo's reactive DAG provides equivalent cross-filtering at zero framework cost
+- Marimo is more mature (0.23.7 vs Vizro 0.x) and has stable WASM export
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 6.C.3.1 | Build 5 KPI cards via `vm.Container` with 5 `vm.Card`s; each card click → `set_control` action setting island filter | ⬜ | This is the cross-filter showcase. Cards become interactive via Vizro's `actions` API. |
-| 6.C.3.2 | Wrap choropleth map as `custom_charts`: `px.choropleth(geojson=indonesia_provinces, ...)` with year slider via `vm.Parameter` | ⬜ | Vendored GeoJSON at `dashboard/assets/indonesia_provinces.geojson` (1 MB). Pass via `custom_charts` function. |
-| 6.C.3.3 | Wrap island group comparison line chart as `custom_charts`: 5 `go.Scatter` traces + `add_hline(y=100)` | ⬜ | Java baseline annotation. |
-| 6.C.3.4 | Build province drill-down table via `vm.Table` sorted by price index asc | ⬜ | Honesty column noting data gaps. |
-| 6.C.3.5 | Add `vm.Container` with `vm.Text` data limitation callout (Cooking Oil only) | ⬜ | Always-visible alert. |
-| 6.C.3.6 | Build `vm.Page(...)`; wire cross-filter via `set_control` on island KPI cards | ⬜ | **Cross-filter primitive — primary justification for migration.** |
+**What was explored:**
 
-#### Page Explainer
+| Phase | Detail | Status |
+|-------|--------|--------|
+| §6.SPIKE | 0.5-day feasibility: `uv add vizro`, spike app at `dashboard/spike/`, px.imshow wrapper, DuckDB `data_manager` wiring | ✅ Done |
+| §6.DATA | Data layer port: 6 marts + forecast registered via `data_manager["key"] = lambda:` pattern | ✅ Done |
+| §6.WIREFRAME | Wireframe evaluation: component mismatch, interaction patterns, GeoJSON paths, 12-resolution-task table | ✅ Done (partial — week_relative→month_relative deviation flagged) |
+| §6.PAGES | Page 1 Vizro build: 4 chart files + vm.Page + Page 1 bugfixes (first-render, YoY, clip, hover) | ✅ Done (superseded by Marimo) |
 
-> **What this page conveys:** "Which commodities to monitor as early warning indicators?"
->
-> Answers via a **lag selector** (0–3 months) controlling a 4×4 **correlation heatmap** and 2 **leading indicator callout cards** (plain-language pair descriptions), plus commodity/year **dropdowns + slider** filtering a pair **scatter chart** (pre/post-2022 dot split), a 36-month **rolling correlation chart** (with 2022 break band), a **pre/post comparison table** (color-coded delta), and a **procurement implication card**. Data: `mart_correlation_summary` + `mart_commodity_correlation`.
-
-#### §6.C.4 — Page 4 (Commodity Signals) — NEW
-
-> **NEW** in either stack.
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 6.C.4.1 | Build leading indicator callout cards (top 2 correlations, plain language) via `vm.Container` + `vm.Card` | ⬜ | Filter `mart_correlation_summary` at selected lag. |
-| 6.C.4.2 | Wrap correlation matrix heatmap as `custom_charts`: `px.imshow` pivoted at selected lag | ⬜ | Lag selector via `vm.Parameter` with `vm.RadioItems` (0/1/2/3). |
-| 6.C.4.3 | Wrap pair scatter chart as `custom_charts`: two `go.Scatter` traces (pre/post 2022) + `add_vline` | ⬜ | Pair selector via `vm.Dropdown` (6 pairs). |
-| 6.C.4.4 | Wrap rolling correlation chart as `custom_charts`: 36-month rolling + `add_vrect` for 2022 break | ⬜ | Most analytically honest visual; preserve all annotations. |
-| 6.C.4.5 | Build pre/post 2022 comparison table via `vm.Table` with color-coded delta column | ⬜ | |
-| 6.C.4.6 | Build procurement implication card via `vm.Container` + `vm.Text` | ⬜ | Plain language; post-2022 caveat prominent. |
-| 6.C.4.7 | Add lag selector `vm.Parameter`; wire to matrix + leading indicator callbacks | ⬜ | Default lag = 1 month. |
-
-### §6.FILTERS — Phase D: Cross-Page Global Filter Workaround (1 day)
-
-> **Sequential** — depends on §6.PAGES. Critical UX decision: how do Commodity / Island / Year filter across all 4 pages?
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 6.D.1 | **DECISION GATE**: Choose between (a) `show_in_url=True` on each `vm.Filter`/`vm.Parameter` → URL state, or (b) custom `vm.Action` pushing filter to global state | ✅ (a) | (a) is battle-tested, URLs ugly. (b) is cleaner but custom-action territory. **DECISION: (a) for first cut.** Apply uniformly to Commodity / Island / Year filters on all 4 pages. **CRITICAL** (LEARNINGS §97): dropdowns with "All" sentinel use `vm.Parameter`, not `vm.Filter` — URL state still works for both. Also: never pass literal parameter name as bound arg in `vm.Graph(figure=fn(data_frame="..."))` (LEARNINGS §98); let chart functions use their Python defaults on first render. |
-| 6.D.2 | Document chosen pattern in `docs/LEARNINGS.md` §89 | ⬜ | Cross-page filter workaround — one of two patterns. |
-| 6.D.3 | Apply pattern uniformly to Commodity / Island / Year filters on all 4 pages | ⬜ | Single pattern, applied 3 filters × 4 pages = 12 placements. |
-| 6.D.4 | Verify filter survives page navigation; test both directions (Page 1 → Page 2, Page 4 → Page 1) | ⬜ | Manual smoke test in browser. |
-
-### §6.DEPLOY — Phase E: Docker + HF Spaces (0.5 day)
-
-> **Sequential** — depends on §6.PAGES + §6.FILTERS.
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 6.E.1 | Update `dashboard/Dockerfile` to use Vizro's `app:app` gunicorn target (vs Dash's `app:server`); port 7860, 2 workers, 120s timeout | ⬜ | Vizro exposes `app` not `server`. `Vizro().build(dashboard).run()` returns a Flask app handle. |
-| 6.E.2 | Update `dashboard/README_HF.md` with new metadata if needed | ⬜ | Most fields unchanged: title, emoji, colorFrom, colorTo, sdk=docker, app_port=7860. |
-| 6.E.3 | Update `dashboard/.dockerignore` to include `dashboard/spike/` (spike dir excluded from image) | ⬜ | Other exclusions unchanged from §6.HISTORY §6.8.3b. |
-| 6.E.4 | `hf upload albarpambagio/wfp-food-price --type space dashboard/ --delete --commit-message "feat: Phase 6 v2 — Vizro dashboard (4 pages + DuckDB + cross-filter)"` | ⬜ | First Vizro push. ~3-5 min Docker build. |
-| 6.E.5 | Verify all 4 page routes load at `https://albarpambagio-wfp-food-price.hf.space/` | ⬜ | Manual smoke test: `/`, `/seasonal`, `/geographic`, `/signals`. |
-| 6.E.6 | Verify cross-filter works on Page 3 (click island KPI → choropleth updates) | ⬜ | The migration's headline feature must work in production. |
-
-### §6.DOCS — Phase F: LEARNINGS.md + AGENTS.md Update (0.5 day)
-
-> **Sequential** — can run in parallel with §6.DEPLOY.
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 6.F.1 | Mark `docs/LEARNINGS.md` §75 superseded (HF Spaces adopted; Cloudflare argument voided) | ⬜ | Append `> SUPERSEDED 2026-06-02 — see §6.STACK` at top of §75. |
-| 6.F.2 | Mark `docs/LEARNINGS.md` §81-86 superseded (Dash patterns) | ⬜ | Same supersession banner. |
-| 6.F.3 | Add `docs/LEARNINGS.md` §87 — Vizro Pydantic Filter scoping (per-page, not cross-page) | ⬜ | |
-| 6.F.4 | Add `docs/LEARNINGS.md` §88 — Vizro `custom_charts` wrapper for advanced Plotly | ⬜ | `add_vline`/`vrect`/CI area/choropleth with vendored GeoJSON patterns. |
-| 6.F.5 | Add `docs/LEARNINGS.md` §89 — Cross-page filter workaround (URL state vs custom action) | ⬜ | Documents the §6.D.1 decision. |
-| 6.F.6 | Add `docs/LEARNINGS.md` §90 — Vizro `data_manager.register_data()` pattern for DuckDB DataFrames | ⬜ | |
-| 6.F.7 | Add `docs/LEARNINGS.md` §91 — Vizro HF Spaces Dockerfile parity (gunicorn `app:app`, port 7860) | ⬜ | |
-| 6.F.8 | Update `AGENTS.md` Stack row: Plotly Dash → Vizro | ⬜ | |
-| 6.F.9 | Replace `AGENTS.md` "Plotly Dash (Python)" conventions block with "Vizro" block | ⬜ | Vizro conventions: `vm.Page`, `custom_charts`, `data_manager.register_data`, cross-page filter pattern, port 7860, gunicorn `app:app`. |
-| 6.F.10 | Update `AGENTS.md` Phase 6 line: "Vizro + DuckDB + HF Spaces" | ⬜ | |
-| 6.F.11 | Remove Dash deps from `pyproject.toml` after Phase C is verified working | ⬜ | `dash`, `dash-bootstrap-components`, `dash-ag-grid` removed; keep `gunicorn`. |
-| 6.F.12 | Add `docs/LEARNINGS.md` §92-96 — wireframe resolution learnings (component mismatch, assets/ convention, Source→Control→Target, vm.Figure limitation, conditional visibility) | ✅ | Completed 2026-06-02 during wireframe evaluation resolution. |
-| 6.F.13 | **[NEW]** Add `docs/LEARNINGS.md` §97 — `vm.Filter` "All" sentinel bug (use `vm.Parameter` for dropdowns containing "All") | ✅ | Completed 2026-06-03 during Page 1 bugfix. Critical for Pages 2-4. |
-| 6.F.14 | **[NEW]** Add `docs/LEARNINGS.md` §98 — `_get_parametrized_config` first-render timing (never pass literal default args in `vm.Graph(figure=fn(...))`) | ✅ | Completed 2026-06-03 during Page 1 bugfix. |
-| 6.F.15 | **[NEW]** Add `docs/LEARNINGS.md` §99 — Page 2 data source mismatch (`mart_seasonal_patterns` 35 rows vs `mart_price_trends_national` 639 rows) | ✅ | Completed 2026-06-04 during Page 2 handoff. |
-| 6.F.16 | **[NEW]** Add `docs/LEARNINGS.md` §100 — Ramadan `month_relative` reframing (monthly source → T-2 to T+1, not weekly T-8 to T+6) | ✅ | Completed 2026-06-04 during Page 2 handoff. |
-
-### §6.HISTORY — Superseded Dash Plan (2026-06-02, replaced same day)
+### §6.HISTORY (Dash) — Superseded Dash Plan (2026-06-02, replaced same day)
 
 <details>
 <summary><b>⚠ SUPERSEDED 2026-06-02</b> — Click to expand full Dash-based Phase 6 plan. Preserved for git history + sunk-cost accounting. Do not implement from this section; use §6.STACK through §6.DOCS above.</summary>
@@ -650,7 +491,7 @@ The Dash-based Phase 6 plan (chosen earlier the same day) is being replaced with
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 6.7.1 | Wire global filters (Commodity, Island Group, Year Range) to `dcc.Store(id="filters-store")` | ⬜ | Per-page callbacks read from Store; no per-page filter wiring |
-| 6.7.2 | (Unchanged) `export/export_json.py` — query all 4 mart models + forecast → static JSON | ✅ DONE | Writes to `dashboard/public/data/`. Retained as row-count verification artefact per §78 preservation |
+| 6.7.2 | (Unchanged) `export/export_json.py` — query all 4 mart models + forecast → static JSON | ✅ DONE | Writes to `dashboard/public/data/` (dir auto-created by rebuild). Retained as row-count verification artefact per §78 preservation |
 | 6.7.3 | (Unchanged) `verify_export()` — validates mart row count matches JSON record count per file | ✅ DONE | Continues to log to `logs/export.log` + update `pipeline.lineage.export_status` |
 | 6.7.4 | (Unchanged) Log export results to `logs/export.log` + update `pipeline.lineage.export_status` | ✅ DONE | |
 
@@ -802,6 +643,8 @@ pinned: false
 
 </details>
 
+</details>
+
 ---
 
 ## Phase 7 — Forecasting Methodology Documentation (1 day)
@@ -826,17 +669,17 @@ pinned: false
 |---|------|--------|-------|
 | 8.1 | README: business scenario (3–4 sentences) | ✅ | |
 | 8.2 | README: exec-driven questions (4 bullets) | ✅ | |
-| 8.3 | README: pipeline architecture (Mermaid diagram) | ✅ | Raw CSV → DuckDB → dbt → statsforecast → export_json.py → **Plotly Dash → HF Spaces** |
-| 8.4 | README: dbt lineage graph screenshot | ⬜ | Deferred to Phase 6 — needs `dbt docs generate` + manual screenshot |
+| 8.3 | README: pipeline architecture (Mermaid diagram) | ✅ | Raw CSV → DuckDB → dbt → statsforecast → export_json.py → **Marimo notebook (static JSON) → HF Spaces (WASM)** — pending rebuild |
+| 8.4 | README: dbt lineage graph screenshot | ⬜ | Deferred — needs `dbt docs generate` + manual screenshot |
 | 8.5 | README: key findings (4–6 quantified bullets) | ✅ | 6 findings from EDA confirmed |
-| 8.6 | README: dashboard preview (4 screenshots) | ⬜ | Deferred to Phase 6 — Dash app not yet built |
+| 8.6 | README: dashboard preview (4 screenshots) | ⬜ | Deferred to Phase 6 rebuild — needs dashboard WASM export + browser screenshots |
 | 8.7 | README: recommendations mapped to stakeholders | ✅ | Procurement Analyst + Category Manager tables |
 | 8.8 | README: data limitations + validation findings | ✅ | Known Limitations + Data Quality Issues sections |
 | 8.9 | README: forecasting methodology summary + link | ✅ | Links to `docs/model_methodology.md` |
-| 8.10 | README: reproduction instructions | ⬜ | **NEEDS UPDATE** — replace `npm install`/`npm run dev` steps with `uv run python dashboard/app.py` + HF Spaces deploy command |
-| 8.11 | README: lessons learned | ⬜ | **NEEDS UPDATE** — replace React hooks row with Dash callback patterns row |
+| 8.10 | README: reproduction instructions | ⬜ | **NEEDS UPDATE** — replace old instructions with `uv run python dashboard/app.py` (dev) + `marimo export html-wasm` → HF Spaces static hosting (prod) |
+| 8.11 | README: lessons learned | ⬜ | **NEEDS UPDATE** — replace React/Dash references with Marimo reactive DAG patterns row |
 | 8.12 | Finalize `docs/insights_log.md` with all 3 insight types: contextual, directional, actionable | ✅ | 13 findings across all 3 types — no edits needed |
-| 8.13 | Live URL pinned in README and GitHub repo description | ⬜ | Deferred to Phase 6 — HF Spaces deploy not done (will be `https://albarpambagio-wfp-food-price.hf.space`) |
+| 8.13 | Live URL pinned in README and GitHub repo description | ⬜ | Deferred — HF Spaces WASM deploy pending (`https://albarpambagio-wfp-food-price.hf.space`) |
 
 ---
 
@@ -894,21 +737,21 @@ pinned: false
 - [x] Phase 8: insights_log.md verified — 13 findings, all 3 insight types
 - [x] Phase 3f: 11 pipeline gaps closed (ramadan cross-year, hardcoded dates, run_id, dbt log, func split, docs, pins, lineage DDL)
 - [x] Full pipeline end-to-end verified: ingest → dbt (66/66) → forecast → export — 59.4s, unified run_id
-- [x] **Phase 6 scaffolding 2026-06-02**: Dash app skeleton — `app.py`, `pages/`, `components/`, `data_access.py` ✅ DONE
-- [x] **Phase 6 scaffolding 2026-06-02**: All 4 dashboard pages (Plotly Dash + dash-bootstrap-components) ✅ DONE
-- [x] **Phase 6 scaffolding 2026-06-02**: 12 files created, smoke test passed (`Pages: 4`) ✅ DONE
-- [ ] **DEFERRED to Phase 6**: Dockerfile + HF Spaces metadata + push via `hf upload`
-- [ ] **DEFERRED to Phase 6**: HF Spaces live URL (`https://albarpambagio-wfp-food-price.hf.space`)
-- [ ] **DEFERRED to Phase 6**: dbt lineage screenshot + dashboard screenshots
-- [x] **Phase 6 Page 1 Vizro build**: `dashboard/app.py` Vizro entry + 4 chart files (`trend_forecast.py`, `kpi_sparklines.py`, `yoy_bar.py`, `signal_badges.py`) + `vm.Page` registered ✅ DONE
-- [x] **Phase 6 Page 1 bugfixes**: first-render timing (§98), YoY computation, chart overlap + y-axis clipping, YoY hover + theme text colors, sidebar toggle workaround — 4 sessions documented in handoffs ✅ DONE
-- [x] **LEARNINGS §97-§100 added**: vm.Filter "All" sentinel (§97), first-render timing (§98), Page 2 data source mismatch (§99), Ramadan month_relative reframing (§100) ✅ DONE
-- [x] **Page 2 implementation handoff**: `HANDOFF-page2-seasonal-patterns-implementation.md` — data sources, chart functions, conditional visibility, filter patterns, known bugs ✅ DONE
+- [~] **Phase 6 Marimo-native dashboard**: Code **deleted 2026-06-08 for clean rebuild**. Architecture blueprint in `HANDOFF-dashboard-marimo-rewrite.md` ✅ DONE (rebuild pending)
+- [x] **Phase 6 architecture documented**: `HANDOFF-dashboard-marimo-rewrite.md` — data schemas, cross-cell scoping, dual-path resolution, Page 4 sync, failure-mode validation ✅ DONE
+- [~] **Phase 6 `marimo check`**: Stale — `dashboard/app.py` deleted, will verify on rebuild
+- [~] **Phase 6 `ruff check dashboard/`**: Stale — `dashboard/` deleted, will re-check on rebuild
+- [~] **Phase 6 script mode**: Stale — `dashboard/app.py` deleted, will verify on rebuild
+- [~] **Phase 6 WASM export**: Stale — `dashboard/app.py` deleted, will re-test on rebuild
+- [ ] **Phase 6 WASM deploy**: `dist/` folder served via HF Spaces (static HTML, no Docker) — pending rebuild + HF Spaces WASM config
+- [ ] **DEFERRED**: HF Spaces live URL + dbt lineage screenshot + dashboard screenshots — pending rebuild
+- [x] **Vizro history preserved**: §6.SPIKE/§6.DATA/§6.WIREFRAME collapsed into §6.HISTORY details block ✅ DONE
+- [x] **Dash scaffolding preserved**: §6.6-§6.8 collapsed into §6.HISTORY details block ✅ DONE
 - [x] **SUPERSEDED 2026-06-02**: Next.js + Shadboard + Recharts + Cloudflare Pages — replaced by Plotly Dash + dash-bootstrap-components + Hugging Face Spaces. See Phase 6 "Stack Change Decision" subsection for rationale.
-- [x] **Phase 5g 2026-06-02**: G1 — `mart_price_trends_national.sql` for Page 1 multi-commodity trend ✅ DONE
-- [x] **Phase 5g 2026-06-02**: G2 — Indonesia provinces GeoJSON vendored at `dashboard/assets/` ✅ DONE
-- [x] **Phase 5g 2026-06-02**: G3 — `pearson_r_pre_2022` + `pearson_r_post_2022` columns in `mart_correlation_summary` ✅ DONE
-- [x] **Phase 5g 2026-06-02**: G4 — Cooking Oil dual-forecast (primary + `post2022_robustness` toggle) documented in `forecast.json` metadata + §6.1.2 wireframe ✅ DONE
+- [x] **Phase 5g 2026-06-02**: G1 — `mart_price_trends_national.sql` for Page 1 multi-commodity trend ✅ DONE (preserved in dbt)
+- [~] **Phase 5g 2026-06-02**: G2 — Indonesia provinces GeoJSON vendored at `dashboard/assets/` ✅ DONE **FILE DELETED 2026-06-08** — will re-vendor on rebuild
+- [x] **Phase 5g 2026-06-02**: G3 — `pearson_r_pre_2022` + `pearson_r_post_2022` columns in `mart_correlation_summary` ✅ DONE (preserved in dbt)
+- [x] **Phase 5g 2026-06-02**: G4 — Cooking Oil dual-forecast (primary + `post2022_robustness` toggle) documented in `forecast.json` metadata + §6.1.2 wireframe ✅ DONE (preserved in forecast.json)
 - [x] **Phase 5g 2026-06-02**: G5 — AGENTS.md stack sweep (6 sections: L13, L70-73, L93, L338, L388, L495) ✅ DONE
 - [x] **Phase 5g 2026-06-02**: G6 — LEARNINGS.md §75 SUPERSEDED banner + §81-§86 Dash learnings ✅ DONE
 - [x] **Phase 5g 2026-06-02**: G7 + G8 — README.md + `wfp-food-price-intelligence-project-plan.md` stack sync ✅ DONE
@@ -955,7 +798,8 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Phase 5g | `fix: pre-dashboard gap closing — national mart, GeoJSON, pre/post correlation, dual forecast, stack docs, pipeline cleanup` | 13 gaps across 3 tiers; deferred execution per user 2026-06-02 |
 | Phase 3d | `docs: forecasting methodology` | `model_methodology.md` |
 | Phase 3e | `fix: phase 3 bugfix — 7 gaps from pipeline audit` | Error handler, lineage DDL, metadata, skips, connection, t_minus_3, status value |
-| Phase 6 | `feat: dashboard (Plotly Dash + dash-bootstrap-components + HF Spaces + export)` | Frontend — supersedes the previously-planned Next.js+Shadboard+CF Pages version (LEARNINGS.md §75 overridden 2026-06-02; chart-engine parity per §80 realized) |
+| Phase 6 blueprint | `docs: marimo handoff — data schemas, cross-cell scoping, dual-path, Page 4 sync, failure modes` | Architecture reference: 8 DataFrame schemas, 40+ cross-cell variable exports, three-source mo.state() mechanism, validation diagnosis table |
+| Phase 6 rebuild | `feat: Marimo-native dashboard — static JSON, mo.ui, 4 tabs` | Frontend — Marimo notebook with `mo.stat()`, `mo.callout()`, `mo.ui.table()`, `mo.ui.tabs()`. Rebuild from handoff blueprint. |
 | Phase 7 | `docs: forecasting methodology` | `model_methodology.md` + `forecast_runbook.md` |
 | Phase 8 | `docs: README, insights, recommendations` | Final packaging — README, insights_log verified |
 | Phase 3f | `fix: 11 pipeline gaps — ramadan cross-year, hardcoded date, unified run_id, dbt log, func split, docs, pep723 pins, lineage dedup` | Cross-phase gap closing post-Phase-5f |
@@ -992,4 +836,6 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | 2026-06-02 | **Phase 6 stack change — Next.js + Shadboard + Cloudflare Pages → Plotly Dash + dash-bootstrap-components + Hugging Face Spaces**. LEARNINGS.md §75's "Cloudflare Pages hard-blocks Python server frameworks" conclusion is **overridden**: HF Spaces replaces CF Pages as the deployment target, and §80's "Plotly EDA → Plotly dashboard" parity is now realized. The 5-JSON export pipeline (Phase 3.6–3.8) is preserved as a row-count verification artefact, not as the dashboard's data source — the Dash app queries DuckDB directly via `dashboard/data_access.py` with `@functools.lru_cache`. | Full plan written into Phase 6 section of this document (lines 282–end of Phase 6). Execution deferred at user request. Stack change rationale and rejected alternatives table inline in Phase 6 "Stack Change Decision" subsection. |
 | 2026-06-02 | **Phase 5g pre-dashboard gap analysis — 13 gaps found across 3 tiers**. Cross-referenced `implementation-plan.md` (Phases 0–5, 7, 8), `LEARNINGS.md` (80 sections), `AGENTS.md`, and current filesystem state. Tier 1 (data, 4 gaps): `mart_price_trends` lacks national-level data for 3/4 commodities (Page 1 KPI cards); Indonesia provinces GeoJSON not vendored (Page 3 choropleth); `mart_correlation_summary` lacks pre/post-2022 split (Page 4 scatter); Cooking Oil dual-forecast UX not specified (Page 1 chart). Tier 2 (docs, 4 gaps): AGENTS.md, README.md, `wfp-food-price-intelligence-project-plan.md` still reference Next.js+Shadboard+CF Pages; LEARNINGS.md §75 not marked SUPERSEDED. Tier 3 (pipeline, 5 gaps): dead `current_step_map` dict; `transform_status="running"` set after `dbt seed` (not before); no `dbt source freshness` invocation; `requirements.txt` out of sync; inconsistent date format in JSON exports. **User decisions**: G1 + G3 use option (a) — new mart / new columns. G4 shows both forecasts (primary default + secondary toggle). G6 defers §81-§85 stubs (Dash-specific learnings earned during Phase 6). Tier 3 bundled into Phase 5g plan, execution deferred. | Full plan written as "Phase 5g — Pre-Dashboard Gap Closing" subsection of this document. Status note at top of section; all 13 items in 3 tier tables + key decisions table + execution order table. Validation Checklist +13 deferred checkboxes. Commit Strategy +1 row. Execution deferred — pipeline orchestrator, exported JSONs, and dbt marts remain in current state until user triggers. |
 | 2026-06-02 | **Phase 6 plan expanded — HF CLI deployment workflow (§6.8)**. Consulted `huggingface/skills` HF CLI skill (`hf` command, replaces deprecated `huggingface-cli`). Documented: authentication (`hf auth login`), Space creation (`hf repos create --type space --space-sdk docker`), code upload (`hf upload ... --type space --delete`), build monitoring (`hf spaces logs --build --follow`), hot-reload (`hf spaces hot-reload`), SSH debugging (`hf spaces dev-mode` + `hf spaces ssh`), sleep/wake management. Expanded §6.6 (Dashboard Init) from 8 to 14 tasks with per-file implementation detail. Expanded §6.1–§6.4 (all 4 pages) with data source references and callback signatures. Added §6.8.10 (Local Dev vs Production differences table). Updated validation checklist. | Full plan written. Execution pending user go-ahead. |
-| 2026-06-03/04 | **Page 1 Vizro build + 4 bugfix sessions**. Built `dashboard/app.py` (Vizro entry) + 4 chart files (`trend_forecast.py`, `kpi_sparklines.py`, `yoy_bar.py`, `signal_badges.py`) + `vm.Page` registered. 4 handoff-documented bugfix sessions: (1) first-render timing — `vm.Graph(figure=fn(commodity_filter="commodity_filter"))` literal string bug (LEARNINGS §98); (2) YoY computation — row-based `pct_change(periods=12)` replaced with merge-based `compute_yoy_delta()`; (3) chart overlap + y-axis clipping — `vm.Container(layout=vm.Flex(direction="column", gap="20px"))` + `yaxis_automargin=True`; (4) YoY hover + theme text colors — per-trace `hovertemplate` + removed explicit `font.color` for dark mode. **Known workaround**: sidebar toggle required on first render due to Vizro 0.1.53 `vm.Parameter` callback timing. Pages 2-4 have detailed implementation handoffs ready. | Handoffs: `HANDOFF-page1-completion.md`, `HANDOFF-page1-bugs-and-learnings.md`, `HANDOFF-page1-hover-theme-wireframe.md`, `HANDOFF-page1-option-a-redesign.md`, `HANDOFF-page1-bugs-remaining.md`, `HANDOFF-page2-seasonal-patterns-implementation.md`. LEARNINGS §97-§100 added. |
+| 2026-06-03/04 | **Page 1 Vizro build + 4 bugfix sessions** (historical — superseded by Marimo). Built `dashboard/app.py` (Vizro entry) + 4 chart files + `vm.Page` registered. 4 handoff-documented bugfix sessions. LEARNINGS §97-§100 added. | All Vizro work superseded by Marimo-native rewrite (2026-06-05→2026-06-08). Preserved in git history. |
+| 2026-06-05→08 | **Marimo-native dashboard rewrite** — replaced both Vizro and Dash approaches with single `dashboard/app.py` Marimo notebook (static JSON, no DuckDB runtime). 4 pages, `mo.stat()`, `mo.callout()`, `mo.ui.table()`, `mo.ui.tabs()`. | ✅ Blueprint complete. Code deleted 2026-06-08 for clean rebuild. Architecture preserved in `docs/handoffs/HANDOFF-dashboard-marimo-rewrite.md`. Rebuild pending. |
+| 2026-06-08 | **Dashboard code deleted for clean rebuild** — `dashboard/` directory removed entirely. All pipeline layers (dbt marts, forecast, export) remain intact. Handoff document preserved as rebuild blueprint. | Accepted — clean slate for Marimo rebuild from handoff. Will regenerate JSON exports + GeoJSON as part of rebuild. |
