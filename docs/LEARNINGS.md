@@ -91,6 +91,7 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 113 | [KPI 2×2 Grid Overflow: Constrain Plotly Widget Width Inside Flex Containers](#113-kpi-22-grid-overflow-constrain-plotly-widget-width-inside-flex-containers) |
 | 114 | [Marimo `_`-Prefixed Variables Are Cell-Private — Cannot Be Exported Across Cells](#114-marimo_-prefixed-variables-are-cell-private--cannot-be-exported-across-cells) |
 | 115 | [UX Audit → Implementation → Re-audit: Layout Restructure for Page 2](#115-ux-audit--implementation--re-audit-layout-restructure-for-page-2-seasonal-patterns) |
+| 116 | [Reactive Wiring Audit: Every Control Must Reach Every Section](#116-reactive-wiring-audit-every-control-must-reach-every-section) |
 
 ### Superseded
 | # | Section |
@@ -2861,3 +2862,79 @@ When a dashboard page feels dense or confusing, run a structured UX audit before
 - LEARNINGS.md §107 — `mo.hstack` doesn't wrap (led to the card chunking pattern)
 - LEARNINGS.md §108 — `mo.stat()` caption does not render HTML (arrow icons in value field instead)
 - LEARNINGS.md §112 — Inline explainer icons → consolidated accordion (same section-heading pattern)
+
+---
+
+## 116. Reactive Wiring Audit: Every Control Must Reach Every Section
+
+### The Problem
+
+Page 2 of the Marimo dashboard had two controls (`commodity_dd` dropdown, `driver_toggle` radio) displayed side by side at the top of the page, but their reactive reach was inconsistent:
+
+| Section | `commodity_dd` | `driver_toggle` |
+|---------|---------------|-----------------|
+| Action Cards | ❌ always all commodities | ✅ filtered by driver |
+| Driver Chart | ✅ filtered by commodity | ✅ selects chart type |
+| Heatmap | ❌ always all commodities | ✅ added vlines only |
+| Summary Table | ❌ always all commodities | ✅ filtered by driver |
+
+`commodity_dd` only affected the Driver Chart; the other three sections ignored it completely. This created confusing UX: changing the commodity dropdown appeared to do nothing for 75% of the page.
+
+Additionally, changing `commodity_dd` while "All" was selected in the Harvest chart produced incorrect data. The harvest chart's annual normalisation used `groupby("year")["avg_price_idr"].mean()`, which blends all commodities into one annual average. When "All" was selected, a Rice data point was divided by `(Rice_avg + Oil_avg + Sugar_avg + Flour_avg) / 4` instead of just `Rice_avg`.
+
+### Root Cause
+
+The `commodity_dd` widget was defined globally (line 56) and placed in the Page 2 assembly via `mo.hstack` (line 1004), but the heatmap, action cards, and summary table cells did not list `commodity_dd` as a function parameter. Marimo only re-executes cells whose declared dependencies change — a cell that doesn't declare `commodity_dd` as a parameter won't react when the dropdown changes.
+
+The harvest chart bug was introduced when `_build_harvest_chart()` was generalised from Rice-only to commodity-aware. The original single-commodity code didn't need per-commodity normalisation. The generalisation re-used the blended `groupby("year")` pattern from the year-end chart (which already handled multi-commodity correctly at line 849 with `groupby(["year", "commodity_consolidated"])`).
+
+### Solution
+
+**Reactive wiring fix** — added `commodity_dd` as a parameter to 3 cells:
+
+1. **Heatmap** (line 657): filter `heatmap_df` by `commodity_dd.value` before pivoting
+2. **Action Cards** (line 581): filter `action_windows_df` by `commodity_dd.value` before card rendering
+3. **Summary Table** (line 911): filter `summary_df` by `commodity_dd.value` before table display
+
+Each cell uses the same pattern:
+```python
+if _comm != "All":
+    _df = _df[_df["commodity_consolidated"] == _comm]   # or ["commodity"] for action/summary
+```
+
+**Harvest chart normalisation fix** — changed `groupby("year")` to `groupby(["year", "commodity_consolidated"])`:
+```python
+# BEFORE (wrong for multi-commodity)
+_annual = _monthly.groupby("year")["avg_price_idr"].mean()
+
+# AFTER (correct for any commodity selection)
+_annual = _monthly.groupby(["year", "commodity_consolidated"])["avg_price_idr"].mean().reset_index().rename(...)
+_monthly = _monthly.merge(_annual, on=["year", "commodity_consolidated"], how="left")
+_monthly["price_index"] = (_monthly["avg_price_idr"] / _monthly["yr_avg"]) * 100
+_mi = _monthly.groupby("month_of_year")["price_index"].mean()
+```
+
+### Bonus Fixes from This Session
+
+A structured code review of the same dashboard identified additional issues that were fixed inline:
+
+| Issue | Fix |
+|-------|-----|
+| Page 1 controls placed above non-reactive KPI cards (misleading affordance) | Moved controls back to mid-page (after Buy Signals, before Trend Chart). Added `_Commodity:_` and `_Year range:_` labels matching Page 2 style |
+| Action card caption duplicated the arrow icon already shown in `value=` | Removed `_arrow` from `caption=` string |
+| Heatmap `add_vline` used string x-values (`"Mar"`) — fragile for categorical axes | Changed to integer index `x=_m - 1` |
+
+### Rule
+
+When a shared filter appears at the top of a multi-section page, systematically trace its reactive reach by building a control × section dependency matrix. Every section that renders data must declare every filter it should respond to. The matrix approach catches incomplete wiring before it reaches users.
+
+When generalising a chart from single-commodity to multi-commodity, audit all aggregation logic for per-commodity correctness. A `groupby("year")` that was correct for one commodity becomes wrong when blending multiple. Always normalise per commodity first, then aggregate.
+
+### Files Affected
+
+- `dashboard/app.py` — 4 cells edited: heatmap, action cards, summary table (reactive wiring), harvest chart (normalisation), Page 1 layout (controls position), action card caption (arrow dedup), heatmap vline (integer index)
+
+### Cross-Reference
+
+- LEARNINGS.md §111 — Filter Overrides Must Apply Consistently Across All Downstream Cells (same principle, different context)
+- LEARNINGS.md §115 — UX audit pattern that led to identifying the wiring gaps

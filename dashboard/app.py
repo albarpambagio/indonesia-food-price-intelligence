@@ -578,15 +578,19 @@ def _(mo):
 
 
 @app.cell
-def _(action_windows_df, driver_toggle, mo):
+def _(action_windows_df, commodity_dd, driver_toggle, mo):
     _driver = driver_toggle.value
+    _comm = commodity_dd.value
+    _adf = action_windows_df
+    if _comm != "All":
+        _adf = _adf[_adf["commodity"] == _comm]
     if _driver == "All Drivers":
-        _relevant = action_windows_df[action_windows_df["spike_pct"].abs() > 3].sort_values(
+        _relevant = _adf[_adf["spike_pct"].abs() > 3].sort_values(
             "spike_pct", ascending=False
         )
     else:
-        _relevant = action_windows_df[
-            (action_windows_df["driver"] == _driver) & (action_windows_df["spike_pct"].abs() > 3)
+        _relevant = _adf[
+            (_adf["driver"] == _driver) & (_adf["spike_pct"].abs() > 3)
         ].sort_values("spike_pct", ascending=False)
 
     _cards = []
@@ -598,7 +602,7 @@ def _(action_windows_df, driver_toggle, mo):
                 value=f"{_arrow} {_sign}{_row['spike_pct']:.1f}%",
                 label=_row["commodity"],
                 caption=(
-                    f"{_arrow} {_row['driver']} \u00b7 "
+                    f"{_row['driver']} \u00b7 "
                     f"Lead: {_row['lead_months']} \u00b7 "
                     f"{_row['consistency']}/{_row['total_years']} yrs consistent"
                 ),
@@ -655,8 +659,13 @@ def _(mo):
 
 
 @app.cell
-def _(heatmap_df, mo, go):
-    _pivot = heatmap_df.pivot(
+def _(commodity_dd, driver_toggle, heatmap_df, mo, go):
+    _driver = driver_toggle.value
+    _comm = commodity_dd.value
+    _hdf = heatmap_df
+    if _comm != "All":
+        _hdf = _hdf[_hdf["commodity_consolidated"] == _comm]
+    _pivot = _hdf.pivot(
         index="commodity_consolidated", columns="month_of_year", values="premium_pct"
     )
     _month_labels = [
@@ -674,6 +683,12 @@ def _(heatmap_df, mo, go):
         "Dec",
     ]
 
+    _highlight_months = {
+        "Ramadan / Lebaran": None,
+        "Harvest Season": {3, 4, 8, 9},
+        "Year-End": {11, 12},
+    }.get(_driver)
+
     _fig = go.Figure(
         go.Heatmap(
             z=_pivot.values,
@@ -687,6 +702,12 @@ def _(heatmap_df, mo, go):
             colorbar=dict(title="Premium vs Annual Avg (%)"),
         )
     )
+    if _highlight_months is not None:
+        for _m in _highlight_months:
+            _fig.add_vline(
+                x=_m - 1,
+                line=dict(color="rgba(0,150,0,0.4)", width=2, dash="dot"),
+            )
     _fig.update_layout(
         height=280,
         margin=dict(l=100, r=20, t=10, b=40),
@@ -765,16 +786,19 @@ def _(COMMODITIES, commodity_dd, driver_toggle, go, mo, np, pd, price_national_d
         return _fig
 
     def _build_harvest_chart():
-        _monthly = price_national_df[price_national_df["commodity_consolidated"] == "Rice"].copy()
+        _comms = COMMODITIES if _selected_comm == "All" else [_selected_comm]
+        _monthly = price_national_df[
+            price_national_df["commodity_consolidated"].isin(_comms)
+        ].copy()
         _monthly["month_of_year"] = _monthly["month"].dt.month
         _monthly["year"] = _monthly["month"].dt.year
-        _month_avg = _monthly.groupby("month_of_year")["avg_price_idr"].mean()
-        _annual = _monthly.groupby("year")["avg_price_idr"].mean()
-        _monthly = _monthly.merge(
-            _annual.reset_index().rename(columns={"avg_price_idr": "yr_avg"}),
-            on="year",
-            how="left",
+        _annual = (
+            _monthly.groupby(["year", "commodity_consolidated"])["avg_price_idr"]
+            .mean()
+            .reset_index()
+            .rename(columns={"avg_price_idr": "yr_avg"})
         )
+        _monthly = _monthly.merge(_annual, on=["year", "commodity_consolidated"], how="left")
         _monthly["price_index"] = (_monthly["avg_price_idr"] / _monthly["yr_avg"]) * 100
         _mi = _monthly.groupby("month_of_year")["price_index"].mean()
         _month_labels = [
@@ -801,7 +825,7 @@ def _(COMMODITIES, commodity_dd, driver_toggle, go, mo, np, pd, price_national_d
                 x=_month_labels,
                 y=[_mi.get(m, 0) for m in range(1, 13)],
                 marker_color=_colors,
-                hovertemplate="%{x}<br>Rice index: %{y:.1f}<extra></extra>",
+                hovertemplate="%{x}<br>Index: %{y:.1f}<extra></extra>",
             )
         )
         _fig.add_hline(y=100, line_dash="dot", line_color="gray", annotation_text="Annual avg")
@@ -815,7 +839,10 @@ def _(COMMODITIES, commodity_dd, driver_toggle, go, mo, np, pd, price_national_d
         return _fig
 
     def _build_yearend_chart():
-        _monthly = price_national_df.copy()
+        _comms = COMMODITIES if _selected_comm == "All" else [_selected_comm]
+        _monthly = price_national_df[
+            price_national_df["commodity_consolidated"].isin(_comms)
+        ].copy()
         _monthly["month_of_year"] = _monthly["month"].dt.month
         _monthly["year"] = _monthly["month"].dt.year
         _annual = (
@@ -889,10 +916,17 @@ def _(COMMODITIES, commodity_dd, driver_toggle, go, mo, np, pd, price_national_d
 
 
 @app.cell
-def _(mo, summary_df):
-    _table_data = summary_df[
+def _(commodity_dd, driver_toggle, mo, summary_df):
+    _driver = driver_toggle.value
+    _comm = commodity_dd.value
+    _sdf = summary_df
+    if _comm != "All":
+        _sdf = _sdf[_sdf["commodity"] == _comm]
+    _table_data = _sdf[
         ["driver", "commodity", "spike_pct", "consistency", "total_years", "lead_months"]
     ].copy()
+    if _driver != "All Drivers":
+        _table_data = _table_data[_table_data["driver"] == _driver]
     _table_data = _table_data.sort_values("spike_pct", key=abs, ascending=False)
     _table_data.columns = [
         "Driver",
@@ -1060,7 +1094,11 @@ def _(
             kpi_cards_output,
             buy_signal_output,
             mo.hstack(
-                [commodity_dd, year_slider, show_all_years],
+                [
+                    mo.vstack([mo.md("_Commodity:_"), commodity_dd], gap="0.25rem"),
+                    mo.vstack([mo.md("_Year range:_"), year_slider], gap="0.25rem"),
+                    show_all_years,
+                ],
                 gap="1rem",
             ),
             mo.md("_Checkbox overrides the year slider._"),
