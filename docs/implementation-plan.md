@@ -8,7 +8,7 @@
 | **Data First Accessed** | 2026-05-22 |
 | **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
 | **Target Completion** | ~16–20 working days |
-| **Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅, Phase 5g ✅. **Phase 6**: Page 1 complete (Price Trends & Forecast) + **UX polish pass (v5)** — page order corrected, KPI 2×2 grid, sparkline width fixed. Pages 2-4 placeholders. |
+| **Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅, Phase 5g ✅. **Phase 6**: Pages 1–2 complete (Price Trends & Forecast + Seasonal Patterns). UX audit pass (v5) on Page 1. Pages 3–4 pending. |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → **Marimo (native UI, mo.ui + mo.state)** → **Hugging Face Spaces (WASM)** |
 
 ### Parallelization Opportunities
@@ -19,7 +19,7 @@
 | §6.6 Dashboard Init | **Phase 0** (scaffolding, zero data dependency) | Phase 1–5 | ~1 day on back-end |
 
 **Sequential chain** (must wait): Phase 0 → 1 → 2 → 2.5 → 3 → 6 (pages). Phase 4 and 7 slot alongside, not behind.
-> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ → Phase 3f ✅ → Phase 5g ✅ → **Phase 6 🟡 (Page 1 complete + UX polish pass, Pages 2-4 pending)**
+> **Current**: Phase 0+1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 3e ✅ → Phase 4 ✅ → Phase 5 ✅ → Phase 5f ✅ → Phase 3f ✅ → Phase 5g ✅ → **Phase 6 🟡 (Pages 1–2 complete, Pages 3–4 pending)**
 
 ---
 
@@ -338,13 +338,13 @@
 
 ---
 
-## Phase 6 — Dashboard (Marimo-native, static JSON, 4 pages) [PAGE 1 COMPLETE ✅ UX AUDIT PASS ✅ v5 LAYOUT FIXED ✅, PAGES 2-4 PENDING]
-> **Phase 6 REBUILD: Page 1 complete (2026-06-08) + UX audit pass (2026-06-08).** The Marimo-native rewrite was completed 2026-06-08, deleted for clean rebuild, and **rebuilt** with Page 1 (Price Trends & Forecast) fully implemented. A UX audit identified 18 issues; all high-priority items are resolved: dead Island Group control removed, stub tabs hidden, dual commodity filter merged, buy signal methodology disclosed, year slider defaults to last 5 years, unit labels added to KPI prices, colour-blind safe signal icons, reactivity cells split, emoji removed from sortable table columns, consolidated explainer accordion card (replaced inline ⓘ icons). See LEARNINGS.md §106-112 for new learnings. Pages 2–4 are placeholders (`mo.md("Coming soon")`). Architecture blueprint preserved in `docs/handoffs/HANDOFF-dashboard-marimo-rewrite.md`. All dbt marts, forecast JSONs, and export pipeline remain intact.
+## Phase 6 — Dashboard (Marimo-native, static JSON, 4 pages) [PAGES 1–2 COMPLETE ✅ UX AUDIT PASS ✅ v5 LAYOUT FIXED ✅, PAGES 3–4 PENDING]
+> **Phase 6 REBUILD: Pages 1–2 complete (2026-06-08/09).** The Marimo-native rewrite was completed 2026-06-08, deleted for clean rebuild, and **rebuilt** with Page 1 (Price Trends & Forecast) fully implemented. A UX audit identified 18 issues; all high-priority items are resolved: dead Island Group control removed, stub tabs hidden, dual commodity filter merged, buy signal methodology disclosed, year slider defaults to last 5 years, unit labels added to KPI prices, colour-blind safe signal icons, reactivity cells split, emoji removed from sortable table columns, consolidated explainer accordion card (replaced inline ⓘ icons). See LEARNINGS.md §106-113 for new learnings. **Page 2 (Seasonal Patterns)** completed 2026-06-09: 11 new cells — seasonal computations from `price_trends_national.json` (not `seasonal_patterns.json` per LEARNINGS §99), driver toggle (Ramadan/Harvest/Year-End/All), heatmap, 3 driver charts, summary table, action window KPI cards, data limitation callout, explainer accordion. Pages 3–4 are placeholders (`mo.md("Coming soon")`). Architecture blueprint preserved in `docs/handoffs/HANDOFF-dashboard-marimo-rewrite.md`. All dbt marts, forecast JSONs, and export pipeline remain intact.
 >
 > **Why Marimo over Vizro/Dash:** Vizro's cross-filtering promise was compelling on paper but its Pydantic configuration model made it hard to iterate on chart layout and impossible to fix Vizro-specific rendering bugs without framework patches. Marimo's reactive DAG provides equivalent cross-filter behavior (commodity/island filters propagate to all charts on the same page) without a framework abstraction layer — every chart is plain `go.Figure` inside `mo.ui.plotly()`.
 
-### §6.MARIMO — Marimo-native Dashboard (Page 1 complete 2026-06-08, Pages 2-4 pending)
-> ✅ **Page 1 rebuilt and working.** Pages 2-4 have "Coming soon" placeholders. The handoff documents are the rebuild blueprints.
+### §6.MARIMO — Marimo-native Dashboard (Pages 1–2 complete 2026-06-08/09, Pages 3–4 pending)
+> ✅ **Pages 1–2 rebuilt and working.** Pages 3–4 have "Coming soon" placeholders. The handoff documents are the rebuild blueprints.
 
 **Decision rationale:** After the Vizro spike passed (§6.SPIKE), implementing the full 4-page Vizro dashboard revealed recurring pattern friction:
 1. Vizro's `vm.Graph(figure=fn(...))` first-render timing bug required sidebar toggle workarounds (§98)
@@ -427,17 +427,19 @@
 - Added missing `from dash import html` to all 4 page files (was causing `NameError` at runtime)
 - Fixed Plotly 6.x incompatibility: `add_vline` `annotation_position` param → separate `add_annotation()` call
 
-### Page 2 — Seasonal Patterns
+### Page 2 — Seasonal Patterns ✅ DONE (2026-06-09)
 > **Explainer:** "When should we increase stock for each commodity?" — **heatmap** (month × commodity), **line chart** with driver bands, Ramadan **overlay chart**, sortable **summary table**, 3 **action window cards**. Toggle: Ramadan / Harvest / Year-End.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.2.1 | Seasonal heatmap: month × commodity price index | ⬜ | `px.imshow` with `mart_seasonal_patterns` pivoted to 12×4 matrix. `color_continuous_scale="RdYlGn_r"` (red = above avg, green = below avg). Y-axis: commodities, X-axis: months (Jan–Dec). Instant visual scan for seasonal patterns. |
-| 6.2.2 | Monthly price line chart (filtered by driver toggle) | ⬜ | `go.Figure` with one trace per commodity. Filtered by `dcc.RadioItems` (Ramadan / Harvest / Year-End / All). When driver selected, highlights relevant months with `vrect` bands. |
-| 6.2.3 | Ramadan overlay chart: price index T-3 to T+1 | ⬜ | Filter `mart_seasonal_patterns` where `flag_ramadan_*` columns are TRUE. Plot `price_index_vs_annual_avg` for each commodity. `add_hline(y=100)` as annual average baseline. One trace per commodity, bold lines. |
-| 6.2.4 | Seasonal summary table (`dbc.Table`) | ⬜ | Aggregated from `mart_seasonal_patterns`: commodity, avg price, peak month, Ramadan premium (%). Computed as `(ramadan_avg - non_ramadan_avg) / non_ramadan_avg * 100`. Sortable via `dbc.Table` with `hover=True`. |
-| 6.2.5 | Page-specific driver toggle (Ramadan / Harvest / Year-End / All) | ⬜ | `dcc.RadioItems(id="seasonal-driver")`. Filters `mart_seasonal_patterns` by relevant `flag_*` columns. `callback` returns filtered DataFrame to all 4 charts. |
-| 6.2.6 | Wire page via single callback | ⬜ | `Input`: 3 global filters + `seasonal-driver`. `Output`: 4 chart figures + summary table children. Data source: `load_mart("mart_seasonal_patterns")`. |
+| 6.2.1 | Seasonal heatmap: month × commodity price index | ✅ DONE | `go.Heatmap` with all 4 commodities × 12 months. Data derived from `price_trends_national.json` (not `seasonal_patterns.json` — LEARNINGS §99). Blues colorscale, zmid=0. Y-axis: commodities, X-axis: months (Jan–Dec). Computed in `seasonal_computations` cell via `_compute_seasonal_data()`. |
+| 6.2.2 | Monthly price line chart (filtered by driver toggle) | ✅ DONE | 3 chart builders (`_build_ramadan_chart`, `_build_harvest_chart`, `_build_yearend_chart`) in `page2_driver_chart` cell. Conditional on `driver_toggle` radio. Ramadan uses `month_relative` T-2 to T+1 (monthly grain, not weekly — LEARNINGS §100). Harvest highlights Mar–Apr + Aug–Sep. Year-end highlights Nov–Dec. |
+| 6.2.3 | Ramadan overlay chart: price index T-3 to T+1 | ✅ DONE | Merged into driver chart — `_build_ramadan_chart()` shows 4-commodity line chart with Eid reference line at month_relative=0 and shaded T-2 to T+1 band. `add_hline(y=100)` baseline. Islamic calendar from `islamic_cal_df` loaded via `data_static.load_csv()`. |
+| 6.2.4 | Seasonal summary table (`mo.ui.table()`) | ✅ DONE | Aggregated from `_compute_seasonal_data()` → `summary_df`: commodity, avg_price, peak_month, spike_pct, spike_driver, data_months. Sorted by abs spike_pct descending. |
+| 6.2.5 | Page-specific driver toggle (Ramadan / Harvest / Year-End / All) | ✅ DONE | `mo.ui.radio()` with 4 options. "All" shows all 3 charts vertically with section headers. Individual modes show single chart. Action window KPI cards computed from `action_windows_df`. |
+| 6.2.6 | Wire page via Marimo reactive DAG | ✅ DONE | No callback needed — Marimo DAG handles reactivity. `seasonal_computations` cell receives `price_national_df`, `forecast_df`, `islamic_cal_df`. `page2_driver_chart` reads `driver_toggle.value`. Final `page2_assembly` cell returns `mo.vstack` of all components. |
+| 6.2.7 | Data limitation callout (Rice/Sugar/Flour) | ✅ DONE | `mo.callout(kind="info")` in `page2_data_notice` cell — Rice/Sugar/Flour data ends 2020-03 (WFP gap), Cooking Oil extends to 2024-12. |
+| 6.2.8 | Explainer accordion (6 sections) | ✅ DONE | `mo.accordion()` in `page2_explainer` cell with 6 entries from `EXPLAINERS_P2` dict in `explainer_copy.py`. |
 
 ### Page 3 — Geographic Disparity
 > **Explainer:** "Which island group offers the best sourcing price?" — 5 island **KPI cards** (clickable), **choropleth map** (province-level), **comparison line chart** (5 series + Java hline), sortable **province drill-down table**, **data limitation callout** (Cooking Oil only).
@@ -742,7 +744,8 @@ pinned: false
 - [x] **Phase 6 v2 regression fix**: Broken `mo.ui.button` (counter-based, locked slider) replaced with `mo.ui.checkbox` (boolean). Unused imports cleaned. YoY reconciling note added between KPI and table sections.
 - [x] **Phase 6 v3 fixes**: KPI layout hstack→vstack (no overflow), per-commodity sparkline window (Flour data ends 2020-03, global window had 0 records), `mo.stat()` HTML captions replaced with plain text + `direction` parameter.
 - [x] **Phase 6 v5 fixes**: KPI cards vstack→2×2 hstack grid (4 cards, `widths="equal"`), page order corrected (KPIs → Buy Signals → Filters → Chart → Callout → YoY → Explainer), sparkline `width=160` constraint added to `kpi_sparklines.py`, full-width panels for Buy Signal Monitor and YoY table.
-- [x] **LEARNINGS.md §106-111**: 6 new sections — button counter, hstack overflow, stat HTML captions, per-commodity sparkline window, reactivity cell split, filter override consistency.
+- [x] **Phase 6 Page 2 (Seasonal Patterns)**: 11 new cells — `seasonal_computations` (heatmap/ramadan/harvest/year-end/action-windows/summary from `price_trends_national.json`), `page2_filters` (driver radio), `page2_action_cards` (mo.stat KPIs), `page2_data_notice` (mo.callout), `page2_heatmap` (go.Heatmap), `page2_driver_chart` (3 builders conditional on toggle), `page2_summary_table` (mo.ui.table), `page2_explainer` (mo.accordion 6 sections), `page2_assembly` (mo.vstack), updated imports + data loading + final tabs cell. All 3 verification checks pass: `marimo check` ✅, `ruff format --check` ✅, script mode ✅.
+- [x] **LEARNINGS.md §106-113**: 8 new sections — button counter, hstack overflow, stat HTML captions, per-commodity sparkline window, reactivity cell split, filter override consistency, numpy bool cast for Plotly showlegend, mo.ui.table sortable param unsupported.
 - [x] **Phase 6 architecture documented**: `HANDOFF-dashboard-marimo-rewrite.md` — data schemas, cross-cell scoping, dual-path resolution, Page 4 sync, failure-mode validation ✅ DONE
 - [x] **Phase 6 `marimo check`**: ✅ PASS — `dashboard/app.py` valid Marimo notebook (PEP 723 header warning only)
 - [x] **Phase 6 `ruff check dashboard/`**: ✅ Clean — E501 only, 0 F821/B018/E702
@@ -814,6 +817,7 @@ Solo portfolio project — commit per phase on `main`. No branches needed unless
 | Page 1 bugfixes | `fix: Page 1 Vizro bugs — first-render, YoY, overlap, clipping, hover, theme` | 6 fixes across charts + LEARNINGS §97-§98 |
 | Page 2 handoff | `docs: Page 2 seasonal patterns implementation handoff` | Data source correction, month_relative reframing, chart functions, filter patterns |
 | Phase 6 v5 | `fix: Page 1 v5 — KPI 2×2 grid, page order, sparkline width` | KPI cards hstack 2×2, layout reorder (chart before signals, callout below chart), `width=160` on sparkline, `mo.card()` attempted but reverted (unavailable in 0.23.9), full-width panels |
+| Phase 6 Page 2 | `feat: Page 2 seasonal patterns — heatmap, driver charts, action windows, summary table` | 11 new cells in app.py, EXPLAINERS_P2 in explainer_copy.py, islamic_calendar.csv added to public/data/, Page 2 verification passes |
 
 **Rules**:
 - Conventional Commits (`feat:`, `docs:`, `fix:`)

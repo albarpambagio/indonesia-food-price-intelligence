@@ -61,3 +61,69 @@ EXPLAINERS = {
         "quotes before committing._"
     ),
 }
+
+EXPLAINERS_P2 = {
+    "action_cards": (
+        "**Reading the action cards**\n\n"
+        "Each card shows a commodity with a statistically meaningful seasonal price "
+        "effect for the selected driver. The percentage is the **average premium** "
+        "(or discount) during the seasonal window compared to the rest of the year.\n\n"
+        "\u2014 **Positive %**: prices tend to rise during this window \u2192 stock up before\n"
+        "\u2014 **Negative %**: prices tend to drop \u2192 consider delaying procurement\n\n"
+        "_Only commodities with >3% average effect are shown. The consistency score "
+        "indicates how many years the pattern held out of the available data._"
+    ),
+    "heatmap": (
+        "**Reading the heatmap**\n\n"
+        "Each cell shows the **average monthly price premium** vs. the annual average "
+        "for that commodity. Darker blue = higher premium; lighter = lower.\n\n"
+        "\u2014 **Values >0%** (darker): prices tend to be above average in this month\n"
+        "\u2014 **Values <0%** (lighter): prices tend to be below average \u2014 "
+        "potential procurement windows\n\n"
+        "_This heatmap uses Gregorian calendar months. Ramadan shifts each year \u2014 "
+        "see the Ramadan overlay below for an Islamic calendar-adjusted view._\n\n"
+        "_Rice, Sugar, and Flour data ends March 2020 (WFP data gap). "
+        "Cooking Oil data extends through December 2024._"
+    ),
+    "ramadan": (
+        "**Reading the Ramadan overlay**\n\n"
+        "Each thin line shows one year's price trajectory relative to Eid al-Fitr. "
+        "The **bold line** is the multi-year average. The horizontal dotted line "
+        "is the annual average baseline (index = 100).\n\n"
+        "\u2014 **T-2**: 2 months before Eid (Ramadan start)\n"
+        "\u2014 **T-1**: 1 month before Eid (peak Ramadan)\n"
+        "\u2014 **T**: Eid al-Fitr month\n"
+        "\u2014 **T+1**: 1 month after Eid\n\n"
+        "_The red line highlights 2022, when Indonesia's palm oil export ban "
+        "created an unusual price spike unrelated to Ramadan seasonality._\n\n"
+        "_Source data is monthly, so the x-axis uses month-level granularity "
+        "(not weekly as in some wireframe specifications)._"
+    ),
+    "harvest": (
+        "**Reading the harvest chart**\n\n"
+        "This chart shows **Rice** price index by month, with harvest discount "
+        "windows highlighted in green (Mar\u2013Apr and Aug\u2013Sep).\n\n"
+        "\u2014 **Green bars**: main harvest seasons when rice supply peaks and prices drop\n"
+        "\u2014 **Blue bars**: non-harvest months\n\n"
+        "_Rice is the only commodity with a pronounced harvest-driven price pattern. "
+        "The dotted line marks the annual average (index = 100). Values below 100 "
+        "indicate months where rice is historically cheaper._"
+    ),
+    "yearend": (
+        "**Reading the year-end chart**\n\n"
+        "Shows the average **Nov\u2013Dec price premium** for each commodity compared "
+        "to the rest of the year. Year-end demand (holidays, harvesting) often "
+        "pushes prices up.\n\n"
+        "_The consistency score indicates how many years this premium was observed. "
+        "Higher consistency = more reliable seasonal signal for procurement planning._"
+    ),
+    "summary": (
+        "**Reading the summary table**\n\n"
+        "All seasonal effects across all drivers in one sortable table. Sort by "
+        "**Spike %** (absolute value) to find the strongest seasonal signals.\n\n"
+        "\u2014 **Positive Spike %**: prices rise during this window (stock up before)\n"
+        "\u2014 **Negative Spike %**: prices drop (potential procurement window)\n\n"
+        "_**Lead Time** = how far in advance the seasonal effect begins. "
+        "This is the most actionable column for procurement timing._"
+    ),
+}
