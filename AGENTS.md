@@ -89,8 +89,23 @@ uv run python forecast/run_forecast.py   # DONE — Phase 3e (7 bugfixes) + Phas
 ### Export + Dashboard
 ```bash
 uv run python export/export_json.py   # DONE — 5 mart JSONs via verify_export() + forecast.json
-uv run python dashboard/app.py        # Dev server (HUMAN-USE ONLY — never run as agent verification, blocks forever)
-# Production: same script, served via Hugging Face Spaces Docker (port 7860)
+uv run python dashboard/app.py        # Script mode (exits cleanly) — also serves via HF Spaces Docker (port 7860)
+```
+
+### Agent Dashboard Verification (pre-merge)
+```bash
+# 1. Structural — catches cell dependency, scoping, missing returns
+uvx marimo check dashboard/app.py
+
+# 2. Syntax — lint + format
+ruff check dashboard/app.py
+ruff format --check dashboard/app.py
+
+# 3. Runtime — all cells execute headlessly, exits cleanly
+uv run python dashboard/app.py
+
+# 4. Compilation — WASM export test
+uv run marimo export html-wasm dashboard/app.py -o /tmp/test.html --mode run -f
 ```
 
 ---
@@ -389,6 +404,7 @@ Mismatch sets `pipeline.lineage.export_status = 'failed'` and logs detailed coun
 - **Plotly figures**: `go.Figure` with `layout.template="plotly_white"`; never `connectgaps=True`
 - **WASM build**: `dashboard/build.py` exports via `marimo export html-wasm`; `dist/` directory for Hugging Face Spaces
 - **Validate**: `marimo check dashboard/app.py`, `ruff check dashboard/`, `uv run python dashboard/app.py` (script mode)
+- **Validate**: `marimo check dashboard/app.py`, `ruff check dashboard/`, `uv run python dashboard/app.py` (script mode)
 
 ### Marimo Notebooks
 - Save as .py files (marimo's standard format)
@@ -530,11 +546,17 @@ uv run python forecast/run_forecast.py
 
 ### Verify Dashboard
 ```bash
-uv run python -c "from dashboard.app import app; print(f'Cells: {len(app._memoized_cells) if hasattr(app, \"_memoized_cells\") else \"OK\"}')"
-# Script mode (exits cleanly):
+# 1. Structural check (cell deps, scoping, missing returns)
+uvx marimo check dashboard/app.py
+
+# 2. Script mode (all cells execute, exits cleanly)
 uv run python dashboard/app.py
-# WASM export test:
+
+# 3. WASM export test (compilation verification)
 uv run marimo export html-wasm dashboard/app.py -o /tmp/test.html --mode run -f
+
+# 4. Import check
+uv run python -c "from dashboard.app import app; print(f'Cells: {len(app._memoized_cells) if hasattr(app, \"_memoized_cells\") else \"OK\"}')"
 ```
 
 ---

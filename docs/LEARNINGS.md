@@ -89,6 +89,7 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 111 | [Filter Overrides Must Apply Consistently Across All Downstream Cells](#111-filter-overrides-must-apply-consistently-across-all-downstream-cells) |
 | 112 | [Inline Explainer Icons Cause Layout Noise — Consolidate Into Single Accordion Card](#112-inline-explainer-icons-cause-layout-noise--consolidate-into-single-accordion-card) |
 | 113 | [KPI 2×2 Grid Overflow: Constrain Plotly Widget Width Inside Flex Containers](#113-kpi-22-grid-overflow-constrain-plotly-widget-width-inside-flex-containers) |
+| 114 | [Marimo `_`-Prefixed Variables Are Cell-Private — Cannot Be Exported Across Cells](#114-marimo_-prefixed-variables-are-cell-private--cannot-be-exported-across-cells) |
 
 ### Superseded
 | # | Section |
@@ -2732,3 +2733,66 @@ When placing Plotly figures inside flex containers (Marimo `mo.hstack` with `wid
 
 - LEARNINGS.md §107 — `mo.hstack` doesn't wrap (the overflow problem that led to the 2×2 grid in the first place)
 - LEARNINGS.md §108 — `mo.stat()` caption does not render HTML (companion stat styling issue)
+
+---
+
+## 114. Marimo `_`-Prefixed Variables Are Cell-Private — Cannot Be Exported Across Cells
+
+### The Problem
+
+A cell computed `data_min_year` and `data_max_year` with underscore prefixes (`_data_min_year`, `_data_max_year`) to signal they were "internal" values. Downstream cells listed them as function parameters, expecting Marimo's reactive DAG to wire them:
+
+```python
+# Cell 3 (data year range)
+@app.cell
+def _(price_national_df):
+    _data_min_year = int(price_national_df["month"].dt.year.min())
+    _data_max_year = int(price_national_df["month"].dt.year.max())
+    return _data_min_year, _data_max_year
+
+# Cell 4 (slider — expects _data_min_year, _data_max_year)
+@app.cell
+def _(mo, _data_min_year, _data_max_year):
+    year_slider = mo.ui.range_slider(start=_data_min_year, stop=_data_max_year, ...)
+```
+
+This raised `NameError: name '_data_min_year' is not defined` on cell 4, with cascading ancestor failures on all downstream cells.
+
+### Root Cause
+
+Marimo treats `_`-prefixed variables as **cell-private**. Variables with a single leading underscore are filtered from the cell's export namespace — `return _data_min_year` does not make `_data_min_year` available to other cells, even though it's in the return tuple. This is consistent with Python's convention that `_` signals "private/internal," but Marimo enforces it at the DAG wiring level.
+
+Note: this is different from `__` (double underscore) which is filtered at **all scope levels** including module level (§69). Single `_` is only filtered from cell exports.
+
+### Solution
+
+Drop the underscore prefix for variables that must be consumed by other cells:
+
+```python
+# Cell 3 — no underscore prefix
+@app.cell
+def _(price_national_df):
+    data_min_year = int(price_national_df["month"].dt.year.min())
+    data_max_year = int(price_national_df["month"].dt.year.max())
+    return data_min_year, data_max_year
+
+# Cell 4 — imports work
+@app.cell
+def _(mo, data_min_year, data_max_year):
+    year_slider = mo.ui.range_slider(start=data_min_year, stop=data_max_year, ...)
+```
+
+Use `_`-prefix only for variables that are genuinely cell-private (loop variables, temporary intermediates that are not returned). Any variable in a `return` tuple that must be wired to downstream cells must NOT have a `_` prefix.
+
+### Rule
+
+In Marimo notebooks, `_`-prefixed variables in `return` tuples are silently dropped from the cell's export namespace. Only use `_` prefix for variables that are not returned or not consumed by other cells. For cross-cell dependencies, use unprefixed names.
+
+### Files Affected
+
+- `dashboard/app.py` — `_data_min_year`/`_data_max_year` → `data_min_year`/`data_max_year` across 5 cells
+
+### Cross-Reference
+
+- LEARNINGS.md §69 — `__` (double underscore) variables filtered at all scope levels (including module level)
+- AGENTS.md §405 — Underscore convention: `__` for reactive-graph-excluded, `_` for loop variables, no prefix for normal locals

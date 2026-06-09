@@ -23,7 +23,7 @@ EXPLAINERS = {
     ),
     "buy_signal": (
         "**How buy signals are calculated**\n\n"
-        "The signal compares the **forecast average price over the next 6 months** against "
+        "The signal compares the **forecast average price over the next 2 months** against "
         "the **most recent actual price**:\n\n"
         "| Signal | Ratio | Meaning for procurement |\n"
         "|--------|-------|------------------------|\n"

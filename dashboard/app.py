@@ -20,7 +20,10 @@ def _():
     import plotly.graph_objects as go
     from explainer_copy import EXPLAINERS
 
-    return EXPLAINERS, go, mo, pd
+    COMMODITIES = ["Rice", "Cooking Oil", "Sugar", "Flour"]
+    UNIT_MAP = {"Rice": "/kg", "Cooking Oil": "/L", "Sugar": "/kg", "Flour": "/kg"}
+
+    return COMMODITIES, EXPLAINERS, go, mo, pd, UNIT_MAP
 
 
 @app.cell
@@ -38,29 +41,44 @@ def _(pd):
 
 
 @app.cell
-def _(mo):
+def _(price_national_df):
+    data_min_year = int(price_national_df["month"].dt.year.min())
+    data_max_year = int(price_national_df["month"].dt.year.max())
+    return data_min_year, data_max_year
+
+
+@app.cell
+def _(mo, data_min_year, data_max_year):
     commodity_dd = mo.ui.dropdown(
         options=["All", "Rice", "Cooking Oil", "Sugar", "Flour"],
         value="All",
         label="Commodity",
     )
     year_slider = mo.ui.range_slider(
-        start=2007,
-        stop=2024,
-        value=[2019, 2024],
+        start=data_min_year,
+        stop=data_max_year,
+        value=[max(2019, data_min_year), data_max_year],
         step=1,
         label="Year range",
     )
     show_all_years = mo.ui.checkbox(
-        label="Show full history (2007\u20132024)",
+        label=f"Show full history ({data_min_year}\u2013{data_max_year})",
     )
     return commodity_dd, show_all_years, year_slider
 
 
 @app.cell
-def _(commodity_dd, mo, price_national_df, show_all_years, year_slider):
+def _(
+    commodity_dd,
+    mo,
+    price_national_df,
+    show_all_years,
+    year_slider,
+    data_min_year,
+    data_max_year,
+):
     if show_all_years.value:
-        _yr_lo, _yr_hi = 2007, 2024
+        _yr_lo, _yr_hi = data_min_year, data_max_year
     else:
         _yr_lo, _yr_hi = year_slider.value
     filtered_df = price_national_df[
@@ -121,17 +139,28 @@ def _(price_national_df):
 
 @app.cell
 def _(forecast_df, price_national_df):
+    _is_baseline = forecast_df["scenario"].isna()
+
     latest_actual = (
-        forecast_df[(forecast_df["actual_price"].notna()) & (forecast_df["scenario"].isna())]
+        forecast_df[(forecast_df["actual_price"].notna()) & _is_baseline]
         .sort_values("date")
         .groupby("commodity")
         .last()
         .reset_index()
     )
     forecast_only = forecast_df[
-        (forecast_df["forecast_price"].notna()) & (forecast_df["scenario"].isna())
+        (forecast_df["forecast_price"].notna()) & _is_baseline
     ].copy()
-    forecast_avg = forecast_only.groupby("commodity")["forecast_price"].mean().reset_index()
+
+    forecast_avg = (
+        forecast_only.sort_values(["commodity", "date"])
+        .groupby("commodity")
+        .head(2)
+        .groupby("commodity")["forecast_price"]
+        .mean()
+        .reset_index()
+    )
+
     buy_signals_df = latest_actual.merge(forecast_avg, on="commodity", suffixes=("", "_avg"))
     buy_signals_df["ratio"] = buy_signals_df["forecast_price"] / buy_signals_df["actual_price"]
     buy_signals_df["signal"] = buy_signals_df["ratio"].apply(
@@ -151,27 +180,19 @@ def _(forecast_df, price_national_df):
     buy_signals_df = buy_signals_df.merge(fc_ranges, on="commodity", how="left")
     buy_signals_df["reason"] = buy_signals_df.apply(
         lambda r: (
-            f"Forecast avg ({r['forecast_price']:,.0f}) "
+            f"2-mo avg ({r['forecast_price']:,.0f}) "
             f"vs current ({r['actual_price']:,.0f}) \u00b7 "
             f"covers {r['fc_start'].strftime('%b %Y')}\u2013{r['fc_end'].strftime('%b %Y')}"
         ),
         axis=1,
     )
 
-    max_data_month = price_national_df["month"].max()
-    return buy_signals_df, max_data_month
+    return (buy_signals_df,)
 
 
 @app.cell
-def _(latest_prices_df, mo, pd, price_national_df):
+def _(COMMODITIES, UNIT_MAP, latest_prices_df, mo, pd, price_national_df):
     from charts.kpi_sparklines import sparkline_chart
-
-    UNIT_MAP = {
-        "Rice": "/kg",
-        "Cooking Oil": "/L",
-        "Sugar": "/kg",
-        "Flour": "/kg",
-    }
 
     cards = []
     for _, row in latest_prices_df.iterrows():
@@ -213,10 +234,10 @@ def _(latest_prices_df, mo, pd, price_national_df):
 
 
 @app.cell
-def _(commodity_dd, filtered_df, forecast_df, go, mo, pd):
+def _(COMMODITIES, commodity_dd, filtered_df, forecast_df, go, mo, pd):
     fig = go.Figure()
     if commodity_dd.value == "All":
-        commodities = ["Rice", "Cooking Oil", "Sugar", "Flour"]
+        commodities = COMMODITIES
     else:
         commodities = [commodity_dd.value]
 
@@ -224,7 +245,7 @@ def _(commodity_dd, filtered_df, forecast_df, go, mo, pd):
         (forecast_df["forecast_price"].notna()) & (forecast_df["scenario"].isna())
     ]
 
-    for c in commodities:
+    for _i, c in enumerate(commodities):
         sub = filtered_df[filtered_df["commodity_consolidated"] == c]
         if sub.empty:
             continue
@@ -260,7 +281,7 @@ def _(commodity_dd, filtered_df, forecast_df, go, mo, pd):
                     fillcolor="rgba(100,100,200,0.15)",
                     line=dict(color="rgba(0,0,0,0)"),
                     name="95% CI",
-                    showlegend=True,
+                    showlegend=(_i == 0),
                 )
             )
 
@@ -289,10 +310,10 @@ def _(commodity_dd, filtered_df, forecast_df, go, mo, pd):
             )
 
     if fig.data:
-        # TODO: Extract to event data structure if more annotations are added
         fig.add_annotation(
             x=pd.Timestamp("2022-04-01"),
-            y=fig.data[0].y.max() * 0.9,
+            y=0.9,
+            yref="paper",
             text="2022 Export Ban",
             showarrow=True,
             arrowhead=2,
@@ -313,8 +334,8 @@ def _(commodity_dd, filtered_df, forecast_df, go, mo, pd):
 
 
 @app.cell
-def _(buy_signals_df, max_data_month, mo):
-    _month_str = max_data_month.strftime("%B %Y")
+def _(buy_signals_df, max_month, mo):
+    _month_str = max_month.strftime("%B %Y")
 
     rows = []
     for _, r in buy_signals_df.iterrows():
@@ -338,22 +359,20 @@ def _(buy_signals_df, max_data_month, mo):
 
 
 @app.cell
-def _(mo, show_all_years, year_slider, yoy_df):
+def _(COMMODITIES, mo, show_all_years, year_slider, yoy_df, data_min_year, data_max_year):
     if show_all_years.value:
-        _yr_lo, _yr_hi = 2007, 2024
+        _yr_lo, _yr_hi = data_min_year, data_max_year
     else:
         _yr_lo, _yr_hi = year_slider.value
     table_data = yoy_df[(yoy_df["year"] >= _yr_lo) & (yoy_df["year"] <= _yr_hi)].sort_values(
         "year", ascending=False
     )
 
-    _numeric_cols = ["Rice", "Cooking Oil", "Sugar", "Flour"]
-
     yoy_table_output = mo.vstack(
         [
             mo.md("## Annual Price Change"),
             mo.ui.table(
-                table_data[["year", *_numeric_cols]],
+                table_data[["year", *COMMODITIES]],
                 page_size=10,
             ),
         ],
