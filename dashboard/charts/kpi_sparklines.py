@@ -35,6 +35,7 @@ def sparkline_chart(series, height=48):
             yshift=10,
         )
     fig.update_layout(
+        width=160,
         height=height,
         margin=dict(l=0, r=0, t=0, b=0),
         paper_bgcolor="rgba(0,0,0,0)",

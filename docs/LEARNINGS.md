@@ -88,6 +88,7 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 110 | [Separate Reactivity Cells to Avoid Unnecessary Re-execution](#110-separate-reactivity-cells-to-avoid-unnecessary-re-execution) |
 | 111 | [Filter Overrides Must Apply Consistently Across All Downstream Cells](#111-filter-overrides-must-apply-consistently-across-all-downstream-cells) |
 | 112 | [Inline Explainer Icons Cause Layout Noise — Consolidate Into Single Accordion Card](#112-inline-explainer-icons-cause-layout-noise--consolidate-into-single-accordion-card) |
+| 113 | [KPI 2×2 Grid Overflow: Constrain Plotly Widget Width Inside Flex Containers](#113-kpi-22-grid-overflow-constrain-plotly-widget-width-inside-flex-containers) |
 
 ### Superseded
 | # | Section |
@@ -2674,3 +2675,60 @@ Each element cell now returns its content bare (no wrapping), and the assembly c
 ### Rule
 
 When a dashboard has multiple explanatory notes (methodology, calculation details, data limitations), collect them into a single collapsible card at the bottom of the page rather than scattering ⓘ icons inline with each element. `mo.accordion({...})` with `multiple=True` is the idiomatic marimo pattern — users expand only the sections they need, and the page layout stays clean. Inline explainers work for single-element tooltips but create visual noise at scale.
+
+---
+
+## 113. KPI 2×2 Grid Overflow: Constrain Plotly Widget Width Inside Flex Containers
+
+### The Problem
+
+After converting KPI cards from vertical stack (`mo.vstack`) to a 2×2 grid (`mo.hstack(cards[:2], widths="equal")`), the second row (Sugar + Flour) overflowed the container. The Plotly sparkline widget inside each `mo.stat`'s `slot` parameter resisted shrinking below its default width (~470px), pushing each card past the 50% column boundary.
+
+### Root Cause
+
+`sparkline_chart()` in `dashboard/charts/kpi_sparklines.py` set `height=48` but no explicit `width` on the Plotly figure. Plotly defaults to a responsive width (~470px for `go.Figure`). When placed inside a flex container with `widths="equal"`, each column gets ~50% of the container minus gap — but the Plotly widget refuses to shrink below its default, causing overflow.
+
+`mo.hstack` with `widths="equal"` distributes width via CSS `flex: 1` on each child. The flex child respects `min-width` from its content. The Plotly widget's implicit `min-width` is its default rendered width.
+
+### Solution
+
+Pin the sparkline figure to a fixed width in `kpi_sparklines.py`:
+
+```python
+fig.update_layout(
+    width=160,   # <-- added
+    height=height,
+    margin=dict(l=0, r=0, t=0, b=0),
+    ...
+)
+```
+
+At 160px, the sparkline is still readable (24-month trend with min/max annotations at 9px font), and each card in a `widths="equal"` hstack fits comfortably within 50% of the container.
+
+### What Didn't Work
+
+**`mo.card()` for panel borders** — Marimo 0.23.9 does not expose `mo.card()`. Tested at runtime: `AttributeError: module 'marimo' has no attribute 'card'`. Available marimo APIs confirmed via `dir(marimo)`: `accordion`, `callout`, `stat`, `vstack`, `hstack`, `ui`, `tabs` — but no `card`. The audit requested card-border treatment on Buy Signal Monitor and YoY table panels; reverted to plain `mo.vstack` with `##` headings for visual separation.
+
+**Fallback if `width=160` is insufficient** — wrap each card in `mo.Html` with `min-width:0; flex:1`:
+
+```python
+def _wrap(card):
+    return mo.Html(f'<div style="flex:1; min-width:0; overflow:hidden">{card.text}</div>')
+row1 = mo.hstack([_wrap(cards[0]), _wrap(cards[1])], gap="1rem", widths="equal")
+```
+
+This was not needed after the `width=160` fix.
+
+### Files Affected
+
+- `dashboard/charts/kpi_sparklines.py` — added `width=160` to `fig.update_layout()`
+- `dashboard/app.py` — KPI cards rearranged from `mo.vstack(cards)` to 2×2 `mo.hstack` grid
+
+### Rule
+
+When placing Plotly figures inside flex containers (Marimo `mo.hstack` with `widths="equal"`, CSS flexbox, or grid layouts), always set an explicit `width` on the figure via `fig.update_layout(width=N)`. Plotly's default responsive width will resist shrinking and overflow the container. The width should be small enough to fit within the expected column width (e.g., 160px for a 50% column in a typical viewport).
+
+### Cross-Reference
+
+- LEARNINGS.md §107 — `mo.hstack` doesn't wrap (the overflow problem that led to the 2×2 grid in the first place)
+- LEARNINGS.md §108 — `mo.stat()` caption does not render HTML (companion stat styling issue)

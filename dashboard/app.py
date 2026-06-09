@@ -206,7 +206,9 @@ def _(latest_prices_df, mo, pd, price_national_df):
         card = mo.stat(**stat_kwargs)
         cards.append(card)
 
-    kpi_cards_output = mo.vstack(cards, gap="1rem")
+    row1 = mo.hstack(cards[:2], gap="1rem", widths="equal")
+    row2 = mo.hstack(cards[2:], gap="1rem", widths="equal")
+    kpi_cards_output = mo.vstack([row1, row2], gap="1rem")
     return (kpi_cards_output,)
 
 
@@ -397,17 +399,13 @@ def _(
                 f"_Indonesian Staple Commodities \u00b7 "
                 f"Jan 2007\u2013{_date_label} + 6-Month Forecast_"
             ),
+            kpi_cards_output,
+            buy_signal_output,
             mo.hstack(
                 [commodity_dd, year_slider, show_all_years],
                 gap="1rem",
             ),
             mo.md("_Checkbox overrides the year slider._"),
-            kpi_cards_output,
-            mo.hstack(
-                [buy_signal_output, yoy_table_output],
-                gap="2rem",
-                align="start",
-            ),
             trend_chart_output,
             mo.callout(
                 mo.md(
@@ -418,6 +416,7 @@ def _(
                 ),
                 kind="info",
             ),
+            yoy_table_output,
             explainer_card,
         ],
         gap="1.5rem",
