@@ -591,13 +591,14 @@ def _(action_windows_df, driver_toggle, mo):
 
     _cards = []
     for _, _row in _relevant.iterrows():
+        _arrow = "\u2191" if _row["spike_pct"] > 0 else "\u2193"
         _sign = "+" if _row["spike_pct"] > 0 else ""
         _cards.append(
             mo.stat(
-                value=f"{_sign}{_row['spike_pct']:.1f}%",
+                value=f"{_arrow} {_sign}{_row['spike_pct']:.1f}%",
                 label=_row["commodity"],
                 caption=(
-                    f"{_row['driver']} \u00b7 "
+                    f"{_arrow} {_row['driver']} \u00b7 "
                     f"Lead: {_row['lead_months']} \u00b7 "
                     f"{_row['consistency']}/{_row['total_years']} yrs consistent"
                 ),
@@ -606,19 +607,26 @@ def _(action_windows_df, driver_toggle, mo):
         )
 
     _label = "All Drivers" if _driver == "All Drivers" else _driver
+    _card_grid = (
+        mo.vstack(
+            [
+                mo.hstack(_row, gap="1rem", widths="equal")
+                for _row in [_cards[i : i + 4] for i in range(0, len(_cards), 4)]
+            ],
+            gap="0.5rem",
+        )
+        if _cards
+        else mo.callout(
+            mo.md("No statistically meaningful seasonal effect (>3%) for this driver."),
+            kind="warn",
+        )
+    )
     page2_action_cards = mo.vstack(
         [
-            mo.md(f"## Action Window \u2014 {_label}"),
-            (
-                mo.hstack(_cards, gap="1rem", widths="equal")
-                if _cards
-                else mo.callout(
-                    mo.md("No statistically meaningful seasonal effect (>3%) for this driver."),
-                    kind="warn",
-                )
-            ),
+            mo.md(f"_Filtered to: **{_label}**_"),
+            _card_grid,
         ],
-        gap="0.5rem",
+        gap="0.75rem",
     )
     return (page2_action_cards,)
 
@@ -671,19 +679,20 @@ def _(heatmap_df, mo, go):
             z=_pivot.values,
             x=_month_labels,
             y=_pivot.index.tolist(),
-            colorscale="Blues",
+            colorscale="RdBu_r",
             zmid=0,
             text=[[f"{v:+.1f}%" for v in row] for row in _pivot.values],
             texttemplate="%{text}",
             hovertemplate="<b>%{y}</b><br>%{x}<br>Premium: %{z:+.1f}%<extra></extra>",
-            colorbar=dict(title="% vs avg"),
+            colorbar=dict(title="Premium vs Annual Avg (%)"),
         )
     )
     _fig.update_layout(
-        height=220,
-        margin=dict(l=100, r=20, t=40, b=40),
-        title="Monthly Price Premium vs Annual Average (%)",
+        height=280,
+        margin=dict(l=100, r=20, t=10, b=40),
         template="plotly_white",
+        font=dict(family="system-ui, sans-serif", size=12),
+        hoverlabel=dict(font_size=13),
     )
     page2_heatmap = mo.ui.plotly(_fig)
     return (page2_heatmap,)
@@ -721,7 +730,10 @@ def _(COMMODITIES, commodity_dd, driver_toggle, go, mo, np, pd, price_national_d
                         ),
                         showlegend=_is_2022,
                         legendgroup=_c,
-                        hovertemplate=f"{_yr} ({_c})<br>T%+d: %{{y:.1f}}<extra></extra>",
+                        hovertemplate=(
+                            f"{_yr} ({_c})<br>Month relative to Eid: %{{x}}"
+                            f"<br>Price Index: %{{y:.1f}}<extra></extra>"
+                        ),
                     )
                 )
             _avg = _sub.groupby("month_relative")["price_index"].mean().reset_index()
@@ -738,15 +750,17 @@ def _(COMMODITIES, commodity_dd, driver_toggle, go, mo, np, pd, price_national_d
         _fig.add_hline(y=100, line_dash="dot", line_color="gray", annotation_text="Annual avg")
         _fig.update_layout(
             height=320,
+            margin=dict(b=100),
             xaxis=dict(
                 title="Months relative to Eid al-Fitr",
                 tickvals=[-2, -1, 0, 1],
                 ticktext=["T\u22122", "T\u22121", "T (Eid)", "T+1"],
             ),
             yaxis_title="Price Index (100 = annual avg)",
-            title="Price Index Relative to Eid al-Fitr \u2014 All Years Overlaid",
             template="plotly_white",
-            legend=dict(orientation="h", y=-0.2),
+            font=dict(family="system-ui, sans-serif", size=12),
+            hoverlabel=dict(font_size=13),
+            legend=dict(orientation="h", y=-0.25),
         )
         return _fig
 
@@ -792,10 +806,11 @@ def _(COMMODITIES, commodity_dd, driver_toggle, go, mo, np, pd, price_national_d
         )
         _fig.add_hline(y=100, line_dash="dot", line_color="gray", annotation_text="Annual avg")
         _fig.update_layout(
-            height=250,
-            yaxis_title="Rice Price Index (100 = annual avg)",
-            title="Rice Price Index by Month \u2014 Harvest Discount Windows",
+            height=280,
+            yaxis_title="Price Index (100 = ann. avg)",
             template="plotly_white",
+            font=dict(family="system-ui, sans-serif", size=12),
+            hoverlabel=dict(font_size=13),
         )
         return _fig
 
@@ -837,10 +852,11 @@ def _(COMMODITIES, commodity_dd, driver_toggle, go, mo, np, pd, price_national_d
             )
         )
         _fig.update_layout(
-            height=230,
+            height=280,
             yaxis_title="Index points above/below annual avg",
-            title="Year-End Price Premium (Nov\u2013Dec) by Commodity",
             template="plotly_white",
+            font=dict(family="system-ui, sans-serif", size=12),
+            hoverlabel=dict(font_size=13),
         )
         return _fig
 
@@ -889,14 +905,16 @@ def _(mo, summary_df):
 
     page2_summary_table = mo.vstack(
         [
-            mo.md("## Seasonal Effect Summary \u2014 All Drivers"),
             mo.ui.table(_table_data, page_size=10),
-            mo.md(
-                "_**Spike %** = avg premium (or discount) during seasonal window vs rest of year. "
-                "**Lead Time** = how far in advance to act._"
+            mo.callout(
+                mo.md(
+                    "_**Spike %** = avg premium (or discount) during seasonal window "
+                    "vs rest of year. **Lead Time** = how far in advance to act._"
+                ),
+                kind="neutral",
             ),
         ],
-        gap="0.5rem",
+        gap="1rem",
     )
     return (page2_summary_table,)
 
@@ -939,27 +957,74 @@ def _(
     page2_heatmap,
     page2_summary_table,
 ):
-    page2_content = mo.vstack(
+    _header = mo.vstack(
         [
             mo.md("# Seasonal Patterns"),
-            mo.md("_Price premiums by season \u00b7 2007\u20132024 historical average_"),
-            mo.hstack([commodity_dd, driver_toggle], gap="1rem"),
-            page2_action_cards,
-            page2_data_notice,
+            mo.md("**Price premiums by season** \u00b7 2007\u20132024 historical average"),
+        ],
+        gap="0.25rem",
+    )
+
+    _controls = mo.hstack(
+        [
+            mo.vstack([mo.md("_Filter by commodity:_"), commodity_dd], gap="0.25rem"),
+            mo.vstack([mo.md("_Show driver:_"), driver_toggle], gap="0.25rem"),
+        ],
+        gap="2rem",
+    )
+
+    _heatmap_section = mo.vstack(
+        [
+            mo.md("## Monthly Price Heatmap"),
             page2_heatmap,
             mo.callout(
                 mo.md(
                     "**Calendar note:** Ramadan months shift each year. The heatmap uses "
-                    "Gregorian months \u2014 the Ramadan overlay above adjusts for the "
+                    "Gregorian months \u2014 the Ramadan overlay below adjusts for the "
                     "Islamic calendar."
                 ),
                 kind="info",
             ),
+            page2_data_notice,
+        ],
+        gap="0.75rem",
+    )
+
+    _drivers_section = mo.vstack(
+        [
+            mo.md("## Seasonal Driver Analysis"),
             page2_driver_chart,
+        ],
+        gap="0.75rem",
+    )
+
+    _cards_section = mo.vstack(
+        [
+            mo.md("## Action Windows"),
+            page2_action_cards,
+        ],
+        gap="0.75rem",
+    )
+
+    _summary_section = mo.vstack(
+        [
+            mo.md("## Reference Table"),
             page2_summary_table,
+        ],
+        gap="0.75rem",
+    )
+
+    page2_content = mo.vstack(
+        [
+            _header,
+            _controls,
+            _heatmap_section,
+            _drivers_section,
+            _cards_section,
+            _summary_section,
             page2_explainer,
         ],
-        gap="1.5rem",
+        gap="2.5rem",
     )
     return (page2_content,)
 

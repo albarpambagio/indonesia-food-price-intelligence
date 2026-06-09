@@ -90,6 +90,7 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 112 | [Inline Explainer Icons Cause Layout Noise — Consolidate Into Single Accordion Card](#112-inline-explainer-icons-cause-layout-noise--consolidate-into-single-accordion-card) |
 | 113 | [KPI 2×2 Grid Overflow: Constrain Plotly Widget Width Inside Flex Containers](#113-kpi-22-grid-overflow-constrain-plotly-widget-width-inside-flex-containers) |
 | 114 | [Marimo `_`-Prefixed Variables Are Cell-Private — Cannot Be Exported Across Cells](#114-marimo_-prefixed-variables-are-cell-private--cannot-be-exported-across-cells) |
+| 115 | [UX Audit → Implementation → Re-audit: Layout Restructure for Page 2](#115-ux-audit--implementation--re-audit-layout-restructure-for-page-2-seasonal-patterns) |
 
 ### Superseded
 | # | Section |
@@ -2796,3 +2797,67 @@ In Marimo notebooks, `_`-prefixed variables in `return` tuples are silently drop
 
 - LEARNINGS.md §69 — `__` (double underscore) variables filtered at all scope levels (including module level)
 - AGENTS.md §405 — Underscore convention: `__` for reactive-graph-excluded, `_` for loop variables, no prefix for normal locals
+
+---
+
+## 115. UX Audit → Implementation → Re-audit: Layout Restructure for Page 2 (Seasonal Patterns)
+
+### The Problem
+
+Page 2 (Seasonal Patterns) had all content at equal visual weight — uniform `gap="1.5rem"` for every element, no section headings, action cards appearing before the evidence that justifies them, and Plotly chart titles competing with Marimo markdown headings. A structured UX audit identified 17 issues across 9 categories.
+
+### Key Fixes Applied
+
+**Information architecture reorder (highest impact):**
+```
+Before: title → controls → cards → data_notice → heatmap → calendar → drivers → summary → explainer
+After:  title → controls → heatmap → drivers → cards → summary → data_notice → explainer
+```
+Moved action cards *after* the heatmap and driver charts so conclusions follow evidence (Overview → Detail → Action pattern).
+
+**Two-level gap system:**
+- Intra-section: `0.75rem` (heading + content within a section)
+- Inter-section: `2.5rem` (between major page sections)
+- Controls row: `2rem` gap between dropdown and radio group
+
+**Single typography system:**
+Removed `title=` from all Plotly `fig.update_layout()` calls. Section headings now live exclusively in Marimo `mo.md("##")` — one heading system, not two competing ones.
+
+**Diverging colorscale for bidirectional data:**
+Heatmap switched from `colorscale="Blues"` (one-directional) to `colorscale="RdBu_r"` with `zmid=0` (diverging). Discounts (blue) vs premiums (red) are now immediately distinguishable.
+
+**Card wrapping for overflow prevention:**
+`mo.hstack` doesn't wrap. Action cards chunked into rows of 4:
+```python
+_card_grid = mo.vstack([
+    mo.hstack(row, gap="1rem", widths="equal")
+    for row in [_cards[i:i+4] for i in range(0, len(_cards), 4)]
+], gap="0.5rem")
+```
+
+**Scope labels on controls:**
+Added italic labels (`_Filter by commodity:_`, `_Show driver:_`) above each control so users know which widget affects which portion of the page.
+
+**Data notice proximity:**
+Moved `page2_data_notice` from the page bottom into `_heatmap_section` — the caveat now sits directly below the chart it qualifies.
+
+**Accessibility — arrow icons in stat value:**
+Embedded `↑`/`↓` arrows in `mo.stat(value=...)` field, not just the `caption`. Colour-blind users reading the value first get the directional cue without relying on `+`/`−` colour.
+
+### Audit False Positive
+
+The audit flagged `_mi.get(m, 0)` (where `_mi` is a `pd.Series`) as an `AttributeError` bug. Verified empirically: `pd.Series.get()` exists and works in pandas >= 2.2.0. **Always verify framework claims against the actual installed version before treating audit findings as bugs.**
+
+### Files Affected
+
+- `dashboard/app.py` — Page 2 assembly cell reordered, chart builders updated, action cards wrapped, controls labelled, summary table heading deduplicated
+
+### Rule
+
+When a dashboard page feels dense or confusing, run a structured UX audit before incremental polish. The highest-impact fixes are usually **information architecture** (reorder) and **spacing hierarchy** (two-level gaps), not individual component styling. Also: audits can have false positives — verify empirical claims against the actual runtime environment before implementing fixes.
+
+### Cross-Reference
+
+- LEARNINGS.md §107 — `mo.hstack` doesn't wrap (led to the card chunking pattern)
+- LEARNINGS.md §108 — `mo.stat()` caption does not render HTML (arrow icons in value field instead)
+- LEARNINGS.md §112 — Inline explainer icons → consolidated accordion (same section-heading pattern)
