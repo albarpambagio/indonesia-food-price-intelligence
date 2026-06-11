@@ -883,8 +883,20 @@ def _(
 
     _controls = mo.hstack(
         [
-            mo.vstack([mo.md("_Filter by commodity:_"), commodity_dd], gap="0.25rem"),
-            mo.vstack([mo.md("_Show driver:_"), driver_toggle], gap="0.25rem"),
+            mo.vstack(
+                [
+                    mo.md("_Commodity (filters heatmap, driver charts, action cards & table):_"),
+                    commodity_dd,
+                ],
+                gap="0.25rem",
+            ),
+            mo.vstack(
+                [
+                    mo.md("_Driver (selects chart type, filters action cards & table):_"),
+                    driver_toggle,
+                ],
+                gap="0.25rem",
+            ),
         ],
         gap="2rem",
     )
@@ -1199,25 +1211,55 @@ def _(
         gap="0.25rem",
     )
 
-    _controls = mo.hstack(
+    _island_controls = mo.hstack(
         [
-            mo.vstack([mo.md("_Filter by commodity:_"), commodity_dd], gap="0.25rem"),
-            mo.vstack([mo.md("_Select island group:_"), geo_island_dropdown], gap="0.25rem"),
+            mo.vstack(
+                [
+                    mo.md("_Island group (highlights cards, bar chart, filters province table):_"),
+                    geo_island_dropdown,
+                ],
+                gap="0.25rem",
+            ),
         ],
         gap="2rem",
+    )
+
+    _island_section = mo.vstack(
+        [
+            mo.md("## Island Group Comparison"),
+            _island_controls,
+            geo_island_kpi_cards,
+            geo_island_bar_chart,
+        ],
+        gap="0.75rem",
+    )
+
+    _province_section = mo.vstack(
+        [
+            mo.md("## Province Detail"),
+            mo.hstack(
+                [
+                    mo.vstack(
+                        [
+                            mo.md("_Commodity (data available for Cooking Oil only):_"),
+                            commodity_dd,
+                        ],
+                        gap="0.25rem",
+                    ),
+                ],
+                gap="2rem",
+            ),
+            geo_province_table,
+        ],
+        gap="0.75rem",
     )
 
     geo_page_content = mo.vstack(
         [
             _header,
             geo_data_notice,
-            _controls,
-            mo.md("_Note: Island-level data available for Cooking Oil only._"),
-            mo.md("## Island Group Comparison"),
-            geo_island_kpi_cards,
-            geo_island_bar_chart,
-            mo.md("## Province Detail"),
-            geo_province_table,
+            _island_section,
+            _province_section,
             geo_explainer,
         ],
         gap="2.5rem",
@@ -1919,15 +1961,6 @@ def _(
         gap="0.25rem",
     )
 
-    _controls = mo.hstack(
-        [
-            mo.vstack([mo.md("_Commodity:_"), commodity_dd], gap="0.25rem"),
-            mo.vstack([mo.md("_Year range:_"), year_slider], gap="0.25rem"),
-            mo.vstack([mo.md("_Lag:_"), page4_lag_selector], gap="0.25rem"),
-        ],
-        gap="1rem",
-    )
-
     _scope_notice = mo.callout(
         mo.md(
             "**Island Group filter disabled on this page.** "
@@ -1935,14 +1968,51 @@ def _(
             "cross-commodity correlation requires all series at the same granularity. "
             "The **Commodity** filter highlights pairs related to the selected commodity "
             "in the leading indicator cards and detail table. "
+            "The **Lag** selector affects the matrix, leading indicator cards, and detail table. "
             "The **Year Range** filter affects the scatter and rolling correlation charts below."
         ),
         kind="info",
     )
 
+    _lead_controls = mo.hstack(
+        [
+            mo.vstack(
+                [
+                    mo.md("_Commodity (filters leading indicator cards & table below):_"),
+                    commodity_dd,
+                ],
+                gap="0.25rem",
+            ),
+        ],
+        gap="1rem",
+    )
+
+    _lead_section = mo.vstack(
+        [
+            mo.md("## Leading Indicators"),
+            _lead_controls,
+            page4_leading_cards,
+        ],
+        gap="0.75rem",
+    )
+
+    _matrix_controls = mo.hstack(
+        [
+            mo.vstack(
+                [
+                    mo.md("_Lag (affects matrix, leading cards & detail table below):_"),
+                    page4_lag_selector,
+                ],
+                gap="0.25rem",
+            ),
+        ],
+        gap="1rem",
+    )
+
     _matrix_section = mo.vstack(
         [
             mo.md("## Correlation Matrix"),
+            _matrix_controls,
             page4_matrix_chart,
             mo.md("_Click any cell to update the scatter plot and implication card below._"),
         ],
@@ -1952,20 +2022,55 @@ def _(
     _pair_label = mo.md(f"**Selected pair:** {selected_pair()[0]} \u2192 {selected_pair()[1]}")
     _pair_selector = mo.hstack([page4_leader_dd, mo.md("\u2192"), page4_follower_dd], gap="0.5rem")
 
-    page4_content = mo.vstack(
+    _pair_controls = mo.hstack(
         [
-            _header,
-            _controls,
-            _scope_notice,
-            page4_data_notice,
-            page4_leading_cards,
-            _matrix_section,
+            mo.vstack(
+                [
+                    mo.md("_Year range (filters scatter & stability charts below):_"),
+                    year_slider,
+                ],
+                gap="0.25rem",
+            ),
+        ],
+        gap="1rem",
+    )
+
+    _pair_section = mo.vstack(
+        [
             mo.md("## Detailed Pair Analysis"),
+            _pair_controls,
             _pair_label,
             _pair_selector,
             page4_scatter_stability_row,
             page4_implication_card,
+        ],
+        gap="0.75rem",
+    )
+
+    _table_section = mo.vstack(
+        [
+            mo.md("## All Pairwise Correlations"),
             page4_detail_table,
+            mo.callout(
+                mo.md(
+                    "_Table also responds to **Commodity** (above) "
+                    "and **Lag** (in Matrix section)._"
+                ),
+                kind="neutral",
+            ),
+        ],
+        gap="0.5rem",
+    )
+
+    page4_content = mo.vstack(
+        [
+            _header,
+            _scope_notice,
+            page4_data_notice,
+            _lead_section,
+            _matrix_section,
+            _pair_section,
+            _table_section,
             page4_explainer,
         ],
         gap="1.5rem",
@@ -1996,19 +2101,37 @@ def _(
 ):
     _date_label = max_month.strftime("%b %Y")
 
-    page1_content = mo.vstack(
+    _kpi_section = mo.vstack(
         [
-            mo.md("# Price Trends & Forecast"),
-            mo.md(
-                f"_Indonesian Staple Commodities \u00b7 "
-                f"Jan 2007\u2013{_date_label} + 6-Month Forecast_"
-            ),
+            mo.md("## Latest Prices"),
             kpi_cards_output,
-            buy_signal_output,
+            mo.callout(
+                mo.md("Shows **latest available price** per commodity — not affected by filters."),
+                kind="info",
+            ),
+        ],
+        gap="0.5rem",
+    )
+
+    _trend_section = mo.vstack(
+        [
+            mo.md("## Price Trends & Forecast"),
             mo.hstack(
                 [
-                    mo.vstack([mo.md("_Commodity:_"), commodity_dd], gap="0.25rem"),
-                    mo.vstack([mo.md("_Year range:_"), year_slider], gap="0.25rem"),
+                    mo.vstack(
+                        [
+                            mo.md("_Commodity (filters trend chart below):_"),
+                            commodity_dd,
+                        ],
+                        gap="0.25rem",
+                    ),
+                    mo.vstack(
+                        [
+                            mo.md("_Year range (filters trend chart & YoY table):_"),
+                            year_slider,
+                        ],
+                        gap="0.25rem",
+                    ),
                     show_all_years,
                 ],
                 gap="1rem",
@@ -2024,7 +2147,29 @@ def _(
                 ),
                 kind="info",
             ),
+        ],
+        gap="1rem",
+    )
+
+    _yoy_section = mo.vstack(
+        [
+            mo.md("## Annual Price Change"),
             yoy_table_output,
+        ],
+        gap="0.5rem",
+    )
+
+    page1_content = mo.vstack(
+        [
+            mo.md("# Price Trends & Forecast"),
+            mo.md(
+                f"_Indonesian Staple Commodities \u00b7 "
+                f"Jan 2007\u2013{_date_label} + 6-Month Forecast_"
+            ),
+            _kpi_section,
+            buy_signal_output,
+            _trend_section,
+            _yoy_section,
             explainer_card,
         ],
         gap="1.5rem",

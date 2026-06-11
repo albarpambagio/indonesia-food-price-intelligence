@@ -105,6 +105,7 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 127 | [f-string + Parenthesized Conditional Causes Runtime TypeError](#127-f-string--parenthesized-conditional-causes-runtime-typeerror) |
 | 128 | [DRY Reactive Cell for Shared Derived State](#128-dry-reactive-cell-for-shared-derived-state) |
 | 129 | [Module Extraction for Testable Marimo Computations](#129-module-extraction-for-testable-marimo-computations) |
+| 130 | [Filter Scope Labels: Place Controls Near Charts They Affect](#130-filter-scope-labels-place-controls-near-the-charts-they-directly-affect) |
 
 ## 117. Import Aliases for Cell-Private Module Imports
 
@@ -3518,3 +3519,88 @@ Benefits:
 ### Rule
 
 Any non-trivial computation (50+ lines) inside a Marimo cell should be extracted to a `computations/` subpackage. Cells handle orchestration and rendering; modules handle business logic. The dividing line is testability — if the computation is worth testing independently, extract it.
+
+---
+
+## 130. Filter Scope Labels: Place Controls Near the Charts They Directly Affect
+
+### The Problem
+
+All 4 dashboard pages had their controls grouped at the top of the page, but different sections responded to different subsets of controls:
+
+| Page | Control Layout | Problem |
+|------|---------------|---------|
+| **1** | Controls after KPI cards, before Trend Chart | KPI Cards and Buy Signal Monitor sit *above* the controls but don't respond to them — misleading affordance. YoY Table responds to year only, not commodity. |
+| **2** | Controls at top | Fine (all 4 sections respond to both controls), but no scope labels explaining which sections are affected |
+| **3** | Controls at top | `geo_island_dropdown` affects KPI cards, bar chart, AND table; `commodity_dd` affects bar chart and table. Grouped together at top with no scope labels. |
+| **4** | Controls at top | `commodity_dd` only affects leading cards and detail table; `page4_lag_selector` affects matrix, leading cards, and table; `year_slider` only affects scatter and stability. Users couldn't tell which filter did what. |
+
+### Root Cause
+
+The original assembly cells placed all controls in a single `_controls` hstack at the top of each page (the "dashboard toolbar" pattern). This pattern works when every section responds to every filter — but fails when:
+1. Some sections are static and don't respond to any filter (Page 1 KPI cards)
+2. Different sections respond to different filter subsets (Page 4)
+3. Users need to understand the scope of each control (all pages)
+
+### Solution
+
+Per-page restructure:
+
+**Page 1 — Section-based assembly with static notes:**
+```
+Header → Latest Prices section (KPI cards + mo.callout "not affected by filters")
+       → Buy Signal Monitor (static)
+       → Price Trends & Forecast section
+           → commodity_dd labeled "(filters trend chart below)"
+           → year_slider labeled "(filters trend chart & YoY table)"
+           → Trend Chart → Forecast footnote
+       → Annual Price Change section → YoY Table
+       → Explainer
+```
+
+**Page 2 — Scope labels on existing top controls:**
+Commodity label: `_Commodity (filters heatmap, driver charts, action cards & table):_`
+Driver label: `_Driver (selects chart type, filters action cards & table):_`
+
+**Page 3 — Controls moved into sections:**
+```
+Island Group Comparison section → geo_island_dropdown with scope label → KPI cards → Bar chart
+Province Detail section → commodity_dd with scope label → Province table
+```
+
+**Page 4 — Controls split across sections:**
+```
+Leading Indicators section → commodity_dd with scope label → Leading cards
+Correlation Matrix section → page4_lag_selector with scope label → Matrix
+Pair Analysis section → year_slider with scope label → Scatter + Stability
+All Pairwise Correlations section → Detail table + reminder note
+```
+
+### Key Patterns Applied
+
+| Pattern | LEARNINGS.md Reference | Application |
+|---------|------------------------|-------------|
+| Scope labels on controls | §115 (control labels with italic markdown) | Every `mo.ui` widget preceded by `mo.md("_Label (scope description):_")` |
+| Section headings for info architecture | §115 (information architecture reorder) | Each page split into `mo.md("## Section Name")` sections with consistent gap hierarchy |
+| Controls near affected charts | §59 (mark filter scope explicitly) | `commodity_dd` right before Trend Chart on page 1, not at the page top |
+| Static component disclosure | §123 (dead controls) | KPI cards on page 1 now explicitly labeled as unfiltered via `mo.callout(kind="info")` |
+| Cross-section filter reminder | §111 (filter overrides must apply consistently) | Page 4 detail table bottom has a callout: `_Table also responds to **Commodity** (above) and **Lag** (in Matrix section)._` |
+
+### Files Affected
+
+- `dashboard/app.py` — All 4 page assembly cells restructured
+
+### Verification
+
+```
+ruff check dashboard/app.py              # ✅ all checks passed
+ruff format --check dashboard/app.py      # ✅ already formatted
+uv run python dashboard/app.py            # ✅ exits cleanly (script mode)
+uvx marimo check dashboard/app.py          # ✅ no structural issues
+```
+
+### Rule
+
+When a dashboard page has multiple sections with different filter dependencies, do not group all controls at the page top. Place each control near the section(s) it directly affects. Label every control with its scope in italic markdown. For static sections that don't respond to any filter, add a `mo.callout(kind="info")` explaining they show latest data. Use section headings (`mo.md("##")`) to create clear visual separation.
+
+The "controls at the top" pattern only works when every section responds to every control — otherwise it creates misleading affordances that violate the Principle of Least Astonishment.
