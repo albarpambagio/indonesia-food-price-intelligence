@@ -1616,12 +1616,17 @@ def _(corr_matrix_df, go, mo, page4_lag_selector):
 
 
 @app.cell
-def _(page4_matrix_chart, set_selected_pair):
+def _(page4_matrix_chart, selected_pair, set_selected_pair):
     if page4_matrix_chart.value and page4_matrix_chart.value.get("points"):
         _pt = page4_matrix_chart.value["points"][0]
         _leader = _pt.get("y")
         _follower = _pt.get("x")
-        if _leader and _follower and _leader != _follower:
+        if (
+            _leader
+            and _follower
+            and _leader != _follower
+            and (_leader, _follower) != selected_pair()
+        ):
             set_selected_pair((_leader, _follower))
 
 
@@ -1642,7 +1647,6 @@ def _(mo, selected_pair):
         value=selected_pair()[1],
         label="Following commodity",
     )
-    mo.hstack([page4_leader_dd, mo.md("\u2192"), page4_follower_dd], gap="0.5rem")
     return page4_leader_dd, page4_follower_dd
 
 
@@ -1652,9 +1656,10 @@ def _(mo, selected_pair):
 
 
 @app.cell
-def _(page4_follower_dd, page4_leader_dd, set_selected_pair):
-    if page4_leader_dd.value != page4_follower_dd.value:
-        set_selected_pair((page4_leader_dd.value, page4_follower_dd.value))
+def _(page4_follower_dd, page4_leader_dd, selected_pair, set_selected_pair):
+    _new_pair = (page4_leader_dd.value, page4_follower_dd.value)
+    if _new_pair != selected_pair():
+        set_selected_pair(_new_pair)
 
 
 # ---------------------------------------------------------------------------
@@ -1887,7 +1892,10 @@ def _(corr_all_pairs_df, mo, pd, page4_lag_selector, selected_pair):
 
 
 @app.cell
-def _(commodity_dd, corr_all_pairs_df, mo, pd, page4_lag_selector, set_selected_pair):
+def _(
+    commodity_dd, corr_all_pairs_df, mo, pd,
+    page4_lag_selector, selected_pair, set_selected_pair,
+):
     _lag = page4_lag_selector.value
     _table_data = (
         corr_all_pairs_df[corr_all_pairs_df["lag"] == _lag].sort_values("r", ascending=False).copy()
@@ -1919,6 +1927,12 @@ def _(commodity_dd, corr_all_pairs_df, mo, pd, page4_lag_selector, set_selected_
         "Stability",
     ]
 
+    def _on_table_change(rows):
+        if rows:
+            _pair = (rows[0]["Leader"], rows[0]["Follower"])
+            if _pair != selected_pair():
+                set_selected_pair(_pair)
+
     page4_detail_table = mo.vstack(
         [
             mo.md("## All Pairwise Correlations"),
@@ -1926,9 +1940,7 @@ def _(commodity_dd, corr_all_pairs_df, mo, pd, page4_lag_selector, set_selected_
                 _display,
                 page_size=10,
                 selection="single",
-                on_change=lambda rows: (
-                    set_selected_pair((rows[0]["Leader"], rows[0]["Follower"])) if rows else None
-                ),
+                on_change=_on_table_change,
             ),
             mo.callout(
                 mo.md(
@@ -1999,9 +2011,11 @@ def _(
     page4_data_notice,
     page4_detail_table,
     page4_explainer,
+    page4_follower_dd,
     page4_implication_card,
     page4_lag_selector,
     page4_leading_cards,
+    page4_leader_dd,
     page4_matrix_chart,
     page4_scatter_stability_row,
     selected_pair,
@@ -2046,6 +2060,9 @@ def _(
     )
 
     _pair_label = mo.md(f"**Selected pair:** {selected_pair()[0]} \u2192 {selected_pair()[1]}")
+    _pair_selector = mo.hstack(
+        [page4_leader_dd, mo.md("\u2192"), page4_follower_dd], gap="0.5rem"
+    )
 
     page4_content = mo.vstack(
         [
@@ -2057,6 +2074,7 @@ def _(
             _matrix_section,
             mo.md("## Detailed Pair Analysis"),
             _pair_label,
+            _pair_selector,
             page4_scatter_stability_row,
             page4_implication_card,
             page4_detail_table,

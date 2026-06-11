@@ -100,6 +100,8 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 122 | [`mart_correlation_summary` Computed Only 6 of 12 Directed Pairs](#122-mart_correlation_summary-computed-only-6-of-12-directed-pairs) |
 | 123 | [Dead Controls on Dashboard Page: Rendered Widgets Without Reactive Wiring](#123-dead-controls-on-dashboard-page-rendered-widgets-without-reactive-wiring) |
 | 124 | [websockets 16.0 Keepalive Ping `AssertionError` in marimo Interactive Server](#124-websockets-160-keepalive-ping-assertionerror-in-marimo-interactive-server) |
+| 125 | [`mo.state()` Feedback Loop: Deduplicate State Setter Calls](#125-mostate-feedback-loop-deduplicate-state-setter-calls) |
+| 126 | [Floating Expression in Marimo Cell Creates Standalone Document Output](#126-floating-expression-in-marimo-cell-creates-standalone-document-output) |
 
 ## 117. Import Aliases for Cell-Private Module Imports
 
@@ -3298,3 +3300,124 @@ websockets 15.0.1 uses a different keepalive mechanism that doesn't trigger the 
 ### Rule
 
 When a transitive dependency (websockets is pulled in by marimo, not declared directly) causes runtime errors, pin it explicitly rather than waiting for the parent library to update. Run `uv pip list | grep <package>` to check if it's direct or transitive before deciding. websockets 16.x should be re-evaluated when marimo updates its compatibility.
+
+---
+
+## 125. `mo.state()` Feedback Loop: Deduplicate State Setter Calls
+
+### The Problem
+
+The dashboard kept refreshing continuously on all 4 pages, with especially high frequency on Page 4 (Commodity Signals). WebSocket keepalive errors appeared in the terminal alongside the refreshing.
+
+### Root Cause
+
+Three independent cells all wrote to `mo.state(selected_pair)` without checking whether the value was already the same:
+
+| Cell | Lines | Trigger | Guard |
+|------|-------|---------|-------|
+| Matrix click handler | 1618–1625 | Plotly click event | ❌ None — called `set_selected_pair()` every time it ran |
+| Dropdown sync | 1654–1657 | Dropdown value change | ⚠️ Only checked `leader != follower`, not equality with current state |
+| Table `on_change` | 1929–1931 | Table row selection | ❌ None — called `set_selected_pair()` unconditionally |
+
+The feedback loop:
+1. `selected_pair` changes → Cell 37 (dropdown creation) re-runs → creates **new** dropdown widget objects with `value=selected_pair()`
+2. Cell 38 (dropdown sync) re-runs (depends on new dropdowns) → reads dropdown values → calls `set_selected_pair()`
+3. If marimo does not deduplicate identical state assignments, or if widget object identity differs from value identity → `selected_pair` triggers again → go to step 1
+
+The final tabs cell depends on `page4_content`, so every state change re-renders all 4 pages.
+
+### Solution
+
+Added `selected_pair` as a dependency + equality guard to all 3 writers:
+
+```python
+# Matrix click handler
+if (_leader, _follower) != selected_pair():
+    set_selected_pair((_leader, _follower))
+
+# Dropdown sync
+_new_pair = (page4_leader_dd.value, page4_follower_dd.value)
+if _new_pair != selected_pair():
+    set_selected_pair(_new_pair)
+
+# Table on_change
+def _on_table_change(rows):
+    if rows:
+        _pair = (rows[0]["Leader"], rows[0]["Follower"])
+        if _pair != selected_pair():
+            set_selected_pair(_pair)
+```
+
+### Files Affected
+
+- `dashboard/app.py` — 3 cells updated with `selected_pair` dependency + equality guard
+
+### Cross-Reference
+
+- LEARNINGS.md §103 — `mo.state()` two-sink pattern (same state, 3 sources instead of 2)
+- LEARNINGS.md §110 — Separate reactivity cells to avoid unnecessary re-execution
+
+### Rule
+
+Every `mo.state()` setter call must be guarded with an equality check against the current value. Never write to state unconditionally from a cell that re-executes on widget changes. The guard pattern is: `if new_value != getter(): setter(new_value)`. Without this, marimo's reactive DAG can create cascading re-executions that appear as continuous refreshing.
+
+---
+
+## 126. Floating Expression in Marimo Cell Creates Standalone Document Output
+
+### The Problem
+
+The "Leading commodity" and "Following commodity" pair selector dropdowns appeared on all 4 dashboard pages, instead of only on Page 4 (Commodity Signals) where they belong.
+
+### Root Cause
+
+The pair selector creation cell (line 1638) had both a `return` statement and a floating expression:
+
+```python
+@app.cell
+def _(mo, selected_pair):
+    page4_leader_dd = mo.ui.dropdown(...)
+    page4_follower_dd = mo.ui.dropdown(...)
+    mo.hstack([page4_leader_dd, mo.md("→"), page4_follower_dd], gap="0.5rem")  # FLOATING
+    return page4_leader_dd, page4_follower_dd
+```
+
+In marimo's cell model:
+- A cell's **display output** is the last expression that is not part of a `return` statement
+- A cell's **definitions** (exports to other cells) are determined by the `return` statement
+
+The floating `mo.hstack(...)` produced a **visible cell output** rendered in the main document flow — outside any `mo.ui.tabs()` container. Since it wasn't inside a tab, it was always visible regardless of which tab was selected.
+
+### Solution
+
+Removed the floating `mo.hstack(...)` from the creation cell (now only creates widgets and returns them). Moved the rendering into the Page 4 assembly cell, inside `page4_content`:
+
+```python
+# Creation cell — no display output, only returns widgets
+@app.cell
+def _(mo, selected_pair):
+    page4_leader_dd = mo.ui.dropdown(...)
+    page4_follower_dd = mo.ui.dropdown(...)
+    return page4_leader_dd, page4_follower_dd
+
+# Assembly cell — renders inside page4_content
+_pair_selector = mo.hstack(
+    [page4_leader_dd, mo.md("→"), page4_follower_dd], gap="0.5rem"
+)
+page4_content = mo.vstack([
+    ..., _pair_label, _pair_selector, page4_scatter_stability_row, ...
+])
+```
+
+### Files Affected
+
+- `dashboard/app.py` — Pair selector cell: removed floating `mo.hstack(...)`. Page 4 assembly cell: added `page4_leader_dd`, `page4_follower_dd` as dependencies, added `_pair_selector` hstack inside `page4_content`.
+
+### Cross-Reference
+
+- LEARNINGS.md §114 — `_`-prefixed variables are cell-private (same principle: marimo cell scoping rules)
+- LEARNINGS.md §69 — Module-level `__` variables are filtered from cell namespaces
+
+### Rule
+
+When a cell creates widgets AND has a `return` statement, any floating expression (not assigned to a variable, not part of `return`) becomes a display output rendered in the main document flow — outside tab containers. To render widgets inside a specific tab, suppress the display output in the creation cell and embed the rendering inside the target page's assembly cell.
