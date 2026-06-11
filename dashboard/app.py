@@ -19,12 +19,12 @@ def _():
     import numpy as np
     import pandas as pd
     import plotly.graph_objects as go
-    from explainer_copy import EXPLAINERS, EXPLAINERS_P2
+    from explainer_copy import EXPLAINERS, EXPLAINERS_P2, EXPLAINERS_P3
 
     COMMODITIES = ["Rice", "Cooking Oil", "Sugar", "Flour"]
     UNIT_MAP = {"Rice": "/kg", "Cooking Oil": "/L", "Sugar": "/kg", "Flour": "/kg"}
 
-    return COMMODITIES, EXPLAINERS, EXPLAINERS_P2, go, mo, np, pd, UNIT_MAP
+    return COMMODITIES, EXPLAINERS, EXPLAINERS_P2, EXPLAINERS_P3, go, mo, np, pd, UNIT_MAP
 
 
 @app.cell
@@ -1064,6 +1064,293 @@ def _(
 
 
 # ---------------------------------------------------------------------------
+# Page 3: Geographic Disparity — data load
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(mo, pd):
+    from data_static import load_json as _load_json
+
+    _raw = _load_json("geographic_disparity.json")
+    geo_province_df = pd.DataFrame(_raw)
+    geo_province_df["year"] = geo_province_df["year"].astype(int)
+
+    mo.stop(geo_province_df.empty, mo.md("_No geographic disparity data available._"))
+
+    geo_island_df = (
+        geo_province_df.groupby("island_group")
+        .agg(
+            provinces=("admin1", "nunique"),
+            avg_price_idr=("avg_price_idr", "mean"),
+            avg_index=("price_index_vs_java", "mean"),
+        )
+        .reset_index()
+        .sort_values("avg_index", ascending=True)
+    )
+    return geo_island_df, geo_province_df
+
+
+# ---------------------------------------------------------------------------
+# Page 3: Data notice
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(mo):
+    geo_data_notice = mo.callout(
+        mo.md(
+            "**Data scope:** Province-level geographic comparison is available for "
+            "**Cooking Oil** only \u2014 Rice, Sugar, and Flour have national-level "
+            "data only (see **Price Trends** tab). "
+            "Data reflects **2024** average prices across 34 provinces."
+        ),
+        kind="warn",
+    )
+    return (geo_data_notice,)
+
+
+# ---------------------------------------------------------------------------
+# Page 3: Island KPI cards (cheapest to most expensive)
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(geo_island_df, geo_island_dropdown, mo):
+    _selected = geo_island_dropdown.value
+    _cards = []
+    for _i, _row in geo_island_df.iterrows():
+        _name = _row["island_group"]
+        _premium = _row["avg_index"] - 100
+        if _name == "Java":
+            _caption = "Baseline"
+        else:
+            _prefix = "+" if _premium > 0 else ""
+            _caption = f"{_prefix}{_premium:.1f}% vs Java"
+
+        _stat = mo.stat(
+            value=f"Rp {_row['avg_price_idr']:,.0f}",
+            label=_name,
+            caption=_caption,
+            bordered=True,
+        )
+
+        _is_selected = _selected != "All" and _name == _selected
+        if _is_selected:
+            _stat = mo.callout(_stat, kind="info")
+            _cards.insert(0, _stat)
+        else:
+            _cards.append(_stat)
+
+    geo_island_kpi_cards = mo.hstack(_cards, gap="1rem", widths="equal")
+    return (geo_island_kpi_cards,)
+
+
+# ---------------------------------------------------------------------------
+# Page 3: Island group dropdown
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(geo_island_df, mo):
+    _island_options = ["All"] + geo_island_df["island_group"].tolist()
+    geo_island_dropdown = mo.ui.dropdown(
+        options=_island_options,
+        value="All",
+        label="Island Group",
+    )
+    return (geo_island_dropdown,)
+
+
+# ---------------------------------------------------------------------------
+# Page 3: Bar chart — island group price index vs Java
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(commodity_dd, geo_island_df, geo_island_dropdown, go, mo):
+    _selected = geo_island_dropdown.value
+    _fig = go.Figure()
+    if commodity_dd.value != "All" and commodity_dd.value != "Cooking Oil":
+        _fig = None
+    else:
+        _marker_colors = []
+        for n in geo_island_df["island_group"]:
+            if _selected != "All" and n == _selected:
+                _marker_colors.append("#ff7f0e")
+            elif n == "Java":
+                _marker_colors.append("#b0b0b0")
+            elif _selected != "All":
+                _marker_colors.append("rgba(31,119,180,0.3)")
+            else:
+                _marker_colors.append("#1f77b4")
+
+        _fig = go.Figure(
+            go.Bar(
+                x=geo_island_df["avg_index"],
+                y=geo_island_df["island_group"],
+                orientation="h",
+                marker_color=_marker_colors,
+                hovertemplate="<b>%{y}</b><br>Price Index: %{x:.1f}<br>(Java = 100)<extra></extra>",
+            )
+        )
+        _fig.add_vline(x=100, line_dash="dot", line_color="gray")
+        _fig.add_annotation(
+            x=100,
+            y=1.05,
+            yref="paper",
+            text="Java baseline = 100",
+            showarrow=False,
+            font=dict(size=11, color="gray"),
+        )
+        _fig.update_layout(
+            height=360,
+            xaxis_title="Price Index (Java = 100)",
+            yaxis=dict(autorange="reversed"),
+            template="plotly_white",
+            margin=dict(l=20, r=60, t=40, b=40),
+        )
+
+    if _fig is None:
+        geo_island_bar_chart = mo.callout(
+            mo.md(
+                f"**{commodity_dd.value}** has national-level data only \u2014 "
+                f"geographic comparison is available for **Cooking Oil** only. "
+                f"Select \"All\" or \"Cooking Oil\" to view island-level data."
+            ),
+            kind="warn",
+        )
+    else:
+        geo_island_bar_chart = mo.ui.plotly(_fig)
+    return (geo_island_bar_chart,)
+
+
+# ---------------------------------------------------------------------------
+# Page 3: Province detail table
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(commodity_dd, geo_island_dropdown, geo_province_df, mo):
+    _island_filter = geo_island_dropdown.value
+    _is_cooking_oil = commodity_dd.value in ("All", "Cooking Oil")
+
+    if not _is_cooking_oil:
+        geo_province_table = mo.callout(
+            mo.md(
+                f"**{commodity_dd.value}** has national-level data only. "
+                f"Select \"All\" or \"Cooking Oil\" for province-level geographic data."
+            ),
+            kind="warn",
+        )
+    else:
+        _pdf = geo_province_df.copy()
+        if _island_filter != "All":
+            _pdf = _pdf[_pdf["island_group"] == _island_filter]
+        _pdf = _pdf.sort_values("price_index_vs_java", ascending=False)
+        _pdf["avg_price_idr"] = _pdf["avg_price_idr"].apply(lambda v: f"Rp {v:,.0f}")
+        _pdf["price_index_vs_java"] = _pdf["price_index_vs_java"].apply(
+            lambda v: f"{v:.2f}"
+        )
+
+        _display = _pdf[
+            ["admin1", "island_group", "avg_price_idr", "price_index_vs_java", "months_with_data"]
+        ].copy()
+        _display.columns = [
+            "Province",
+            "Island Group",
+            "Avg Price (2024)",
+            "Index vs Java",
+            "Months w/ Data",
+        ]
+
+        if _display.empty:
+            geo_province_table = mo.callout(
+                mo.md("No provinces match the current selection."),
+                kind="info",
+            )
+        else:
+            geo_province_table = mo.ui.table(
+                _display,
+                page_size=10,
+            )
+    return (geo_province_table,)
+
+
+# ---------------------------------------------------------------------------
+# Page 3: Explainer accordion
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(EXPLAINERS_P3, mo):
+    geo_explainer = mo.accordion(
+        {
+            "Island KPI Cards \u2014 how to read": EXPLAINERS_P3["island_cards"],
+            "Bar Chart \u2014 how to read": EXPLAINERS_P3["bar_chart"],
+            "Province Table \u2014 how to read": EXPLAINERS_P3["province_table"],
+            "Data Scope & Limitations": EXPLAINERS_P3["data_scope"],
+        },
+        multiple=True,
+    )
+    return (geo_explainer,)
+
+
+# ---------------------------------------------------------------------------
+# Page 3: Assembly
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(
+    commodity_dd,
+    geo_data_notice,
+    geo_explainer,
+    geo_island_bar_chart,
+    geo_island_dropdown,
+    geo_island_kpi_cards,
+    geo_province_table,
+    mo,
+):
+    _header = mo.vstack(
+        [
+            mo.md("# Geographic Disparity"),
+            mo.md(
+                "**Price comparison across island groups** \u00b7 "
+                "2024 Cooking Oil prices"
+            ),
+        ],
+        gap="0.25rem",
+    )
+
+    _controls = mo.hstack(
+        [
+            mo.vstack([mo.md("_Filter by commodity:_"), commodity_dd], gap="0.25rem"),
+            mo.vstack(
+                [mo.md("_Select island group:_"), geo_island_dropdown], gap="0.25rem"
+            ),
+        ],
+        gap="2rem",
+    )
+
+    geo_page_content = mo.vstack(
+        [
+            _header,
+            _controls,
+            geo_data_notice,
+            mo.md("## Island Group Comparison"),
+            geo_island_kpi_cards,
+            geo_island_bar_chart,
+            mo.md("## Province Detail"),
+            geo_province_table,
+            geo_explainer,
+        ],
+        gap="2.5rem",
+    )
+    return (geo_page_content,)
+
+
+# ---------------------------------------------------------------------------
 # Final assembly: tabs
 # ---------------------------------------------------------------------------
 
@@ -1073,6 +1360,7 @@ def _(
     buy_signal_output,
     commodity_dd,
     explainer_card,
+    geo_page_content,
     kpi_cards_output,
     max_month,
     mo,
@@ -1122,6 +1410,7 @@ def _(
         {
             "Price Trends": page1_content,
             "Seasonal Patterns": page2_content,
+            "Geographic": geo_page_content,
         }
     )
 

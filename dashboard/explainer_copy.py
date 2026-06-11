@@ -62,6 +62,46 @@ EXPLAINERS = {
     ),
 }
 
+EXPLAINERS_P3 = {
+    "island_cards": (
+        "**Reading the island comparison cards**\n\n"
+        "Each card shows the **2024 average Cooking Oil price** for one island group "
+        "and its premium (or discount) relative to the Java baseline.\n\n"
+        "\u2014 **Java** is the reference at 100 \u2014 most markets, lowest prices\n"
+        "\u2014 **Plus values** indicate how much more expensive than Java "
+        "(e.g., +16.4% = 16.4% above Java price)\n\n"
+        "_Island groups sorted from cheapest to most expensive for quick sourcing decisions._"
+    ),
+    "bar_chart": (
+        "**Reading the bar chart**\n\n"
+        "Horizontal bars show each island group's **price index** with Java set to 100. "
+        "A bar at 115 means prices in that island group average 15% higher than Java.\n\n"
+        "\u2014 **Gray bar**: Java (baseline)\n"
+        "\u2014 **Blue bars**: Other island groups\n\n"
+        "_Use this to identify the most cost-effective sourcing regions. "
+        "Combined with the province table below for market-level decisions._"
+    ),
+    "province_table": (
+        "**Reading the province table**\n\n"
+        "Each row is a province within the selected island group. Sort by any column "
+        "to find the best sourcing opportunities.\n\n"
+        "\u2014 **Index vs Java** > 100 = more expensive than Java average\n"
+        "\u2014 **Months w/ Data** shows data coverage quality in 2024 "
+        "(max 7 months, Jan\u2013Jul)\n\n"
+        "_Use the island group dropdown to drill into a specific region, "
+        "or select \"All\" to compare across all islands._"
+    ),
+    "data_scope": (
+        "**Why only Cooking Oil?**\n\n"
+        "The WFP dataset provides **province-level** price data for Cooking Oil only. "
+        "Rice, Sugar, and Flour prices are available at **national level** only "
+        "(single average per month).\n\n"
+        "\u2014 Use **Price Trends** tab for national-level Rice/Sugar/Flour trends\n"
+        "\u2014 Use this **Geographic tab** for Cooking Oil sourcing decisions\n\n"
+        "_Data covers 34 provinces across 5 island groups for January\u2013July 2024._"
+    ),
+}
+
 EXPLAINERS_P2 = {
     "action_cards": (
         "**Reading the action cards**\n\n"
