@@ -625,6 +625,8 @@ def _(
     price_national_df,
     ramadan_df,
 ):
+    from computations.seasonal import compute_price_index
+
     _driver = driver_toggle.value
     _selected_comm = commodity_dd.value
 
@@ -689,19 +691,8 @@ def _(
 
     def _build_harvest_chart():
         _comms = COMMODITIES if _selected_comm == "All" else [_selected_comm]
-        _monthly = price_national_df[
-            price_national_df["commodity_consolidated"].isin(_comms)
-        ].copy()
-        _monthly["month_of_year"] = _monthly["month"].dt.month
-        _monthly["year"] = _monthly["month"].dt.year
-        _annual = (
-            _monthly.groupby(["year", "commodity_consolidated"])["avg_price_idr"]
-            .mean()
-            .reset_index()
-            .rename(columns={"avg_price_idr": "yr_avg"})
-        )
-        _monthly = _monthly.merge(_annual, on=["year", "commodity_consolidated"], how="left")
-        _monthly["price_index"] = (_monthly["avg_price_idr"] / _monthly["yr_avg"]) * 100
+        _df = price_national_df[price_national_df["commodity_consolidated"].isin(_comms)]
+        _monthly = compute_price_index(_df)
         _mi = _monthly.groupby("month_of_year")["price_index"].mean()
         _month_labels = [
             "Jan",
@@ -742,19 +733,8 @@ def _(
 
     def _build_yearend_chart():
         _comms = COMMODITIES if _selected_comm == "All" else [_selected_comm]
-        _monthly = price_national_df[
-            price_national_df["commodity_consolidated"].isin(_comms)
-        ].copy()
-        _monthly["month_of_year"] = _monthly["month"].dt.month
-        _monthly["year"] = _monthly["month"].dt.year
-        _annual = (
-            _monthly.groupby(["year", "commodity_consolidated"])["avg_price_idr"]
-            .mean()
-            .reset_index()
-            .rename(columns={"avg_price_idr": "ann_avg"})
-        )
-        _monthly = _monthly.merge(_annual, on=["year", "commodity_consolidated"], how="left")
-        _monthly["price_index"] = (_monthly["avg_price_idr"] / _monthly["ann_avg"]) * 100
+        _df = price_national_df[price_national_df["commodity_consolidated"].isin(_comms)]
+        _monthly = compute_price_index(_df)
         _nov_dec = _monthly[_monthly["month_of_year"].isin([11, 12])]
         _rest = _monthly[~_monthly["month_of_year"].isin([11, 12])]
         _nd_avg = (
@@ -1232,6 +1212,7 @@ def _(
             _header,
             geo_data_notice,
             _controls,
+            mo.md("_Note: Island-level data available for Cooking Oil only._"),
             mo.md("## Island Group Comparison"),
             geo_island_kpi_cards,
             geo_island_bar_chart,
@@ -1461,7 +1442,7 @@ def _(corr_matrix_df, go, mo, page4_lag_selector):
                 ].values
                 _r = _val[0] if len(_val) else None
                 _row_z.append(_r)
-                _row_text.append(f"{_r:.2f}")
+                _row_text.append(f"{_r:.2f}" if _r is not None else "N/A")
         _z.append(_row_z)
         _text.append(_row_text)
 

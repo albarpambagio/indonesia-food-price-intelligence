@@ -2,14 +2,11 @@ import numpy as np
 import pandas as pd
 
 
-def compute_seasonal_data(
-    df: pd.DataFrame, cal: pd.DataFrame
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Derive heatmap, Ramadan overlay, action windows, summary from price data."""
+def compute_price_index(df: pd.DataFrame) -> pd.DataFrame:
+    """Add price_index column (100 = annual avg) to monthly price DataFrame."""
     df = df.copy()
     df["year"] = df["month"].dt.year
     df["month_of_year"] = df["month"].dt.month
-
     annual_avg = (
         df.groupby(["year", "commodity_consolidated"])["avg_price_idr"]
         .mean()
@@ -18,6 +15,14 @@ def compute_seasonal_data(
     )
     df = df.merge(annual_avg, on=["year", "commodity_consolidated"], how="left")
     df["price_index"] = (df["avg_price_idr"] / df["ann_avg"]) * 100
+    return df
+
+
+def compute_seasonal_data(
+    df: pd.DataFrame, cal: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Derive heatmap, Ramadan overlay, action windows, summary from price data."""
+    df = compute_price_index(df)
 
     # Heatmap: mean premium % vs annual avg by commodity × month
     monthly_avg = (
