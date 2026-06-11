@@ -92,6 +92,178 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 114 | [Marimo `_`-Prefixed Variables Are Cell-Private — Cannot Be Exported Across Cells](#114-marimo_-prefixed-variables-are-cell-private--cannot-be-exported-across-cells) |
 | 115 | [UX Audit → Implementation → Re-audit: Layout Restructure for Page 2](#115-ux-audit--implementation--re-audit-layout-restructure-for-page-2-seasonal-patterns) |
 | 116 | [Reactive Wiring Audit: Every Control Must Reach Every Section](#116-reactive-wiring-audit-every-control-must-reach-every-section) |
+| 117 | [Import Aliases for Cell-Private Module Imports](#117-import-aliases-for-cell-private-module-imports) |
+| 118 | [`mo.ui.table()` Has No `sortable` Parameter](#118-mouitable-has-no-sortable-parameter) |
+| 119 | [Highlighting Selected KPI Cards via `mo.callout` Wrapper](#119-highlighting-selected-kpi-cards-via-mocallout-wrapper) |
+| 120 | [Bar Chart Highlight via Marker Color Override](#120-bar-chart-highlight-via-marker-color-override) |
+
+## 117. Import Aliases for Cell-Private Module Imports
+
+### The Problem
+
+When adding a new cell that imports `load_json` from `data_static` (already imported in another cell), `marimo check` reported:
+
+```
+critical[multiple-definitions]: Variable 'load_json' is defined in multiple cells
+```
+
+Marimo treats `from data_static import load_json` as defining a cell variable named `load_json`. Since another cell already has the same import, it creates a name conflict.
+
+### Root Cause
+
+Marimo's `_`-prefix filtering (§114, §69) applies to variables defined within cells. But imports behave the same as variable assignments — `from data_static import load_json` is equivalent to `load_json = data_static.load_json` in the cell namespace. If two cells export a non-private `load_json`, marimo detects the conflict.
+
+### Solution
+
+Prefix the import alias with `_` to make it cell-private:
+
+```python
+# Instead of:
+from data_static import load_json
+
+# Use:
+from data_static import load_json as _load_json
+```
+
+The `_load_json` variable is cell-private; marimo doesn't conflict it with the other cell's `load_json`. The function is called identically: `_load_json("geographic_disparity.json")`.
+
+### Alternative: Import in a Shared Cell
+
+If the import is used across multiple cells, import it in the `setup()` cell and return it through the DAG:
+
+```python
+@app.cell
+def _():
+    from data_static import load_csv, load_json, load_json_envelope
+    return load_csv, load_json, load_json_envelope
+```
+
+But this leaks the function into the reactive graph and triggers re-execution of downstream cells on every kernel restart. The `as _load_json` alias pattern is preferred for one-off imports.
+
+### Files Affected
+
+- `dashboard/app.py` — `load_json` import in `geo_data_load` cell changed to `from data_static import load_json as _load_json`
+
+### Cross-Reference
+
+- LEARNINGS.md §105 — Duplicate variable names across cells (same principle for non-import variables)
+- LEARNINGS.md §114 — `_`-prefixed variables are cell-private
+
+### Rule
+
+When importing a module function in a marimo cell where another cell already imports the same function, use `as _name` to make the import cell-private. This avoids `critical[multiple-definitions]` without leaking the import into the shared namespace.
+
+---
+
+## 118. `mo.ui.table()` Has No `sortable` Parameter
+
+### The Problem
+
+```python
+mo.ui.table(_display, page_size=10, sortable=True)
+```
+
+raised:
+
+```
+TypeError: table.__init__() got an unexpected keyword argument 'sortable'
+```
+
+### Investigation
+
+Bitwarden's marimo API (0.23.7) `mo.ui.table` accepts `page_size`, `selection`, `pagination`, `page_size_options`, `label`, `value`, and `format_mapping` — but not `sortable`. Marimo tables are not sortable by default in 0.23.7.
+
+### Solution
+
+Remove `sortable=True`. Marimo tables support column reordering via drag-and-drop in the rendered output but do not expose a sortable parameter:
+
+```python
+mo.ui.table(_display, page_size=10)
+```
+
+### Rule
+
+Before adding parameters to `mo.ui.table()`, verify the marimo version's API. Version 0.23.7 supports `page_size`, `selection`, `pagination`, `label`, `value`, and `format_mapping` — but not `sortable`, `filter`, or `resizable`. These are supported by `ui.data_explorer` but not `ui.table`.
+
+---
+
+## 119. Highlighting Selected KPI Cards via `mo.callout` Wrapper
+
+### The Problem
+
+Page 3 (Geographic Disparity) has 5 island group KPI cards via `mo.stat()`. When a user selects a specific island group from the dropdown, the corresponding card needed visual highlighting. `mo.stat` has no built-in "selected" or "highlighted" state — no `selected=True` parameter or distinct visual variant.
+
+### Solution
+
+Wrap the selected card in `mo.callout(kind="info")`, which adds a colored left border and subtle background:
+
+```python
+_stat = mo.stat(
+    value=f"Rp {_row['avg_price_idr']:,.0f}",
+    label=_name,
+    caption=_caption,
+    bordered=True,
+)
+
+if _is_selected:
+    _stat = mo.callout(_stat, kind="info")
+    _cards.insert(0, _stat)   # move to front
+else:
+    _cards.append(_stat)
+```
+
+Key design choices:
+- **`kind="info"`** uses marimo's blue accent border — visually distinct from the default card
+- **`insert(0)`** moves the selected card to the first position in the hstack, so it's immediately visible
+- **All cards remain visible** — the selection is a highlight, not a filter; comparison context is preserved
+
+### What Didn't Work
+
+- `mo.stat(direction=...)` on the selected card — direction is for trend indication, not selection state; using it for selection state abuses the semantic meaning
+- Changing `bordered=True` to `bordered=False` on non-selected cards — reduced visual weight inconsistently and made unselected cards look like they lacked data
+
+### Rule
+
+When `mo.stat` needs a "selected" state, wrap it in `mo.callout(kind="info")`. Use `insert(0)` to reorder the selected card to the front of the row. Keep all cards visible — selection highlighting works best as an accent, not a filter.
+
+---
+
+## 120. Bar Chart Highlight via Marker Color Override
+
+### The Problem
+
+Page 3's horizontal bar chart shows 5 island group price indices. Without highlighting, all bars are the same color (blue, with Java gray). The island group dropdown selection needs visual feedback on the chart — the selected island should stand out.
+
+### Solution
+
+Compute `_marker_colors` in a list comprehension with a 4-way condition:
+
+```python
+_marker_colors = []
+for n in geo_island_df["island_group"]:
+    if _selected != "All" and n == _selected:
+        _marker_colors.append("#ff7f0e")              # orange — selected
+    elif n == "Java":
+        _marker_colors.append("#b0b0b0")              # gray — baseline, always dim
+    elif _selected != "All":
+        _marker_colors.append("rgba(31,119,180,0.3)") # dimmed — non-selected
+    else:
+        _marker_colors.append("#1f77b4")              # blue — default (no filter)
+```
+
+Color semantics:
+| State | Color | Hex/RGBA | Purpose |
+|-------|-------|----------|---------|
+| Selected | Orange | `#ff7f0e` | High contrast, draws attention |
+| Java baseline | Gray | `#b0b0b0` | Reference point — always de-emphasised |
+| Non-selected (filter active) | Dim blue | `rgba(31,119,180,0.3)` | Context preservation without competing |
+| Unfiltered default | Blue | `#1f77b4` | Default Plotly color — equal weight |
+
+### Rule
+
+When a single-item filter applies to a bar chart, use marker color to highlight the selected item rather than filtering the data. This keeps comparison context visible. Use orange (`#ff7f0e`) for the selected item — it's visually distinct from Plotly's default blue palette and works for colour-blind users in combination with bar position.
+
+---
 
 ### Superseded
 | # | Section |
