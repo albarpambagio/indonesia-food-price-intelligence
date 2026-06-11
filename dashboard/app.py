@@ -9,7 +9,7 @@
 
 import marimo
 
-__generated_with = "0.23.7"
+__generated_with = "0.23.9"
 app = marimo.App(width="full")
 
 
@@ -19,10 +19,26 @@ def _():
     import numpy as np
     import pandas as pd
     import plotly.graph_objects as go
-    from explainer_copy import EXPLAINERS, EXPLAINERS_P2, EXPLAINERS_P3, EXPLAINERS_P4
+
+    from explainer_loader import load_explainers
+    EXPLAINERS, EXPLAINERS_P2, EXPLAINERS_P3, EXPLAINERS_P4 = load_explainers()
 
     COMMODITIES = ["Rice", "Cooking Oil", "Sugar", "Flour"]
     UNIT_MAP = {"Rice": "/kg", "Cooking Oil": "/L", "Sugar": "/kg", "Flour": "/kg"}
+    MONTH_LABELS = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
     BUY_SIGNAL_LOWER = 0.98
     BUY_SIGNAL_UPPER = 1.02
     COMMODITY_COLORS = {
@@ -37,6 +53,7 @@ def _():
         BUY_SIGNAL_UPPER,
         COMMODITIES,
         COMMODITY_COLORS,
+        MONTH_LABELS,
         EXPLAINERS,
         EXPLAINERS_P2,
         EXPLAINERS_P3,
@@ -50,21 +67,68 @@ def _():
 
 
 @app.cell
-def _(pd):
-    from data_static import load_csv, load_json, load_json_envelope
+def _(mo, pd):
+    try:
+        from data_static import load_csv, load_json, load_json_envelope
+    except ModuleNotFoundError:
 
-    price_national_df = pd.DataFrame(load_json("price_trends_national.json"))
-    price_national_df["month"] = pd.to_datetime(price_national_df["month"])
+        def load_json(filename):
+            return []
 
-    forecast_raw = load_json_envelope("forecast.json")
-    forecast_df = pd.DataFrame(forecast_raw)
-    forecast_df["date"] = pd.to_datetime(forecast_df["date"])
+        def load_json_envelope(filename, key="data"):
+            return []
 
-    islamic_cal_df = load_csv("islamic_calendar.csv")
-    islamic_cal_df["eid_date"] = pd.to_datetime(islamic_cal_df["eid_date"])
+        def load_csv(filename):
+            return pd.DataFrame()
 
-    max_month = price_national_df["month"].max()
+    _load_error = None
+    try:
+        price_national_df = pd.DataFrame(load_json("price_trends_national.json"))
+        price_national_df["month"] = pd.to_datetime(price_national_df["month"])
+
+        forecast_raw = load_json_envelope("forecast.json")
+        forecast_df = pd.DataFrame(forecast_raw)
+        forecast_df["date"] = pd.to_datetime(forecast_df["date"])
+
+        islamic_cal_df = load_csv("islamic_calendar.csv")
+        islamic_cal_df["eid_date"] = pd.to_datetime(islamic_cal_df["eid_date"])
+
+        max_month = price_national_df["month"].max()
+    except Exception as _exc:
+        _load_error = str(_exc)
+        price_national_df = pd.DataFrame(
+            columns=["month", "commodity_consolidated", "avg_price_idr"]
+        )
+        price_national_df["month"] = pd.to_datetime(price_national_df["month"])
+        forecast_df = pd.DataFrame(
+            columns=[
+                "date",
+                "commodity_consolidated",
+                "commodity",
+                "forecast_price",
+                "lower_95",
+                "upper_95",
+                "scenario",
+                "actual_price",
+            ]
+        )
+        forecast_df["date"] = pd.to_datetime(forecast_df["date"])
+        islamic_cal_df = pd.DataFrame(columns=["eid_date", "ramadan_start", "ramadan_end"])
+        islamic_cal_df["eid_date"] = pd.to_datetime(islamic_cal_df["eid_date"])
+        max_month = pd.Timestamp("2024-01-01")
+
+    data_load_error = (
+        mo.callout(
+            mo.md(
+                f"**Data loading failed:** {_load_error}\n\nEnsure the data files are accessible."
+            ),
+            kind="danger",
+        )
+        if _load_error
+        else None
+    )
     return (
+        data_load_error,
         forecast_df,
         islamic_cal_df,
         load_csv,
@@ -77,8 +141,12 @@ def _(pd):
 
 @app.cell
 def _(price_national_df):
-    data_min_year = int(price_national_df["month"].dt.year.min())
-    data_max_year = int(price_national_df["month"].dt.year.max())
+    data_min_year = (
+        int(price_national_df["month"].dt.year.min()) if not price_national_df.empty else 2007
+    )
+    data_max_year = (
+        int(price_national_df["month"].dt.year.max()) if not price_national_df.empty else 2024
+    )
     return data_min_year, data_max_year
 
 
@@ -127,9 +195,19 @@ def _(
     if commodity_dd.value != "All":
         filtered_df = filtered_df[filtered_df["commodity_consolidated"] == commodity_dd.value]
 
-    mo.stop(filtered_df.empty, mo.md("_No data available for the selected filters._"))
+    page1_filter_notice = (
+        mo.callout(
+            mo.md(
+                "_No data available for the selected filters. "
+                "Try adjusting the year range or commodity._"
+            ),
+            kind="warn",
+        )
+        if filtered_df.empty
+        else None
+    )
 
-    return (filtered_df,)
+    return filtered_df, page1_filter_notice
 
 
 @app.cell
@@ -197,7 +275,7 @@ def _(BUY_SIGNAL_LOWER, BUY_SIGNAL_UPPER, forecast_df, price_national_df):
     )
 
     buy_signals_df = latest_actual.merge(forecast_avg, on="commodity", suffixes=("", "_avg"))
-    buy_signals_df["ratio"] = buy_signals_df["forecast_price"] / buy_signals_df["actual_price"]
+    buy_signals_df["ratio"] = buy_signals_df["forecast_price_avg"] / buy_signals_df["actual_price"]
     buy_signals_df["signal"] = buy_signals_df["ratio"].apply(
         lambda r: (
             "BUY NOW" if r < BUY_SIGNAL_LOWER else ("WATCH" if r > BUY_SIGNAL_UPPER else "HOLD")
@@ -217,7 +295,7 @@ def _(BUY_SIGNAL_LOWER, BUY_SIGNAL_UPPER, forecast_df, price_national_df):
     buy_signals_df = buy_signals_df.merge(fc_ranges, on="commodity", how="left")
     buy_signals_df["reason"] = buy_signals_df.apply(
         lambda r: (
-            f"2-mo avg ({r['forecast_price']:,.0f}) "
+            f"2-mo avg ({r['forecast_price_avg']:,.0f}) "
             f"vs current ({r['actual_price']:,.0f}) \u00b7 "
             f"covers {r['fc_start'].strftime('%b %Y')}\u2013{r['fc_end'].strftime('%b %Y')}"
         ),
@@ -228,8 +306,13 @@ def _(BUY_SIGNAL_LOWER, BUY_SIGNAL_UPPER, forecast_df, price_national_df):
 
 
 @app.cell
-def _(COMMODITIES, UNIT_MAP, latest_prices_df, mo, pd, price_national_df):
-    from charts.kpi_sparklines import sparkline_chart
+def _(COMMODITIES, UNIT_MAP, go, latest_prices_df, mo, pd, price_national_df):
+    try:
+        from charts.kpi_sparklines import sparkline_chart
+    except ModuleNotFoundError:
+
+        def sparkline_chart(*a, **kw):
+            return go.Figure()
 
     cards = []
     for _, row in latest_prices_df.iterrows():
@@ -419,13 +502,14 @@ def _(COMMODITIES, mo, yoy_df, yr_lo, yr_hi):
 
 @app.cell
 def _(EXPLAINERS, mo):
+    _na = mo.md("_N/A_")
     explainer_card = mo.accordion(
         {
-            "KPI Cards \u2014 how to read": EXPLAINERS["kpi_cards"],
-            "Trend Chart \u2014 how to read": EXPLAINERS["trend_chart"],
-            "Buy Signals \u2014 how they work": EXPLAINERS["buy_signal"],
-            "YoY Table \u2014 how to read": EXPLAINERS["yoy_table"],
-            "Forecast Reliability": EXPLAINERS["forecast_note"],
+            "KPI Cards \u2014 how to read": EXPLAINERS.get("kpi_cards", _na),
+            "Trend Chart \u2014 how to read": EXPLAINERS.get("trend_chart", _na),
+            "Buy Signals \u2014 how they work": EXPLAINERS.get("buy_signal", _na),
+            "YoY Table \u2014 how to read": EXPLAINERS.get("yoy_table", _na),
+            "Forecast Reliability": EXPLAINERS.get("forecast_note", _na),
         },
         multiple=True,
     )
@@ -438,8 +522,13 @@ def _(EXPLAINERS, mo):
 
 
 @app.cell
-def _(islamic_cal_df, price_national_df):
-    from computations.seasonal import compute_seasonal_data
+def _(islamic_cal_df, pd, price_national_df):
+    try:
+        from computations.seasonal import compute_seasonal_data
+    except ModuleNotFoundError:
+
+        def compute_seasonal_data(*a):
+            return (pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame())
 
     heatmap_df, ramadan_df, action_windows_df, summary_df = compute_seasonal_data(
         price_national_df, islamic_cal_df
@@ -547,7 +636,7 @@ def _(mo):
 
 
 @app.cell
-def _(commodity_dd, driver_toggle, heatmap_df, mo, go):
+def _(MONTH_LABELS, commodity_dd, driver_toggle, heatmap_df, mo, go):
     _driver = driver_toggle.value
     _comm = commodity_dd.value
     _hdf = heatmap_df
@@ -556,20 +645,6 @@ def _(commodity_dd, driver_toggle, heatmap_df, mo, go):
     _pivot = _hdf.pivot(
         index="commodity_consolidated", columns="month_of_year", values="premium_pct"
     )
-    _month_labels = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-    ]
 
     _highlight_months = {
         "Ramadan / Lebaran": None,
@@ -580,7 +655,7 @@ def _(commodity_dd, driver_toggle, heatmap_df, mo, go):
     _fig = go.Figure(
         go.Heatmap(
             z=_pivot.values,
-            x=_month_labels,
+            x=MONTH_LABELS,
             y=_pivot.index.tolist(),
             colorscale="RdBu_r",
             zmid=0,
@@ -616,6 +691,7 @@ def _(commodity_dd, driver_toggle, heatmap_df, mo, go):
 def _(
     COMMODITIES,
     COMMODITY_COLORS,
+    MONTH_LABELS,
     commodity_dd,
     driver_toggle,
     go,
@@ -625,7 +701,12 @@ def _(
     price_national_df,
     ramadan_df,
 ):
-    from computations.seasonal import compute_price_index
+    try:
+        from computations.seasonal import compute_price_index
+    except ModuleNotFoundError:
+
+        def compute_price_index(df):
+            return pd.DataFrame(columns=["month_of_year", "price_index"])
 
     _driver = driver_toggle.value
     _selected_comm = commodity_dd.value
@@ -694,20 +775,6 @@ def _(
         _df = price_national_df[price_national_df["commodity_consolidated"].isin(_comms)]
         _monthly = compute_price_index(_df)
         _mi = _monthly.groupby("month_of_year")["price_index"].mean()
-        _month_labels = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-        ]
         _harvest_months = {3, 4, 8, 9}
         _colors = [
             "rgba(34,139,34,0.6)" if m in _harvest_months else "rgba(70,130,180,0.7)"
@@ -715,7 +782,7 @@ def _(
         ]
         _fig = go.Figure(
             go.Bar(
-                x=_month_labels,
+                x=MONTH_LABELS,
                 y=[_mi.get(m, 0) for m in range(1, 13)],
                 marker_color=_colors,
                 hovertemplate="%{x}<br>Index: %{y:.1f}<extra></extra>",
@@ -842,14 +909,15 @@ def _(commodity_dd, driver_toggle, mo, summary_df):
 
 @app.cell
 def _(EXPLAINERS_P2, mo):
+    _na = mo.md("_N/A_")
     page2_explainer = mo.accordion(
         {
-            "Action Cards \u2014 how to read": EXPLAINERS_P2["action_cards"],
-            "Heatmap \u2014 how to read": EXPLAINERS_P2["heatmap"],
-            "Ramadan Overlay \u2014 how to read": EXPLAINERS_P2["ramadan"],
-            "Harvest Chart \u2014 how to read": EXPLAINERS_P2["harvest"],
-            "Year-End Chart \u2014 how to read": EXPLAINERS_P2["yearend"],
-            "Summary Table \u2014 how to read": EXPLAINERS_P2["summary"],
+            "Action Cards \u2014 how to read": EXPLAINERS_P2.get("action_cards", _na),
+            "Heatmap \u2014 how to read": EXPLAINERS_P2.get("heatmap", _na),
+            "Ramadan Overlay \u2014 how to read": EXPLAINERS_P2.get("ramadan", _na),
+            "Harvest Chart \u2014 how to read": EXPLAINERS_P2.get("harvest", _na),
+            "Year-End Chart \u2014 how to read": EXPLAINERS_P2.get("yearend", _na),
+            "Summary Table \u2014 how to read": EXPLAINERS_P2.get("summary", _na),
         },
         multiple=True,
     )
@@ -972,19 +1040,31 @@ def _(load_json, mo, pd):
     geo_province_df = pd.DataFrame(_raw)
     geo_province_df["year"] = geo_province_df["year"].astype(int)
 
-    mo.stop(geo_province_df.empty, mo.md("_No geographic disparity data available._"))
-
-    geo_island_df = (
-        geo_province_df.groupby("island_group")
-        .agg(
-            provinces=("admin1", "nunique"),
-            avg_price_idr=("avg_price_idr", "mean"),
-            avg_index=("price_index_vs_java", "mean"),
+    page3_filter_notice = (
+        mo.callout(
+            mo.md("_No geographic disparity data available._"),
+            kind="warn",
         )
-        .reset_index()
-        .sort_values("avg_index", ascending=True)
+        if geo_province_df.empty
+        else None
     )
-    return geo_island_df, geo_province_df
+
+    if not geo_province_df.empty:
+        geo_island_df = (
+            geo_province_df.groupby("island_group")
+            .agg(
+                provinces=("admin1", "nunique"),
+                avg_price_idr=("avg_price_idr", "mean"),
+                avg_index=("price_index_vs_java", "mean"),
+            )
+            .reset_index()
+            .sort_values("avg_index", ascending=True)
+        )
+    else:
+        geo_island_df = pd.DataFrame(
+            columns=["island_group", "provinces", "avg_price_idr", "avg_index"]
+        )
+    return geo_island_df, geo_province_df, page3_filter_notice
 
 
 # ---------------------------------------------------------------------------
@@ -1175,12 +1255,13 @@ def _(commodity_dd, geo_island_dropdown, geo_province_df, mo):
 
 @app.cell
 def _(EXPLAINERS_P3, mo):
+    _na = mo.md("_N/A_")
     geo_explainer = mo.accordion(
         {
-            "Island KPI Cards \u2014 how to read": EXPLAINERS_P3["island_cards"],
-            "Bar Chart \u2014 how to read": EXPLAINERS_P3["bar_chart"],
-            "Province Table \u2014 how to read": EXPLAINERS_P3["province_table"],
-            "Data Scope & Limitations": EXPLAINERS_P3["data_scope"],
+            "Island KPI Cards \u2014 how to read": EXPLAINERS_P3.get("island_cards", _na),
+            "Bar Chart \u2014 how to read": EXPLAINERS_P3.get("bar_chart", _na),
+            "Province Table \u2014 how to read": EXPLAINERS_P3.get("province_table", _na),
+            "Data Scope & Limitations": EXPLAINERS_P3.get("data_scope", _na),
         },
         multiple=True,
     )
@@ -1202,6 +1283,7 @@ def _(
     geo_island_kpi_cards,
     geo_province_table,
     mo,
+    page3_filter_notice,
 ):
     _header = mo.vstack(
         [
@@ -1249,6 +1331,7 @@ def _(
                 ],
                 gap="2rem",
             ),
+            mo.md("_Island Group filter above also applies here._"),
             geo_province_table,
         ],
         gap="0.75rem",
@@ -1258,6 +1341,7 @@ def _(
         [
             _header,
             geo_data_notice,
+            *([] if page3_filter_notice is None else [page3_filter_notice]),
             _island_section,
             _province_section,
             geo_explainer,
@@ -1314,6 +1398,15 @@ def _(load_json, mo, pd):
     )
     best_leader_per_follower_df = _by_follower[["follower", "leader", "lag", "r", "stable"]].copy()
 
+    page4_filter_notice = (
+        mo.callout(
+            mo.md("_No correlation data available._"),
+            kind="warn",
+        )
+        if corr_all_pairs_df.empty
+        else None
+    )
+
     # Load monthly price data for scatter + rolling correlation
     _price_raw = load_json("commodity_correlation.json")
     _price_df = pd.DataFrame(_price_raw)
@@ -1327,45 +1420,46 @@ def _(load_json, mo, pd):
         "Flour": "flour_price",
     }
 
-    # Scatter pairs: same-period prices for all 12 ordered pairs
-    _rows = []
-    for _leader in _COMMODITIES_ORDER:
-        for _follower in _COMMODITIES_ORDER:
-            if _leader == _follower:
-                continue
-            _lcol = _price_cols[_leader]
-            _fcol = _price_cols[_follower]
-            _sub = _price_df[["month", _lcol, _fcol]].copy()
-            _sub.columns = ["date", "leader_price", "follower_price"]
-            _sub["leader"] = _leader
-            _sub["follower"] = _follower
-            _sub["period"] = _sub["date"].apply(
-                lambda d: "pre_2022" if d < pd.Timestamp("2022-01-01") else "post_2022"
-            )
-            _rows.append(_sub)
-    corr_pairs_scatter_df = pd.concat(_rows, ignore_index=True)
+    if not _price_df.empty:
+        # Scatter pairs: same-period prices for all 12 ordered pairs
+        _rows = []
+        for _leader in _COMMODITIES_ORDER:
+            for _follower in _COMMODITIES_ORDER:
+                if _leader == _follower:
+                    continue
+                _lcol = _price_cols[_leader]
+                _fcol = _price_cols[_follower]
+                _sub = _price_df[["month", _lcol, _fcol]].copy()
+                _sub.columns = ["date", "leader_price", "follower_price"]
+                _sub["leader"] = _leader
+                _sub["follower"] = _follower
+                _sub["period"] = _sub["date"].apply(
+                    lambda d: "pre_2022" if d < pd.Timestamp("2022-01-01") else "post_2022"
+                )
+                _rows.append(_sub)
+        corr_pairs_scatter_df = pd.concat(_rows, ignore_index=True)
 
-    # Rolling 3-year (36-month) correlation for each ordered pair
-    _roll_rows = []
-    for _leader in _COMMODITIES_ORDER:
-        for _follower in _COMMODITIES_ORDER:
-            if _leader == _follower:
-                continue
-            _lcol = _price_cols[_leader]
-            _fcol = _price_cols[_follower]
-            _s = _price_df[["month", _lcol, _fcol]].sort_values("month").copy()
-            _s.columns = ["date", "leader_price", "follower_price"]
-            _s["rolling_r_3yr"] = _s["leader_price"].rolling(36).corr(_s["follower_price"])
-            _s = _s.dropna(subset=["rolling_r_3yr"])
-            _s["leader"] = _leader
-            _s["follower"] = _follower
-            _roll_rows.append(_s[["date", "leader", "follower", "rolling_r_3yr"]])
-    corr_rolling_r_df = pd.concat(_roll_rows, ignore_index=True)
-
-    mo.stop(
-        corr_all_pairs_df.empty,
-        mo.md("_No correlation data available._"),
-    )
+        # Rolling 3-year (36-month) correlation for each ordered pair
+        _roll_rows = []
+        for _leader in _COMMODITIES_ORDER:
+            for _follower in _COMMODITIES_ORDER:
+                if _leader == _follower:
+                    continue
+                _lcol = _price_cols[_leader]
+                _fcol = _price_cols[_follower]
+                _s = _price_df[["month", _lcol, _fcol]].sort_values("month").copy()
+                _s.columns = ["date", "leader_price", "follower_price"]
+                _s["rolling_r_3yr"] = _s["leader_price"].rolling(36).corr(_s["follower_price"])
+                _s = _s.dropna(subset=["rolling_r_3yr"])
+                _s["leader"] = _leader
+                _s["follower"] = _follower
+                _roll_rows.append(_s[["date", "leader", "follower", "rolling_r_3yr"]])
+        corr_rolling_r_df = pd.concat(_roll_rows, ignore_index=True)
+    else:
+        corr_pairs_scatter_df = pd.DataFrame(
+            columns=["date", "leader_price", "follower_price", "leader", "follower", "period"]
+        )
+        corr_rolling_r_df = pd.DataFrame(columns=["date", "leader", "follower", "rolling_r_3yr"])
 
     return (
         corr_all_pairs_df,
@@ -1373,6 +1467,7 @@ def _(load_json, mo, pd):
         corr_pairs_scatter_df,
         corr_rolling_r_df,
         best_leader_per_follower_df,
+        page4_filter_notice,
     )
 
 
@@ -1412,12 +1507,24 @@ def _(corr_all_pairs_df, mo):
 
 
 @app.cell
-def _(best_leader_per_follower_df, commodity_dd, mo, page4_lag_selector):
+def _(best_leader_per_follower_df, commodity_dd, corr_all_pairs_df, mo, page4_lag_selector):
     _comm = commodity_dd.value
     _lag = page4_lag_selector.value
 
+    # Filter by selected lag, then pick best leader per follower at that lag
+    _lag_df = corr_all_pairs_df[corr_all_pairs_df["lag"] == _lag]
+    if not _lag_df.empty:
+        _lag_best = (
+            _lag_df.sort_values("r", ascending=False)
+            .groupby("follower")
+            .first()
+            .reset_index()[["follower", "leader", "lag", "r", "stable"]]
+        )
+    else:
+        _lag_best = best_leader_per_follower_df
+
     # Filter by commodity if not "All"
-    _candidates = best_leader_per_follower_df
+    _candidates = _lag_best
     if _comm != "All":
         _candidates = _candidates[
             (_candidates["leader"] == _comm) | (_candidates["follower"] == _comm)
@@ -1527,26 +1634,6 @@ def _(corr_matrix_df, go, mo, page4_lag_selector):
 
 
 # ---------------------------------------------------------------------------
-# Page 4: Matrix click handler (cross-filter)
-# ---------------------------------------------------------------------------
-
-
-@app.cell
-def _(page4_matrix_chart, selected_pair, set_selected_pair):
-    if page4_matrix_chart.value and page4_matrix_chart.value.get("points"):
-        _pt = page4_matrix_chart.value["points"][0]
-        _leader = _pt.get("y")
-        _follower = _pt.get("x")
-        if (
-            _leader
-            and _follower
-            and _leader != _follower
-            and (_leader, _follower) != selected_pair()
-        ):
-            set_selected_pair((_leader, _follower))
-
-
-# ---------------------------------------------------------------------------
 # Page 4: Pair selector dropdowns
 # ---------------------------------------------------------------------------
 
@@ -1567,15 +1654,34 @@ def _(mo, selected_pair):
 
 
 # ---------------------------------------------------------------------------
-# Page 4: Pair dropdown sync to state
+# Page 4: Selected pair update (matrix click + dropdown sync)
 # ---------------------------------------------------------------------------
 
 
 @app.cell
-def _(page4_follower_dd, page4_leader_dd, selected_pair, set_selected_pair):
-    _new_pair = (page4_leader_dd.value, page4_follower_dd.value)
-    if _new_pair != selected_pair():
-        set_selected_pair(_new_pair)
+def _(
+    page4_follower_dd,
+    page4_leader_dd,
+    page4_matrix_chart,
+    selected_pair,
+    set_selected_pair,
+):
+    _click_value = page4_matrix_chart.value
+    if _click_value and _click_value.get("points"):
+        _pt = _click_value["points"][0]
+        _leader = _pt.get("y")
+        _follower = _pt.get("x")
+        if (
+            _leader
+            and _follower
+            and _leader != _follower
+            and (_leader, _follower) != selected_pair()
+        ):
+            set_selected_pair((_leader, _follower))
+    else:
+        _new_pair = (page4_leader_dd.value, page4_follower_dd.value)
+        if _new_pair != selected_pair():
+            set_selected_pair(_new_pair)
 
 
 # ---------------------------------------------------------------------------
@@ -1918,13 +2024,14 @@ def _(mo):
 
 @app.cell
 def _(EXPLAINERS_P4, mo):
+    _na = mo.md("_N/A_")
     page4_explainer = mo.accordion(
         {
-            "Leading Indicators \u2014 how to read": EXPLAINERS_P4["leading_indicators"],
-            "Correlation Matrix \u2014 how to read": EXPLAINERS_P4["correlation_matrix"],
-            "Scatter Plot \u2014 how to read": EXPLAINERS_P4["scatter_plot"],
-            "Stability Chart \u2014 how to read": EXPLAINERS_P4["stability_chart"],
-            "Implication Card \u2014 how to read": EXPLAINERS_P4["implication_card"],
+            "Leading Indicators \u2014 how to read": EXPLAINERS_P4.get("leading_indicators", _na),
+            "Correlation Matrix \u2014 how to read": EXPLAINERS_P4.get("correlation_matrix", _na),
+            "Scatter Plot \u2014 how to read": EXPLAINERS_P4.get("scatter_plot", _na),
+            "Stability Chart \u2014 how to read": EXPLAINERS_P4.get("stability_chart", _na),
+            "Implication Card \u2014 how to read": EXPLAINERS_P4.get("implication_card", _na),
         },
         multiple=True,
     )
@@ -1943,6 +2050,7 @@ def _(
     page4_data_notice,
     page4_detail_table,
     page4_explainer,
+    page4_filter_notice,
     page4_follower_dd,
     page4_implication_card,
     page4_lag_selector,
@@ -1951,6 +2059,7 @@ def _(
     page4_matrix_chart,
     page4_scatter_stability_row,
     selected_pair,
+    show_all_years,
     year_slider,
 ):
     _header = mo.vstack(
@@ -2028,6 +2137,7 @@ def _(
                 [
                     mo.md("_Year range (filters scatter & stability charts below):_"),
                     year_slider,
+                    show_all_years,
                 ],
                 gap="0.25rem",
             ),
@@ -2067,6 +2177,7 @@ def _(
             _header,
             _scope_notice,
             page4_data_notice,
+            *([] if page4_filter_notice is None else [page4_filter_notice]),
             _lead_section,
             _matrix_section,
             _pair_section,
@@ -2087,11 +2198,13 @@ def _(
 def _(
     buy_signal_output,
     commodity_dd,
+    data_load_error,
     explainer_card,
     geo_page_content,
     kpi_cards_output,
     max_month,
     mo,
+    page1_filter_notice,
     page2_content,
     page4_content,
     show_all_years,
@@ -2155,6 +2268,7 @@ def _(
         [
             mo.md("## Annual Price Change"),
             yoy_table_output,
+            mo.md("_Year range set above also applies here._"),
         ],
         gap="0.5rem",
     )
@@ -2166,6 +2280,8 @@ def _(
                 f"_Indonesian Staple Commodities \u00b7 "
                 f"Jan 2007\u2013{_date_label} + 6-Month Forecast_"
             ),
+            *([] if data_load_error is None else [data_load_error]),
+            *([] if page1_filter_notice is None else [page1_filter_notice]),
             _kpi_section,
             buy_signal_output,
             _trend_section,
@@ -2175,7 +2291,7 @@ def _(
         gap="1.5rem",
     )
 
-    mo.ui.tabs(
+    return mo.ui.tabs(
         {
             "Forecast & Signals": page1_content,
             "Seasonal Planning": page2_content,
