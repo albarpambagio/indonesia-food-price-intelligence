@@ -1,7 +1,5 @@
--- NOTE: commodity_pair is ordered as 'rice-oil' (not 'oil-rice'), meaning
--- lag_months is applied to the FIRST commodity before correlating with the SECOND.
--- For the reverse direction (oil leading rice), query mart_commodity_correlation
--- directly with LAG(oil_price, N) and CORR(oil_lagN, rice_price).
+-- All 12 directed pairs (6 forward + 6 reverse) × 4 lags = 48 rows.
+-- commodity_pair = 'leader-follower' — lag is applied to the FIRST commodity.
 WITH corr_base AS (
   SELECT
     rice_price,
@@ -217,6 +215,204 @@ pairwise AS (
          CASE WHEN month < '2022-01-01' THEN flour_price END),
     CORR(CASE WHEN month >= '2022-01-01' THEN sugar_lag3 END,
          CASE WHEN month >= '2022-01-01' THEN flour_price END)
+  FROM corr_base
+  -- Reverse direction: oil leading rice
+  UNION ALL
+  SELECT 'oil-rice', 0,
+    CORR(oil_price, rice_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN oil_price END,
+         CASE WHEN month < '2022-01-01' THEN rice_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN oil_price END,
+         CASE WHEN month >= '2022-01-01' THEN rice_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'oil-rice', 1,
+    CORR(oil_lag1, rice_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN oil_lag1 END,
+         CASE WHEN month < '2022-01-01' THEN rice_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN oil_lag1 END,
+         CASE WHEN month >= '2022-01-01' THEN rice_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'oil-rice', 2,
+    CORR(oil_lag2, rice_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN oil_lag2 END,
+         CASE WHEN month < '2022-01-01' THEN rice_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN oil_lag2 END,
+         CASE WHEN month >= '2022-01-01' THEN rice_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'oil-rice', 3,
+    CORR(oil_lag3, rice_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN oil_lag3 END,
+         CASE WHEN month < '2022-01-01' THEN rice_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN oil_lag3 END,
+         CASE WHEN month >= '2022-01-01' THEN rice_price END)
+  FROM corr_base
+  -- Reverse direction: sugar leading rice
+  UNION ALL
+  SELECT 'sugar-rice', 0,
+    CORR(sugar_price, rice_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN sugar_price END,
+         CASE WHEN month < '2022-01-01' THEN rice_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN sugar_price END,
+         CASE WHEN month >= '2022-01-01' THEN rice_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'sugar-rice', 1,
+    CORR(sugar_lag1, rice_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN sugar_lag1 END,
+         CASE WHEN month < '2022-01-01' THEN rice_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN sugar_lag1 END,
+         CASE WHEN month >= '2022-01-01' THEN rice_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'sugar-rice', 2,
+    CORR(sugar_lag2, rice_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN sugar_lag2 END,
+         CASE WHEN month < '2022-01-01' THEN rice_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN sugar_lag2 END,
+         CASE WHEN month >= '2022-01-01' THEN rice_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'sugar-rice', 3,
+    CORR(sugar_lag3, rice_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN sugar_lag3 END,
+         CASE WHEN month < '2022-01-01' THEN rice_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN sugar_lag3 END,
+         CASE WHEN month >= '2022-01-01' THEN rice_price END)
+  FROM corr_base
+  -- Reverse direction: flour leading rice
+  UNION ALL
+  SELECT 'flour-rice', 0,
+    CORR(flour_price, rice_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN flour_price END,
+         CASE WHEN month < '2022-01-01' THEN rice_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN flour_price END,
+         CASE WHEN month >= '2022-01-01' THEN rice_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'flour-rice', 1,
+    CORR(flour_lag1, rice_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN flour_lag1 END,
+         CASE WHEN month < '2022-01-01' THEN rice_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN flour_lag1 END,
+         CASE WHEN month >= '2022-01-01' THEN rice_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'flour-rice', 2,
+    CORR(flour_lag2, rice_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN flour_lag2 END,
+         CASE WHEN month < '2022-01-01' THEN rice_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN flour_lag2 END,
+         CASE WHEN month >= '2022-01-01' THEN rice_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'flour-rice', 3,
+    CORR(flour_lag3, rice_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN flour_lag3 END,
+         CASE WHEN month < '2022-01-01' THEN rice_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN flour_lag3 END,
+         CASE WHEN month >= '2022-01-01' THEN rice_price END)
+  FROM corr_base
+  -- Reverse direction: sugar leading oil
+  UNION ALL
+  SELECT 'sugar-oil', 0,
+    CORR(sugar_price, oil_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN sugar_price END,
+         CASE WHEN month < '2022-01-01' THEN oil_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN sugar_price END,
+         CASE WHEN month >= '2022-01-01' THEN oil_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'sugar-oil', 1,
+    CORR(sugar_lag1, oil_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN sugar_lag1 END,
+         CASE WHEN month < '2022-01-01' THEN oil_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN sugar_lag1 END,
+         CASE WHEN month >= '2022-01-01' THEN oil_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'sugar-oil', 2,
+    CORR(sugar_lag2, oil_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN sugar_lag2 END,
+         CASE WHEN month < '2022-01-01' THEN oil_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN sugar_lag2 END,
+         CASE WHEN month >= '2022-01-01' THEN oil_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'sugar-oil', 3,
+    CORR(sugar_lag3, oil_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN sugar_lag3 END,
+         CASE WHEN month < '2022-01-01' THEN oil_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN sugar_lag3 END,
+         CASE WHEN month >= '2022-01-01' THEN oil_price END)
+  FROM corr_base
+  -- Reverse direction: flour leading oil
+  UNION ALL
+  SELECT 'flour-oil', 0,
+    CORR(flour_price, oil_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN flour_price END,
+         CASE WHEN month < '2022-01-01' THEN oil_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN flour_price END,
+         CASE WHEN month >= '2022-01-01' THEN oil_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'flour-oil', 1,
+    CORR(flour_lag1, oil_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN flour_lag1 END,
+         CASE WHEN month < '2022-01-01' THEN oil_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN flour_lag1 END,
+         CASE WHEN month >= '2022-01-01' THEN oil_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'flour-oil', 2,
+    CORR(flour_lag2, oil_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN flour_lag2 END,
+         CASE WHEN month < '2022-01-01' THEN oil_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN flour_lag2 END,
+         CASE WHEN month >= '2022-01-01' THEN oil_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'flour-oil', 3,
+    CORR(flour_lag3, oil_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN flour_lag3 END,
+         CASE WHEN month < '2022-01-01' THEN oil_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN flour_lag3 END,
+         CASE WHEN month >= '2022-01-01' THEN oil_price END)
+  FROM corr_base
+  -- Reverse direction: flour leading sugar
+  UNION ALL
+  SELECT 'flour-sugar', 0,
+    CORR(flour_price, sugar_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN flour_price END,
+         CASE WHEN month < '2022-01-01' THEN sugar_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN flour_price END,
+         CASE WHEN month >= '2022-01-01' THEN sugar_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'flour-sugar', 1,
+    CORR(flour_lag1, sugar_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN flour_lag1 END,
+         CASE WHEN month < '2022-01-01' THEN sugar_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN flour_lag1 END,
+         CASE WHEN month >= '2022-01-01' THEN sugar_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'flour-sugar', 2,
+    CORR(flour_lag2, sugar_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN flour_lag2 END,
+         CASE WHEN month < '2022-01-01' THEN sugar_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN flour_lag2 END,
+         CASE WHEN month >= '2022-01-01' THEN sugar_price END)
+  FROM corr_base
+  UNION ALL
+  SELECT 'flour-sugar', 3,
+    CORR(flour_lag3, sugar_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN flour_lag3 END,
+         CASE WHEN month < '2022-01-01' THEN sugar_price END),
+    CORR(CASE WHEN month >= '2022-01-01' THEN flour_lag3 END,
+         CASE WHEN month >= '2022-01-01' THEN sugar_price END)
   FROM corr_base
 ),
 

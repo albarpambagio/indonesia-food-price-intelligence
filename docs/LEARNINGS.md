@@ -96,6 +96,10 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 118 | [`mo.ui.table()` Has No `sortable` Parameter](#118-mouitable-has-no-sortable-parameter) |
 | 119 | [Highlighting Selected KPI Cards via `mo.callout` Wrapper](#119-highlighting-selected-kpi-cards-via-mocallout-wrapper) |
 | 120 | [Bar Chart Highlight via Marker Color Override](#120-bar-chart-highlight-via-marker-color-override) |
+| 121 | [Mart Filter Scope Mismatch: `mart_commodity_correlation` Used `price_flag = 'actual'`, Omitting Post-2020 Data](#121-mart-filter-scope-mismatch-mart_commodity_correlation-used-price_flag--actual-omitting-post-2020-rice-sugar-flour-data) |
+| 122 | [`mart_correlation_summary` Computed Only 6 of 12 Directed Pairs](#122-mart_correlation_summary-computed-only-6-of-12-directed-pairs) |
+| 123 | [Dead Controls on Dashboard Page: Rendered Widgets Without Reactive Wiring](#123-dead-controls-on-dashboard-page-rendered-widgets-without-reactive-wiring) |
+| 124 | [websockets 16.0 Keepalive Ping `AssertionError` in marimo Interactive Server](#124-websockets-160-keepalive-ping-assertionerror-in-marimo-interactive-server) |
 
 ## 117. Import Aliases for Cell-Private Module Imports
 
@@ -3110,3 +3114,187 @@ When generalising a chart from single-commodity to multi-commodity, audit all ag
 
 - LEARNINGS.md §111 — Filter Overrides Must Apply Consistently Across All Downstream Cells (same principle, different context)
 - LEARNINGS.md §115 — UX audit pattern that led to identifying the wiring gaps
+
+---
+
+## 121. Mart Filter Scope Mismatch: `mart_commodity_correlation` Used `price_flag = 'actual'`, Omitting Post-2020 Rice/Sugar/Flour Data
+
+### The Problem
+
+Page 4 (Commodity Signals) correlation analysis showed **no data after March 2020** for Rice, Sugar, and Flour, despite `price_trends_national.json` (Page 1) having Rice data through May 2024 (208 months). Cross-commodity correlation on 2007–2020 data only was meaningful for long-term patterns but missed the most recent market dynamics.
+
+### Root Cause
+
+Two mart models serving different pages used different quality filters:
+
+| Model | Filter | Data end (Rice/Sugar) | Used by |
+|-------|--------|----------------------|---------|
+| `mart_price_trends_national` | No `price_flag` filter | 2024-05 | Pages 1, 2 |
+| `mart_commodity_correlation` | `filter_out = FALSE AND price_flag = 'actual'` | 2020-03 | Page 4 |
+
+The `price_flag = 'actual'` filter excluded `aggregate` price records, which is how WFP provides national-level data for Rice, Sugar, and Flour after 2020. `mart_price_trends_national` never applied this filter — it was designed for cross-commodity trend visualisation and needed all 4 series. `mart_commodity_correlation` inherited the `'actual'` filter from `mart_price_trends` (which needs it for geographic market-level analysis) without considering that national-level correlation analysis needs the same data universe as the trend chart.
+
+### Solution
+
+Removed `AND price_flag = 'actual'` and replaced `filter_out = FALSE` with individual conditions matching `mart_price_trends_national`:
+
+```sql
+-- Before: excludes aggregate prices
+WHERE filter_out = FALSE
+  AND price_flag = 'actual'
+  AND commodity_consolidated IS NOT NULL
+
+-- After: matches mart_price_trends_national filter scope
+WHERE commodity_consolidated IS NOT NULL
+  AND price_idr > 0
+  AND unit IS NOT NULL
+  AND EXTRACT(YEAR FROM date) BETWEEN 2007 AND 2024
+```
+
+Result: `commodity_correlation.json` grew from **165 to 215 rows**. Rice/Sugar data now extends to 2024-05. Flour remains at 2020-03 (WFP data gap, not a filter issue).
+
+### Files Affected
+
+- `transform/models/marts/mart_commodity_correlation.sql` — WHERE clause changed
+- `dashboard/app.py` — added `page4_data_notice` callout documenting the residual Flour 2020-03 limitation
+
+### Rule
+
+When two mart models serve different dashboard pages, verify their filter scopes are consistent — especially `price_flag` filters. A data-quality filter that's correct for market-level geographic analysis (`price_flag = 'actual'`) may be wrong for national-level cross-commodity analysis, where aggregate prices are the only available data for some commodities. The data universe should match the analytical question, not the pipeline's default quality tier.
+
+### Cross-Reference
+
+- LEARNINGS.md §61 — Historical shock analysis needed unfiltered aggregate data (same pattern: filter scope mismatch between analytical purpose)
+- LEARNINGS.md §99 — `mart_seasonal_patterns` had 35 rows (Cooking Oil only) due to overlapping filters
+
+---
+
+## 122. `mart_correlation_summary` Computed Only 6 of 12 Directed Pairs — Missing Reverse Directions Showed r=0 Silently
+
+### The Problem
+
+The correlation matrix on Page 4 showed **r=0** for cells like Oil→Rice or Sugar→Oil. A user clicking these cells would see "no correlation" in the heatmap, then be unable to select the pair for the scatter/stability charts. The actual issue was not zero correlation but **missing data** — these reverse-direction pairs were never computed.
+
+### Root Cause
+
+`mart_correlation_summary.sql` only covered pairs where the leader is alphabetically first:
+- Forward: `rice-oil`, `rice-sugar`, `rice-flour`, `oil-sugar`, `oil-flour`, `sugar-flour`
+- Missing: `oil-rice`, `sugar-rice`, `flour-rice`, `sugar-oil`, `flour-oil`, `flour-sugar`
+
+The SQL's UNION ALL pattern (24 blocks for 6 pairs × 4 lags) was already verbose, so the missing reverse pairs were likely seen as "the user can query `mart_commodity_correlation` directly." But the dashboard's correlation matrix expects **all 12 directed pairs** to exist — it fills missing entries with `r = 0` (line 1556), which is semantically misleading.
+
+### Solution
+
+Added 24 more UNION ALL blocks for the 6 reverse pairs (each with lags 0–3), bringing the total to **48 rows** (12 pairs × 4 lags). The reverse pairs follow the same pattern:
+
+```sql
+SELECT 'oil-rice', 0,
+    CORR(oil_price, rice_price),
+    CORR(CASE WHEN month < '2022-01-01' THEN oil_price END, ...),
+    CORR(CASE WHEN month >= '2022-01-01' THEN oil_price END, ...)
+FROM corr_base
+```
+
+Updated the model description in `_marts__models.yml` to reflect 48 rows and all 12 pairs.
+
+### Why Not Compute Both Directions in a Single Pass
+
+The symmetry of reverse-direction pairs with lagged correlation means `CORR(lagA, B)` ≠ `CORR(lagB, A)` — they are truly different computations. A generational CTE approach (pivot/unpivot with all (leader, follower, lag) combinations) would be more DRY but changes the model's DAG structure. The UNION ALL approach duplicates SQL but keeps the DAG simple and the model structure clear.
+
+### Files Affected
+
+- `transform/models/marts/mart_correlation_summary.sql` — added 24 reverse-direction UNION ALL blocks
+- `transform/models/marts/_marts__models.yml` — updated row count and pair description
+
+### Rule
+
+When a model outputs "directed pairs" (A→B at lag N), ensure all permutations are computed — not just alphabetically-first ordering. Don't rely on the consuming application to handle missing pairs gracefully. If the dashboard shows all 12 cells, the data model must produce all 12. An r=0 default for missing data is wrong — it tells the user "no correlation" when the data simply wasn't computed.
+
+---
+
+## 123. Dead Controls on Dashboard Page: Rendered Widgets Without Reactive Wiring
+
+### The Problem
+
+Page 4 (Commodity Signals) displayed `commodity_dd` and `year_slider` in its controls section (line 1955), but changing either widget had **zero effect** on any chart or table on the page. All Page 4 computations used unfiltered data — the controls were decorative.
+
+### Root Cause
+
+The controls were placed in the assembly cell via `mo.hstack([commodity_dd, ..., year_slider, ...])` but the data-load, leading-indicator, correlation-matrix, scatter-plot, stability-chart, and detail-table cells never listed these parameters. Marimo only re-executes cells that declare their dependencies as function parameters — a widget rendered in the assembly cell has no reactive reach unless explicitly wired.
+
+This is a repeat of the same pattern from LEARNINGS.md §116 (Page 2 reactive wiring audit), where `commodity_dd` had incomplete reactive reach across Page 2 sections.
+
+### Investigation
+
+| Cell | Declares `commodity_dd`? | Declares `year_slider`? | Effect when changed |
+|------|--------------------------|-------------------------|---------------------|
+| Leading indicator cards | ❌ | ❌ | No change |
+| Correlation matrix | ❌ | ❌ | No change |
+| Scatter plot | ❌ | ❌ | No change |
+| Stability chart | ❌ | ❌ | No change |
+| Detail table | ❌ | ❌ | No change |
+
+Every cell on Page 4 was reactive to `page4_lag_selector` (the page-specific control), but zero cells reacted to the global filters. This is the inverse of the Page 2 problem, where `commodity_dd` reached some cells but not all.
+
+### Solution
+
+Wired both global filters to all applicable Page 4 cells:
+
+| Control | Cells wired | Implementation |
+|---------|-------------|----------------|
+| `commodity_dd` | Leading indicator cards, Detail table | Filter by `leader == _comm OR follower == _comm` |
+| `year_slider` | Scatter plot, Stability chart | Filter by `dt.year.between(_yr_lo, _yr_hi)` |
+
+For the correlation matrix, commodity filtering is not applied (it shows all 12 pairs regardless) — the detail table below the matrix provides the filtered view.
+
+### Files Affected
+
+- `dashboard/app.py` — 4 cells updated with new function parameters + filter logic; assembly cell updated with descriptive tooltip
+
+### Rule
+
+When adding a widget to a dashboard page's control section, verify its reactive reach by checking every data-rendering cell on that page. Use a control × section dependency matrix (see LEARNINGS.md §116 table). A widget that doesn't reach any cell is dead weight — either wire it or remove it from the controls section. The user should never interact with a control and see no response.
+
+### Cross-Reference
+
+- LEARNINGS.md §116 — Same issue for Page 2: `commodity_dd` had incomplete reactive reach across 4 sections
+
+---
+
+## 124. websockets 16.0 Keepalive Ping `AssertionError` in marimo Interactive Server
+
+### The Problem
+
+Running `marimo edit dashboard/app.py` and then closing the browser tab triggered:
+
+```
+ERROR: keepalive ping failed
+...
+File "websockets/legacy/protocol.py", line 308, in _drain_helper
+    assert waiter is None or waiter.cancelled()
+AssertionError
+```
+
+This is a websocket connection teardown error — it doesn't affect dashboard functionality but produces a visible stack trace in the terminal.
+
+### Root Cause
+
+websockets 16.0 introduced a regression in the keepalive ping mechanism. When a WebSocket connection closes (browser tab closes), the ping waiter's state can transition to "completed" between the `assert waiter is None` check and the cancellation check, causing the `AssertionError`. This is a known issue in websockets 16.0 (reported upstream).
+
+### Solution
+
+Pinned websockets to 15.x:
+
+```bash
+uv pip install 'websockets<16'
+```
+
+websockets 15.0.1 uses a different keepalive mechanism that doesn't trigger the race condition.
+
+### Files Affected
+
+- `uv.lock` (auto-updated by `uv pip install`)
+
+### Rule
+
+When a transitive dependency (websockets is pulled in by marimo, not declared directly) causes runtime errors, pin it explicitly rather than waiting for the parent library to update. Run `uv pip list | grep <package>` to check if it's direct or transitive before deciding. websockets 16.x should be re-evaluated when marimo updates its compatibility.

@@ -167,3 +167,59 @@ EXPLAINERS_P2 = {
         "This is the most actionable column for procurement timing._"
     ),
 }
+
+EXPLAINERS_P4 = {
+    "leading_indicators": (
+        "**Reading the leading indicator cards**\n\n"
+        "These cards show the **strongest predictive relationships** at the selected lag. "
+        "A leading indicator is a commodity whose price movement tends to precede another's.\n\n"
+        "\u2014 **r = correlation coefficient**: ranges from 0 (no relationship) to 1 (perfect).\n"
+        "\u2014 **Stable post-2022**: the relationship held after the 2022 commodity shock.\n"
+        "\u2014 **Weakened post-2022**: the relationship may have broken down \u2014 "
+        "use with caution.\n\n"
+        "_Procurement use case: if Rice consistently leads Flour by 1 month, a Rice price "
+        "increase this month signals Flour procurement should be accelerated._"
+    ),
+    "correlation_matrix": (
+        "**Reading the correlation matrix**\n\n"
+        "Each cell shows the **Pearson correlation coefficient (r)** between two commodities "
+        "at the selected lag. The row commodity **leads** the column commodity.\n\n"
+        "\u2014 **Darker blue** = stronger positive relationship (prices move together)\n"
+        "\u2014 **Diagonal cells** (commodity with itself) are blank\n\n"
+        "_Click any cell to see the detailed scatter plot and stability chart for that pair. "
+        "Change the lag selector above the matrix to see relationships at different lead times._"
+    ),
+    "scatter_plot": (
+        "**Reading the scatter plot**\n\n"
+        "Each point is one month of paired price data. The **x-axis** is the leading "
+        "commodity's price; the **y-axis** is the following commodity's price (lagged).\n\n"
+        "\u2014 **Blue dots**: Pre-2022 data (more stable relationship period)\n"
+        "\u2014 **Red dots**: Post-2022 data (may show structural break)\n"
+        "\u2014 **Dashed gray line**: Overall trend (full period)\n\n"
+        "_If the red and blue dots cluster around the same trend line, the relationship "
+        "is stable. If they diverge, the 2022 shock changed the relationship._"
+    ),
+    "stability_chart": (
+        "**Reading the stability chart**\n\n"
+        "Shows the **rolling 3-year correlation coefficient** over time for the selected "
+        "commodity pair. This is the most analytically honest visual in the dashboard.\n\n"
+        "\u2014 **Line above r = 0.3**: meaningful relationship\n"
+        "\u2014 **Dashed gray line**: 2022 commodity shock\n"
+        "\u2014 **Declining trend**: relationship weakening \u2014 treat directional signals "
+        "with caution\n\n"
+        "_A stable flat line above 0.5 means the relationship is reliable for procurement "
+        "planning. A declining or volatile line means the relationship is breaking down._"
+    ),
+    "implication_card": (
+        "**How procurement implications are generated**\n\n"
+        "The implication card translates the statistical relationship into plain-language "
+        "procurement guidance for a Category Manager audience.\n\n"
+        "\u2014 **Green card** (info): stable relationship \u2014 can be used for planning\n"
+        "\u2014 **Amber card** (warn): relationship weakened post-2022 \u2014 directional "
+        "signal only\n\n"
+        "_No r-values or statistical jargon. The card describes what it means for "
+        "procurement timing, not how the statistic was computed._\n\n"
+        "_This recommendation is generated from the data. It does not account for supplier "
+        "contract terms or logistics constraints._"
+    ),
+}

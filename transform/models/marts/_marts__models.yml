@@ -179,14 +179,13 @@ models:
 
   - name: mart_correlation_summary
     description: >
-      Cross-correlation coefficients (Pearson's r) for all 6 commodity pairs
-      at lags 0-3 months. 24 rows total. Includes rank per commodity for
+      Cross-correlation coefficients (Pearson's r) for all 12 directed commodity
+      pairs at lags 0-3 months. 48 rows total. Includes rank per commodity for
       identifying which lag has the strongest signal. Also includes pre/post-2022
       split correlations to detect structural break impact (2022 cooking oil shock).
       Feeds Page 4 leading indicator analysis.
-      ⚠ Pairs are directional (e.g., 'rice-oil' means lag is applied to Rice,
-      not Oil). Reverse direction not computed — query mart_commodity_correlation
-      directly with LAG(oil_price, N) for Oil-leading-Rice analysis.
+      Pairs are directional (e.g., 'rice-oil' means lag is applied to Rice,
+      not Oil). All 6 reverse directions are computed.
     columns:
       - name: commodity_pair
         description: >

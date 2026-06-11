@@ -19,12 +19,23 @@ def _():
     import numpy as np
     import pandas as pd
     import plotly.graph_objects as go
-    from explainer_copy import EXPLAINERS, EXPLAINERS_P2, EXPLAINERS_P3
+    from explainer_copy import EXPLAINERS, EXPLAINERS_P2, EXPLAINERS_P3, EXPLAINERS_P4
 
     COMMODITIES = ["Rice", "Cooking Oil", "Sugar", "Flour"]
     UNIT_MAP = {"Rice": "/kg", "Cooking Oil": "/L", "Sugar": "/kg", "Flour": "/kg"}
 
-    return COMMODITIES, EXPLAINERS, EXPLAINERS_P2, EXPLAINERS_P3, go, mo, np, pd, UNIT_MAP
+    return (
+        COMMODITIES,
+        EXPLAINERS,
+        EXPLAINERS_P2,
+        EXPLAINERS_P3,
+        EXPLAINERS_P4,
+        go,
+        mo,
+        np,
+        pd,
+        UNIT_MAP,
+    )
 
 
 @app.cell
@@ -238,10 +249,7 @@ def _(COMMODITIES, UNIT_MAP, latest_prices_df, mo, pd, price_national_df):
 @app.cell
 def _(COMMODITIES, commodity_dd, filtered_df, forecast_df, go, mo, pd):
     fig = go.Figure()
-    if commodity_dd.value == "All":
-        commodities = COMMODITIES
-    else:
-        commodities = [commodity_dd.value]
+    commodities = COMMODITIES if commodity_dd.value == "All" else [commodity_dd.value]
 
     forecast_primary = forecast_df[
         (forecast_df["forecast_price"].notna()) & (forecast_df["scenario"].isna())
@@ -585,13 +593,11 @@ def _(action_windows_df, commodity_dd, driver_toggle, mo):
     if _comm != "All":
         _adf = _adf[_adf["commodity"] == _comm]
     if _driver == "All Drivers":
-        _relevant = _adf[_adf["spike_pct"].abs() > 3].sort_values(
+        _relevant = _adf[_adf["spike_pct"].abs() > 3].sort_values("spike_pct", ascending=False)
+    else:
+        _relevant = _adf[(_adf["driver"] == _driver) & (_adf["spike_pct"].abs() > 3)].sort_values(
             "spike_pct", ascending=False
         )
-    else:
-        _relevant = _adf[
-            (_adf["driver"] == _driver) & (_adf["spike_pct"].abs() > 3)
-        ].sort_values("spike_pct", ascending=False)
 
     _cards = []
     for _, _row in _relevant.iterrows():
@@ -1216,7 +1222,7 @@ def _(commodity_dd, geo_island_df, geo_island_dropdown, go, mo):
             mo.md(
                 f"**{commodity_dd.value}** has national-level data only \u2014 "
                 f"geographic comparison is available for **Cooking Oil** only. "
-                f"Select \"All\" or \"Cooking Oil\" to view island-level data."
+                f'Select "All" or "Cooking Oil" to view island-level data.'
             ),
             kind="warn",
         )
@@ -1239,7 +1245,7 @@ def _(commodity_dd, geo_island_dropdown, geo_province_df, mo):
         geo_province_table = mo.callout(
             mo.md(
                 f"**{commodity_dd.value}** has national-level data only. "
-                f"Select \"All\" or \"Cooking Oil\" for province-level geographic data."
+                f'Select "All" or "Cooking Oil" for province-level geographic data.'
             ),
             kind="warn",
         )
@@ -1249,9 +1255,7 @@ def _(commodity_dd, geo_island_dropdown, geo_province_df, mo):
             _pdf = _pdf[_pdf["island_group"] == _island_filter]
         _pdf = _pdf.sort_values("price_index_vs_java", ascending=False)
         _pdf["avg_price_idr"] = _pdf["avg_price_idr"].apply(lambda v: f"Rp {v:,.0f}")
-        _pdf["price_index_vs_java"] = _pdf["price_index_vs_java"].apply(
-            lambda v: f"{v:.2f}"
-        )
+        _pdf["price_index_vs_java"] = _pdf["price_index_vs_java"].apply(lambda v: f"{v:.2f}")
 
         _display = _pdf[
             ["admin1", "island_group", "avg_price_idr", "price_index_vs_java", "months_with_data"]
@@ -1315,10 +1319,7 @@ def _(
     _header = mo.vstack(
         [
             mo.md("# Geographic Disparity"),
-            mo.md(
-                "**Price comparison across island groups** \u00b7 "
-                "2024 Cooking Oil prices"
-            ),
+            mo.md("**Price comparison across island groups** \u00b7 2024 Cooking Oil prices"),
         ],
         gap="0.25rem",
     )
@@ -1326,9 +1327,7 @@ def _(
     _controls = mo.hstack(
         [
             mo.vstack([mo.md("_Filter by commodity:_"), commodity_dd], gap="0.25rem"),
-            mo.vstack(
-                [mo.md("_Select island group:_"), geo_island_dropdown], gap="0.25rem"
-            ),
+            mo.vstack([mo.md("_Select island group:_"), geo_island_dropdown], gap="0.25rem"),
         ],
         gap="2rem",
     )
@@ -1351,6 +1350,724 @@ def _(
 
 
 # ---------------------------------------------------------------------------
+# Page 4: Commodity Signals — data load
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(mo, pd):
+    from data_static import load_json as _load_json
+
+    # Load correlation summary (pre-computed r values for all pairs x lags)
+    _corr_raw = _load_json("correlation_summary.json")
+    _corr_df = pd.DataFrame(_corr_raw)
+    _corr_df[["leader", "follower"]] = _corr_df["commodity_pair"].str.split("-", n=1, expand=True)
+    _comm_map = {
+        "rice": "Rice",
+        "oil": "Cooking Oil",
+        "sugar": "Sugar",
+        "flour": "Flour",
+    }
+    _corr_df["leader"] = _corr_df["leader"].map(_comm_map)
+    _corr_df["follower"] = _corr_df["follower"].map(_comm_map)
+    _corr_df = _corr_df.dropna(subset=["leader", "follower"])
+
+    corr_all_pairs_df = _corr_df.rename(
+        columns={
+            "lag_months": "lag",
+            "pearson_r": "r",
+            "pearson_r_pre_2022": "pre_2022_r",
+            "pearson_r_post_2022": "post_2022_r",
+        }
+    ).copy()
+
+    corr_all_pairs_df["stable"] = corr_all_pairs_df.apply(
+        lambda r: bool(
+            pd.isna(r["post_2022_r"]) or abs(r["pre_2022_r"] - r["post_2022_r"]) <= 0.2
+        ),
+        axis=1,
+    )
+
+    # Matrix: leader, follower, lag, r
+    corr_matrix_df = corr_all_pairs_df[["leader", "follower", "lag", "r"]].copy()
+
+    # Rank-filtered: for each follower, pick the best leader-lag combo by r
+    _by_follower = (
+        corr_all_pairs_df.sort_values("r", ascending=False)
+        .groupby("follower")
+        .first()
+        .reset_index()
+    )
+    best_leader_per_follower_df = _by_follower[["follower", "leader", "lag", "r", "stable"]].copy()
+
+    # Load monthly price data for scatter + rolling correlation
+    _price_raw = _load_json("commodity_correlation.json")
+    _price_df = pd.DataFrame(_price_raw)
+    _price_df["month"] = pd.to_datetime(_price_df["month"])
+
+    _COMMODITIES_ORDER = ["Rice", "Cooking Oil", "Sugar", "Flour"]
+    _price_cols = {
+        "Rice": "rice_price",
+        "Cooking Oil": "oil_price",
+        "Sugar": "sugar_price",
+        "Flour": "flour_price",
+    }
+
+    # Scatter pairs: same-period prices for all 12 ordered pairs
+    _rows = []
+    for _leader in _COMMODITIES_ORDER:
+        for _follower in _COMMODITIES_ORDER:
+            if _leader == _follower:
+                continue
+            _lcol = _price_cols[_leader]
+            _fcol = _price_cols[_follower]
+            _sub = _price_df[["month", _lcol, _fcol]].copy()
+            _sub.columns = ["date", "leader_price", "follower_price"]
+            _sub["leader"] = _leader
+            _sub["follower"] = _follower
+            _sub["period"] = _sub["date"].apply(
+                lambda d: "pre_2022" if d < pd.Timestamp("2022-01-01") else "post_2022"
+            )
+            _rows.append(_sub)
+    corr_pairs_scatter_df = pd.concat(_rows, ignore_index=True)
+
+    # Rolling 3-year (36-month) correlation for each ordered pair
+    _roll_rows = []
+    for _leader in _COMMODITIES_ORDER:
+        for _follower in _COMMODITIES_ORDER:
+            if _leader == _follower:
+                continue
+            _lcol = _price_cols[_leader]
+            _fcol = _price_cols[_follower]
+            _s = _price_df[["month", _lcol, _fcol]].sort_values("month").copy()
+            _s.columns = ["date", "leader_price", "follower_price"]
+            _s["rolling_r_3yr"] = _s["leader_price"].rolling(36).corr(_s["follower_price"])
+            _s = _s.dropna(subset=["rolling_r_3yr"])
+            _s["leader"] = _leader
+            _s["follower"] = _follower
+            _roll_rows.append(_s[["date", "leader", "follower", "rolling_r_3yr"]])
+    corr_rolling_r_df = pd.concat(_roll_rows, ignore_index=True)
+
+    mo.stop(
+        corr_all_pairs_df.empty,
+        mo.md("_No correlation data available._"),
+    )
+
+    return (
+        corr_all_pairs_df,
+        corr_matrix_df,
+        corr_pairs_scatter_df,
+        corr_rolling_r_df,
+        best_leader_per_follower_df,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Lag selector
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(mo):
+    page4_lag_selector = mo.ui.radio(
+        options={"0 months": 0, "1 month": 1, "2 months": 2, "3 months": 3},
+        value="1 month",
+        label="Lag",
+    )
+    return (page4_lag_selector,)
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Selected pair state (cross-filter sink)
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(corr_all_pairs_df, mo):
+    _default = corr_all_pairs_df[corr_all_pairs_df["lag"] == 1].sort_values("r", ascending=False)
+    _d_leader = _default.iloc[0]["leader"] if not _default.empty else "Rice"
+    _d_follower = _default.iloc[0]["follower"] if not _default.empty else "Flour"
+
+    selected_pair, set_selected_pair = mo.state((_d_leader, _d_follower))
+    return selected_pair, set_selected_pair
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Leading indicator callout cards
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(best_leader_per_follower_df, commodity_dd, mo, page4_lag_selector):
+    _comm = commodity_dd.value
+    _lag = page4_lag_selector.value
+
+    # Filter by commodity if not "All"
+    _candidates = best_leader_per_follower_df
+    if _comm != "All":
+        _candidates = _candidates[
+            (_candidates["leader"] == _comm) | (_candidates["follower"] == _comm)
+        ]
+
+    if _candidates.empty:
+        page4_leading_cards = mo.callout(
+            mo.md(
+                "No strong leading relationship at this lag \u2014 "
+                "try a different lag. (Threshold: r \u2265 0.3)"
+            ),
+            kind="warn",
+        )
+    else:
+        _cards = []
+        for _, _row in _candidates.iterrows():
+            _flag = "\u2705 Stable post-2022" if _row["stable"] else "\u26a0 Weakened post-2022"
+            _r = _row["r"]
+            _lag_str = f"{int(_row['lag'])} month(s)" if _row["lag"] != 0 else "same-month"
+            _cards.append(
+                mo.stat(
+                    value=f"r = {_r:.2f}",
+                    label=f"{_row['leader']} \u2192 {_row['follower']}",
+                    caption=f"Leads by {_lag_str} \u00b7 {_flag}",
+                    bordered=True,
+                )
+            )
+        _rows = [
+            mo.hstack(_cards[i : i + 2], gap="1rem", widths="equal")
+            for i in range(0, len(_cards), 2)
+        ]
+        page4_leading_cards = mo.vstack(
+            [
+                mo.md("## Leading Indicators"),
+                *_rows,
+            ],
+            gap="0.5rem",
+        )
+    return (page4_leading_cards,)
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Correlation matrix heatmap
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(corr_matrix_df, go, mo, page4_lag_selector):
+    _lag = page4_lag_selector.value
+    _at_lag = corr_matrix_df[corr_matrix_df["lag"] == _lag]
+
+    _commodities = ["Rice", "Cooking Oil", "Sugar", "Flour"]
+    _z = []
+    _text = []
+    for _leader in _commodities:
+        _row_z, _row_text = [], []
+        for _follower in _commodities:
+            if _leader == _follower:
+                _row_z.append(None)
+                _row_text.append("\u2014")
+            else:
+                _val = _at_lag[(_at_lag["leader"] == _leader) & (_at_lag["follower"] == _follower)][
+                    "r"
+                ].values
+                _r = _val[0] if len(_val) else 0
+                _row_z.append(_r)
+                _row_text.append(f"{_r:.2f}")
+        _z.append(_row_z)
+        _text.append(_row_text)
+
+    _fig = go.Figure(
+        go.Heatmap(
+            z=_z,
+            x=_commodities,
+            y=_commodities,
+            text=_text,
+            texttemplate="%{text}",
+            colorscale="Blues",
+            zmin=0,
+            zmax=1,
+            hovertemplate=(
+                "<b>%{y} \u2192 %{x}</b><br>"
+                f"r = %{{z:.2f}} at lag {_lag} month(s)<extra></extra>"
+            ),
+            colorbar=dict(title="r"),
+        )
+    )
+    _fig.update_layout(
+        height=240,
+        title=f"Cross-Commodity Correlation Matrix \u2014 {_lag}-Month Lag",
+        annotations=[
+            dict(
+                text="Row commodity <b>leads</b> column commodity at selected lag",
+                xref="paper",
+                yref="paper",
+                x=0,
+                y=1.12,
+                showarrow=False,
+                font=dict(size=11, color="gray"),
+            )
+        ],
+    )
+    page4_matrix_chart = mo.ui.plotly(_fig)
+    return (page4_matrix_chart,)
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Matrix click handler (cross-filter)
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(page4_matrix_chart, set_selected_pair):
+    if page4_matrix_chart.value and page4_matrix_chart.value.get("points"):
+        _pt = page4_matrix_chart.value["points"][0]
+        _leader = _pt.get("y")
+        _follower = _pt.get("x")
+        if _leader and _follower and _leader != _follower:
+            set_selected_pair((_leader, _follower))
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Pair selector dropdowns
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(mo, selected_pair):
+    page4_leader_dd = mo.ui.dropdown(
+        options=["Rice", "Cooking Oil", "Sugar", "Flour"],
+        value=selected_pair()[0],
+        label="Leading commodity",
+    )
+    page4_follower_dd = mo.ui.dropdown(
+        options=["Rice", "Cooking Oil", "Sugar", "Flour"],
+        value=selected_pair()[1],
+        label="Following commodity",
+    )
+    mo.hstack([page4_leader_dd, mo.md("\u2192"), page4_follower_dd], gap="0.5rem")
+    return page4_leader_dd, page4_follower_dd
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Pair dropdown sync to state
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(page4_follower_dd, page4_leader_dd, set_selected_pair):
+    if page4_leader_dd.value != page4_follower_dd.value:
+        set_selected_pair((page4_leader_dd.value, page4_follower_dd.value))
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Scatter plot (pre/post 2022)
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(
+    corr_pairs_scatter_df, data_max_year, data_min_year,
+    go, mo, np, selected_pair, show_all_years, year_slider,
+):
+    _yr_lo = data_min_year if show_all_years.value else year_slider.value[0]
+    _yr_hi = data_max_year if show_all_years.value else year_slider.value[1]
+
+    _leader, _follower = selected_pair()
+    _pair_data = corr_pairs_scatter_df[
+        (corr_pairs_scatter_df["leader"] == _leader)
+        & (corr_pairs_scatter_df["follower"] == _follower)
+    ]
+
+    if _pair_data.empty:
+        page4_scatter_chart = mo.callout(
+            mo.md("No price data available for this pair."), kind="warn"
+        )
+    else:
+        _pair_data = _pair_data[
+            _pair_data["date"].dt.year.between(_yr_lo, _yr_hi)
+        ]
+        _pre = _pair_data[_pair_data["period"] == "pre_2022"]
+        _post = _pair_data[_pair_data["period"] == "post_2022"]
+
+        _fig = go.Figure()
+        _fig.add_trace(
+            go.Scatter(
+                x=_pre["leader_price"],
+                y=_pre["follower_price"],
+                mode="markers",
+                name="Pre-2022",
+                marker=dict(color="steelblue", size=6, opacity=0.6),
+                hovertemplate=(
+                    f"{_leader}: %{{x:,.0f}}<br>{_follower}: %{{y:,.0f}}<extra>Pre-2022</extra>"
+                ),
+            )
+        )
+        _fig.add_trace(
+            go.Scatter(
+                x=_post["leader_price"],
+                y=_post["follower_price"],
+                mode="markers",
+                name="Post-2022",
+                marker=dict(color="tomato", size=6, opacity=0.7),
+                hovertemplate=(
+                    f"{_leader}: %{{x:,.0f}}<br>{_follower}: %{{y:,.0f}}<extra>Post-2022</extra>"
+                ),
+            )
+        )
+
+        _all_x = _pair_data["leader_price"].values
+        _all_y = _pair_data["follower_price"].values
+        if len(_all_x) > 1:
+            _m, _b = np.polyfit(_all_x, _all_y, 1)
+            _x_range = np.linspace(_all_x.min(), _all_x.max(), 50)
+            _fig.add_trace(
+                go.Scatter(
+                    x=_x_range,
+                    y=_m * _x_range + _b,
+                    mode="lines",
+                    name="Trend (full period)",
+                    line=dict(color="gray", dash="dash", width=1),
+                )
+            )
+
+        _fig.update_layout(
+            height=260,
+            xaxis_title=f"{_leader} Price (IDR)",
+            yaxis_title=f"{_follower} Price (IDR)",
+            title=f"Price Co-Movement: {_leader} \u2192 {_follower}",
+            legend=dict(orientation="h", y=-0.25),
+            template="plotly_white",
+            margin=dict(l=60, r=20, t=40, b=80),
+        )
+        page4_scatter_chart = mo.ui.plotly(_fig)
+
+    return (page4_scatter_chart,)
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Rolling correlation stability chart
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(
+    corr_rolling_r_df, data_max_year, data_min_year,
+    go, mo, pd, selected_pair, show_all_years, year_slider,
+):
+    _yr_lo = data_min_year if show_all_years.value else year_slider.value[0]
+    _yr_hi = data_max_year if show_all_years.value else year_slider.value[1]
+
+    _leader, _follower = selected_pair()
+    _roll = corr_rolling_r_df[
+        (corr_rolling_r_df["leader"] == _leader) & (corr_rolling_r_df["follower"] == _follower)
+    ].sort_values("date")
+    _roll = _roll[_roll["date"].dt.year.between(_yr_lo, _yr_hi)]
+
+    if _roll.empty:
+        page4_stability_chart = mo.callout(
+            mo.md("Insufficient data for rolling correlation."), kind="info"
+        )
+    else:
+        _has_post_2022 = _roll["date"].max() >= pd.Timestamp("2022-01-01")
+
+        _fig = go.Figure()
+        _fig.add_trace(
+            go.Scatter(
+                x=_roll["date"],
+                y=_roll["rolling_r_3yr"],
+                mode="lines",
+                name="Rolling r (3-yr window)",
+                line=dict(color="steelblue", width=2),
+                hovertemplate="%{x|%Y}<br>r = %{y:.2f}<extra></extra>",
+            )
+        )
+        _fig.add_hline(
+            y=0.3,
+            line_dash="dot",
+            line_color="red",
+            annotation_text="r = 0.3 floor",
+        )
+        if _has_post_2022:
+            _fig.add_vline(
+                x="2022-01-01",
+                line_dash="dash",
+                line_color="gray",
+                annotation_text="2022 shock",
+                annotation_position="top left",
+            )
+        _fig.update_layout(
+            height=220,
+            yaxis_title="Correlation (r)",
+            yaxis_range=[-0.1, 1.05],
+            title=f"Rolling Correlation Stability \u2014 {_leader} \u2192 {_follower}",
+            template="plotly_white",
+            margin=dict(l=60, r=20, t=40, b=40),
+        )
+        page4_stability_chart = mo.ui.plotly(_fig)
+
+    return (page4_stability_chart,)
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Scatter + stability side by side
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(mo, page4_scatter_chart, page4_stability_chart):
+    page4_scatter_stability_row = mo.hstack(
+        [page4_scatter_chart, page4_stability_chart], widths=[0.45, 0.55]
+    )
+    return (page4_scatter_stability_row,)
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Procurement implication card
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(corr_all_pairs_df, mo, pd, page4_lag_selector, selected_pair):
+    _leader, _follower = selected_pair()
+    _lag = page4_lag_selector.value
+
+    _row = corr_all_pairs_df[
+        (corr_all_pairs_df["leader"] == _leader)
+        & (corr_all_pairs_df["follower"] == _follower)
+        & (corr_all_pairs_df["lag"] == _lag)
+    ]
+
+    if _row.empty:
+        page4_implication_card = mo.md(
+            "_Select a commodity pair from the matrix to see procurement implications._"
+        )
+    else:
+        _r_val = _row.iloc[0]["r"]
+        _pre_r = _row.iloc[0]["pre_2022_r"]
+        _post_r = _row.iloc[0]["post_2022_r"]
+        _is_stable = _row.iloc[0]["stable"]
+        _lag_str = "the same month" if _lag == 0 else f"{int(_lag)} month{'s' if _lag != 1 else ''}"
+
+        _body = (
+            f"When **{_leader}** prices rise, **{_follower}** prices have "
+            f"historically followed within {_lag_str} \u2014 "
+            f"this pattern occurred in a significant majority of observed periods."
+        )
+
+        if not _is_stable and pd.notna(_post_r):
+            _body += (
+                f"\n\n\u26a0 **Relationship weakened post-2022** \u2014 "
+                f"treat as a directional signal, not deterministic. "
+                f"Pre-2022 r = {_pre_r:.2f}, Post-2022 r = {_post_r:.2f}."
+            )
+
+        _body += (
+            "\n\n_This recommendation is generated from the data. "
+            "It does not account for supplier contract terms or "
+            "logistics constraints._"
+        )
+
+        _kind = "warn" if (not _is_stable and pd.notna(_post_r)) else "info"
+
+        page4_implication_card = mo.callout(
+            mo.vstack(
+                [
+                    mo.md(f"## Procurement Implication \u2014 {_leader} \u2192 {_follower}"),
+                    mo.md(_body),
+                ],
+                gap="0.5rem",
+            ),
+            kind=_kind,
+        )
+
+    return (page4_implication_card,)
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Full correlation detail table
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(commodity_dd, corr_all_pairs_df, mo, pd, page4_lag_selector, set_selected_pair):
+    _lag = page4_lag_selector.value
+    _table_data = (
+        corr_all_pairs_df[corr_all_pairs_df["lag"] == _lag].sort_values("r", ascending=False).copy()
+    )
+    _comm = commodity_dd.value
+    if _comm != "All":
+        _table_data = _table_data[
+            (_table_data["leader"] == _comm) | (_table_data["follower"] == _comm)
+        ]
+
+    _table_data["stability"] = _table_data.apply(
+        lambda r: (
+            "\u26a0"
+            if (pd.notna(r["post_2022_r"]) and abs(r["pre_2022_r"] - r["post_2022_r"]) > 0.2)
+            else "\u2705"
+        ),
+        axis=1,
+    )
+
+    _display = _table_data[
+        ["leader", "follower", "r", "pre_2022_r", "post_2022_r", "stability"]
+    ].copy()
+    _display.columns = [
+        "Leader",
+        "Follower",
+        "r",
+        "Pre-2022 r",
+        "Post-2022 r",
+        "Stability",
+    ]
+
+    page4_detail_table = mo.vstack(
+        [
+            mo.md("## All Pairwise Correlations"),
+            mo.ui.table(
+                _display,
+                page_size=10,
+                selection="single",
+                on_change=lambda rows: (
+                    set_selected_pair((rows[0]["Leader"], rows[0]["Follower"])) if rows else None
+                ),
+            ),
+            mo.callout(
+                mo.md(
+                    "_**Pre/Post 2022 r:** Large divergence (\u26a0) signals a "
+                    "relationship that may have been broken by the 2022 commodity "
+                    "shock. Use with caution._"
+                ),
+                kind="neutral",
+            ),
+        ],
+        gap="0.5rem",
+    )
+    return (page4_detail_table,)
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Data scope callout
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(mo):
+    page4_data_notice = mo.callout(
+        mo.md(
+            "**Data scope:** Cross-commodity correlation uses national-level monthly "
+            "average prices. Rice, Sugar, and Oil data extends through **May 2024**; "
+            "Flour data ends **March 2020** (WFP data gap). Pairs involving Flour "
+            "have no post-2020 observations, so pre/post-2022 stability comparison "
+            "is only meaningful for Rice\u2013Sugar\u2013Oil pairs.\n\n"
+            "Correlation measures historical price co-movement and does not imply "
+            "causation. Use the stability chart to assess whether relationships "
+            "have held over time."
+        ),
+        kind="info",
+    )
+    return (page4_data_notice,)
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Explainer accordion
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(EXPLAINERS_P4, mo):
+    page4_explainer = mo.accordion(
+        {
+            "Leading Indicators \u2014 how to read": EXPLAINERS_P4["leading_indicators"],
+            "Correlation Matrix \u2014 how to read": EXPLAINERS_P4["correlation_matrix"],
+            "Scatter Plot \u2014 how to read": EXPLAINERS_P4["scatter_plot"],
+            "Stability Chart \u2014 how to read": EXPLAINERS_P4["stability_chart"],
+            "Implication Card \u2014 how to read": EXPLAINERS_P4["implication_card"],
+        },
+        multiple=True,
+    )
+    return (page4_explainer,)
+
+
+# ---------------------------------------------------------------------------
+# Page 4: Assembly
+# ---------------------------------------------------------------------------
+
+
+@app.cell
+def _(
+    commodity_dd,
+    mo,
+    page4_data_notice,
+    page4_detail_table,
+    page4_explainer,
+    page4_implication_card,
+    page4_lag_selector,
+    page4_leading_cards,
+    page4_matrix_chart,
+    page4_scatter_stability_row,
+    selected_pair,
+    year_slider,
+):
+    _header = mo.vstack(
+        [
+            mo.md("# Commodity Signals"),
+            mo.md("_Leading Indicators & Input Cost Bundling \u00b7 2007\u20132024_"),
+        ],
+        gap="0.25rem",
+    )
+
+    _controls = mo.hstack(
+        [
+            mo.vstack([mo.md("_Commodity:_"), commodity_dd], gap="0.25rem"),
+            mo.vstack([mo.md("_Year range:_"), year_slider], gap="0.25rem"),
+            mo.vstack([mo.md("_Lag:_"), page4_lag_selector], gap="0.25rem"),
+        ],
+        gap="1rem",
+    )
+
+    _scope_notice = mo.callout(
+        mo.md(
+            "**Island Group filter disabled on this page.** "
+            "All correlation analysis is conducted at national level \u2014 "
+            "cross-commodity correlation requires all series at the same granularity. "
+            "The **Commodity** filter highlights pairs related to the selected commodity "
+            "in the leading indicator cards and detail table. "
+            "The **Year Range** filter affects the scatter and rolling correlation charts below."
+        ),
+        kind="info",
+    )
+
+    _matrix_section = mo.vstack(
+        [
+            mo.md("## Correlation Matrix"),
+            page4_matrix_chart,
+            mo.md("_Click any cell to update the scatter plot and implication card below._"),
+        ],
+        gap="0.5rem",
+    )
+
+    _pair_label = mo.md(f"**Selected pair:** {selected_pair()[0]} \u2192 {selected_pair()[1]}")
+
+    page4_content = mo.vstack(
+        [
+            _header,
+            _controls,
+            _scope_notice,
+            page4_data_notice,
+            page4_leading_cards,
+            _matrix_section,
+            mo.md("## Detailed Pair Analysis"),
+            _pair_label,
+            page4_scatter_stability_row,
+            page4_implication_card,
+            page4_detail_table,
+            page4_explainer,
+        ],
+        gap="1.5rem",
+    )
+    return (page4_content,)
+
+
+# ---------------------------------------------------------------------------
 # Final assembly: tabs
 # ---------------------------------------------------------------------------
 
@@ -1365,6 +2082,7 @@ def _(
     max_month,
     mo,
     page2_content,
+    page4_content,
     show_all_years,
     trend_chart_output,
     year_slider,
@@ -1411,6 +2129,7 @@ def _(
             "Price Trends": page1_content,
             "Seasonal Patterns": page2_content,
             "Geographic": geo_page_content,
+            "Commodity Signals": page4_content,
         }
     )
 

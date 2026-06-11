@@ -4,9 +4,10 @@ WITH national_prices AS (
     commodity_consolidated,
     AVG(price_idr) AS national_avg_price
   FROM {{ ref('int_prices_normalised') }}
-  WHERE filter_out = FALSE
-    AND price_flag = 'actual'
-    AND commodity_consolidated IS NOT NULL
+  WHERE commodity_consolidated IS NOT NULL
+    AND price_idr > 0
+    AND unit IS NOT NULL
+    AND EXTRACT(YEAR FROM date) BETWEEN 2007 AND 2024
   GROUP BY DATE_TRUNC('month', date), commodity_consolidated
 ),
 
