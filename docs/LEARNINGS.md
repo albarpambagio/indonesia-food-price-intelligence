@@ -106,6 +106,7 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 128 | [DRY Reactive Cell for Shared Derived State](#128-dry-reactive-cell-for-shared-derived-state) |
 | 129 | [Module Extraction for Testable Marimo Computations](#129-module-extraction-for-testable-marimo-computations) |
 | 130 | [Filter Scope Labels: Place Controls Near Charts They Affect](#130-filter-scope-labels-place-controls-near-the-charts-they-directly-affect) |
+| 131 | [Marimo App View: `return` Produces No Rendering — Assign Variable and Reference](#131-marimo-app-view-return-produces-no-rendering--assign-variable-and-reference) |
 
 ## 117. Import Aliases for Cell-Private Module Imports
 
@@ -3604,3 +3605,69 @@ uvx marimo check dashboard/app.py          # ✅ no structural issues
 When a dashboard page has multiple sections with different filter dependencies, do not group all controls at the page top. Place each control near the section(s) it directly affects. Label every control with its scope in italic markdown. For static sections that don't respond to any filter, add a `mo.callout(kind="info")` explaining they show latest data. Use section headings (`mo.md("##")`) to create clear visual separation.
 
 The "controls at the top" pattern only works when every section responds to every control — otherwise it creates misleading affordances that violate the Principle of Least Astonishment.
+
+---
+
+## 131. Marimo App View: `return` Produces No Rendering — Assign Variable and Reference
+
+### The Problem
+
+After completing all 4 pages of the Marimo-native dashboard, running `marimo run dashboard/app.py` produced a blank page — no tabs, no charts, no content. The same notebook rendered correctly in `marimo edit` mode.
+
+The final assembly cell ended with:
+
+```python
+return mo.ui.tabs({
+    "Forecast & Signals": page1_content,
+    "Seasonal Planning": page2_content,
+    "Regional Pricing": geo_page_content,
+    "Leading Indicators": page4_content,
+})
+```
+
+### Root Cause
+
+In Marimo's **run/app view**, a cell's visual output comes from the **last expression** in the cell body. A `return` statement is a **statement**, not an expression — it controls which variables are exported to the reactive DAG but produces no visible rendered output.
+
+This differs from `marimo edit` mode, where cell outputs are shown based on execution results. The `return` statement passes the value to downstream cells but nothing tells Marimo to render it as the cell's output in app view.
+
+### Solution
+
+Replace `return mo.ui.tabs({...})` with variable assignment + trailing reference:
+
+```python
+_dashboard_tabs = mo.ui.tabs({
+    "Forecast & Signals": page1_content,
+    "Seasonal Planning": page2_content,
+    "Regional Pricing": geo_page_content,
+    "Leading Indicators": page4_content,
+})
+_dashboard_tabs
+```
+
+The variable reference `_dashboard_tabs` on the final line is the last expression, so Marimo renders it in app view. The `_` prefix makes it cell-private (no risk of cross-cell variable conflicts).
+
+### Key Insight
+
+Every Marimo cell has two outputs:
+1. **DAG exports** — variables made available to downstream cells (controlled by `return (x, y, z)`)
+2. **Visual output** — what renders in the UI (controlled by the **last expression** in the cell body)
+
+A cell that both exports variables and renders UI must use `return` for exports and a trailing expression for rendering. They are separate concerns.
+
+### Files Affected
+
+- `dashboard/app.py` — final cell: `return mo.ui.tabs(...)` → `_dashboard_tabs = mo.ui.tabs(...)` + `_dashboard_tabs`
+
+### Cross-Reference
+
+- LEARNINGS.md §126 — Floating expression in Marimo cell creates standalone document output (related: trailing expressions control visual rendering)
+
+### Rule
+
+In any Marimo cell that produces UI output visible in `marimo run` mode:
+- Use `return (var1, var2)` only for DAG exports to downstream cells
+- Add a trailing variable reference as the **final line** for the visual output
+- Never use `return <renderable>` as the last line — the renderable will be exported to the DAG but not rendered visually
+
+Apply this to `mo.ui.tabs()`, `mo.vstack()`, `mo.ui.table()`, `mo.ui.plotly()` — anything that should appear in app view.

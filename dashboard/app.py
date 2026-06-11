@@ -2291,7 +2291,7 @@ def _(
         gap="1.5rem",
     )
 
-    return mo.ui.tabs(
+    _dashboard_tabs = mo.ui.tabs(
         {
             "Forecast & Signals": page1_content,
             "Seasonal Planning": page2_content,
@@ -2299,6 +2299,7 @@ def _(
             "Leading Indicators": page4_content,
         }
     )
+    _dashboard_tabs
 
 
 if __name__ == "__main__":

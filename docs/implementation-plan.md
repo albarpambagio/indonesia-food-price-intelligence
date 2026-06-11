@@ -8,7 +8,7 @@
 | **Data First Accessed** | 2026-05-22 |
 | **Data Source** | WFP Food Prices Indonesia (HDX, CC BY-IGO 3.0) |
 | **Target Completion** | ~16–20 working days |
-| **Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅, Phase 5g ✅. **Phase 6 ✅** — All 4 pages complete (Price Trends, Seasonal Patterns, Geographic Disparity, Commodity Signals). Post-completion fixes: mo.state() feedback loop (§125), pair selector leak (§126). |
+| **Status** | Phase 0–5 ✅, Phase 5f ✅, Phase 3f ✅, Phase 5g ✅. **Phase 6 ✅** — All 4 pages complete (Price Trends, Seasonal Patterns, Geographic Disparity, Commodity Signals). Post-completion fixes: mo.state() feedback loop (§125), pair selector leak (§126), blank-page app view fix (§131). |
 | **Stack** | Python → DuckDB → dbt → statsforecast → Marimo → Static JSON → **Marimo (native UI, mo.ui + mo.state)** → **Hugging Face Spaces (WASM)** |
 
 ### Parallelization Opportunities
@@ -753,6 +753,7 @@ pinned: false
 - [x] **Phase 6 `marimo check`**: ✅ PASS — `dashboard/app.py` valid Marimo notebook (PEP 723 header warning only)
 - [x] **Phase 6 `ruff check dashboard/`**: ✅ Clean — E501 only, 0 F821/B018/E702
 - [x] **Phase 6 script mode**: ✅ PASS — `uv run python dashboard/app.py` exits cleanly
+- [x] **Blank page app view fix**: Final cell `return mo.ui.tabs()` → `_dashboard_tabs` + trailing reference (LEARNINGS §131)
 - [ ] **Phase 6 WASM export**: Pending — needs `marimo export html-wasm` test after Pages 2-4 complete
 - [ ] **Phase 6 WASM deploy**: `dist/` folder served via HF Spaces (static HTML, no Docker) — pending Pages 2-4 + HF Spaces WASM config
 - [ ] **DEFERRED**: HF Spaces live URL + dbt lineage screenshot + dashboard screenshots — pending Pages 2-4 completion
