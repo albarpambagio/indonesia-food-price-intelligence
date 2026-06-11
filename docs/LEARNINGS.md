@@ -102,6 +102,9 @@ This document captures key technical learnings, bugs encountered, and solutions 
 | 124 | [websockets 16.0 Keepalive Ping `AssertionError` in marimo Interactive Server](#124-websockets-160-keepalive-ping-assertionerror-in-marimo-interactive-server) |
 | 125 | [`mo.state()` Feedback Loop: Deduplicate State Setter Calls](#125-mostate-feedback-loop-deduplicate-state-setter-calls) |
 | 126 | [Floating Expression in Marimo Cell Creates Standalone Document Output](#126-floating-expression-in-marimo-cell-creates-standalone-document-output) |
+| 127 | [f-string + Parenthesized Conditional Causes Runtime TypeError](#127-f-string--parenthesized-conditional-causes-runtime-typeerror) |
+| 128 | [DRY Reactive Cell for Shared Derived State](#128-dry-reactive-cell-for-shared-derived-state) |
+| 129 | [Module Extraction for Testable Marimo Computations](#129-module-extraction-for-testable-marimo-computations) |
 
 ## 117. Import Aliases for Cell-Private Module Imports
 
@@ -3421,3 +3424,97 @@ page4_content = mo.vstack([
 ### Rule
 
 When a cell creates widgets AND has a `return` statement, any floating expression (not assigned to a variable, not part of `return`) becomes a display output rendered in the main document flow — outside tab containers. To render widgets inside a specific tab, suppress the display output in the creation cell and embed the rendering inside the target page's assembly cell.
+
+---
+
+## 127. f-string + Parenthesized Conditional Causes Runtime TypeError
+
+### The Problem
+
+Dashboard crashed at runtime with `TypeError: 'str' object is not callable`. No linter or type checker caught it.
+
+### Root Cause
+
+```python
+mo.md(f"Confidence: ... ({_reliability})"("higher than usual") if ... else "lower")
+```
+
+Python parsed the f-string result (a `str`) followed by `(...)` as a **function call** on the string. The parenthesized conditional after the f-string was ambiguous — Python interpreted the parentheses as a call operator applied to the string produced by the f-string.
+
+Ruff had formatted the code into this broken state; neither ruff nor ty detected the ambiguity.
+
+### Solution
+
+Extract the conditional into a named variable before the f-string:
+
+```python
+_reliability = "higher than usual" if condition else "lower"
+mo.md(f"Confidence: ... ({_reliability})")
+```
+
+### Rule
+
+Never place a parenthesized conditional expression immediately after an f-string. Python interprets `f"..."(...)` as a method call on the string. Always extract the ternary into a named variable first.
+
+---
+
+## 128. DRY Reactive Cell for Shared Derived State
+
+### The Problem
+
+The year-range guard (`yr_lo`, `yr_hi`) was computed identically in 4 separate cells (`filtered_df`, `yoy_table`, `scatter`, `stability`):
+
+```python
+# Repeated in 4 cells
+yr_lo, yr_hi = int(yr_slider.value[0]), int(yr_slider.value[1])
+```
+
+This created duplication, violated DRY, and risked inconsistency if one cell's computation diverged.
+
+### Solution
+
+Extract the derived state into its own reactive cell:
+
+```python
+@app.cell
+def _(yr_slider):
+    yr_lo, yr_hi = int(yr_slider.value[0]), int(yr_slider.value[1])
+    return yr_lo, yr_hi
+```
+
+All 4 downstream cells now receive `yr_lo, yr_hi` via DAG parameters from this single source. If the computation changes, only one cell needs updating.
+
+### Rule
+
+When the same derived state (a computation on a raw widget value, not the raw value itself) is needed in 3+ cells, extract it into its own reactive cell. Marimo's DAG provides single-source-of-truth with zero overhead — the computation runs exactly once per reactivity cycle.
+
+---
+
+## 129. Module Extraction for Testable Marimo Computations
+
+### The Problem
+
+The `_compute_seasonal_data` function was a 150-line inline closure inside a Marimo cell — untestable, bloated the cell, and mixed computation with rendering orchestration.
+
+### Solution
+
+Extract the function to `dashboard/computations/seasonal.py`:
+
+```python
+# computations/seasonal.py — pure computation, testable
+def compute_seasonal_data(...):
+    ...
+    return result
+
+# app.py cell — imports and orchestrates
+from computations.seasonal import compute_seasonal_data
+```
+
+Benefits:
+- Unit-testable with standard pytest
+- Cell remains focused on orchestration and rendering
+- Computation logic is reusable across cells or notebooks
+
+### Rule
+
+Any non-trivial computation (50+ lines) inside a Marimo cell should be extracted to a `computations/` subpackage. Cells handle orchestration and rendering; modules handle business logic. The dividing line is testability — if the computation is worth testing independently, extract it.

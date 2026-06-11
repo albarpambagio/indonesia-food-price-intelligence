@@ -23,9 +23,20 @@ def _():
 
     COMMODITIES = ["Rice", "Cooking Oil", "Sugar", "Flour"]
     UNIT_MAP = {"Rice": "/kg", "Cooking Oil": "/L", "Sugar": "/kg", "Flour": "/kg"}
+    BUY_SIGNAL_LOWER = 0.98
+    BUY_SIGNAL_UPPER = 1.02
+    COMMODITY_COLORS = {
+        "Rice": "#1f77b4",
+        "Cooking Oil": "#ff7f0e",
+        "Sugar": "#2ca02c",
+        "Flour": "#d62728",
+    }
 
     return (
+        BUY_SIGNAL_LOWER,
+        BUY_SIGNAL_UPPER,
         COMMODITIES,
+        COMMODITY_COLORS,
         EXPLAINERS,
         EXPLAINERS_P2,
         EXPLAINERS_P3,
@@ -52,7 +63,16 @@ def _(pd):
     islamic_cal_df = load_csv("islamic_calendar.csv")
     islamic_cal_df["eid_date"] = pd.to_datetime(islamic_cal_df["eid_date"])
 
-    return forecast_df, islamic_cal_df, price_national_df
+    max_month = price_national_df["month"].max()
+    return (
+        forecast_df,
+        islamic_cal_df,
+        load_csv,
+        load_json,
+        load_json_envelope,
+        max_month,
+        price_national_df,
+    )
 
 
 @app.cell
@@ -83,22 +103,25 @@ def _(mo, data_min_year, data_max_year):
 
 
 @app.cell
+def _(data_min_year, data_max_year, show_all_years, year_slider):
+    if show_all_years.value:
+        yr_lo, yr_hi = data_min_year, data_max_year
+    else:
+        yr_lo, yr_hi = year_slider.value
+    return yr_lo, yr_hi
+
+
+@app.cell
 def _(
     commodity_dd,
     mo,
     price_national_df,
-    show_all_years,
-    year_slider,
-    data_min_year,
-    data_max_year,
+    yr_lo,
+    yr_hi,
 ):
-    if show_all_years.value:
-        _yr_lo, _yr_hi = data_min_year, data_max_year
-    else:
-        _yr_lo, _yr_hi = year_slider.value
     filtered_df = price_national_df[
-        (price_national_df["month"].dt.year >= _yr_lo)
-        & (price_national_df["month"].dt.year <= _yr_hi)
+        (price_national_df["month"].dt.year >= yr_lo)
+        & (price_national_df["month"].dt.year <= yr_hi)
     ].copy()
 
     if commodity_dd.value != "All":
@@ -106,8 +129,7 @@ def _(
 
     mo.stop(filtered_df.empty, mo.md("_No data available for the selected filters._"))
 
-    max_month = price_national_df["month"].max()
-    return filtered_df, max_month
+    return (filtered_df,)
 
 
 @app.cell
@@ -153,7 +175,7 @@ def _(price_national_df):
 
 
 @app.cell
-def _(forecast_df, price_national_df):
+def _(BUY_SIGNAL_LOWER, BUY_SIGNAL_UPPER, forecast_df, price_national_df):
     _is_baseline = forecast_df["scenario"].isna()
 
     latest_actual = (
@@ -177,7 +199,9 @@ def _(forecast_df, price_national_df):
     buy_signals_df = latest_actual.merge(forecast_avg, on="commodity", suffixes=("", "_avg"))
     buy_signals_df["ratio"] = buy_signals_df["forecast_price"] / buy_signals_df["actual_price"]
     buy_signals_df["signal"] = buy_signals_df["ratio"].apply(
-        lambda r: "BUY NOW" if r < 0.98 else ("WATCH" if r > 1.02 else "HOLD")
+        lambda r: (
+            "BUY NOW" if r < BUY_SIGNAL_LOWER else ("WATCH" if r > BUY_SIGNAL_UPPER else "HOLD")
+        )
     )
     buy_signals_df["color"] = buy_signals_df["signal"].map(
         {"BUY NOW": "#2e7d32", "HOLD": "#757575", "WATCH": "#ed6c02"}
@@ -240,14 +264,18 @@ def _(COMMODITIES, UNIT_MAP, latest_prices_df, mo, pd, price_national_df):
         card = mo.stat(**stat_kwargs)
         cards.append(card)
 
-    row1 = mo.hstack(cards[:2], gap="1rem", widths="equal")
-    row2 = mo.hstack(cards[2:], gap="1rem", widths="equal")
-    kpi_cards_output = mo.vstack([row1, row2], gap="1rem")
+    _n = len(cards)
+    _per_row = 2
+    _rows_kpi = [
+        mo.hstack(cards[i : i + _per_row], gap="1rem", widths="equal")
+        for i in range(0, _n, _per_row)
+    ]
+    kpi_cards_output = mo.vstack(_rows_kpi, gap="1rem")
     return (kpi_cards_output,)
 
 
 @app.cell
-def _(COMMODITIES, commodity_dd, filtered_df, forecast_df, go, mo, pd):
+def _(COMMODITIES, COMMODITY_COLORS, commodity_dd, filtered_df, forecast_df, go, mo, pd):
     fig = go.Figure()
     commodities = COMMODITIES if commodity_dd.value == "All" else [commodity_dd.value]
 
@@ -265,7 +293,7 @@ def _(COMMODITIES, commodity_dd, filtered_df, forecast_df, go, mo, pd):
                 y=sub["avg_price_idr"],
                 mode="lines",
                 name=c,
-                hovertemplate=("%{x|%b %Y}<br>Price: Rp %{y:,.0f}<extra>" + c + "</extra>"),
+                hovertemplate=f"%{{x|%b %Y}}<br>Price: Rp %{{y:,.0f}}<extra>{c}</extra>",
             )
         )
 
@@ -278,17 +306,19 @@ def _(COMMODITIES, commodity_dd, filtered_df, forecast_df, go, mo, pd):
                     mode="lines",
                     name=f"{c} (forecast)",
                     line=dict(dash="dash"),
-                    hovertemplate=("%{x|%b %Y}<br>Forecast: Rp %{y:,.0f}<extra></extra>"),
+                    hovertemplate=f"%{{x|%b %Y}}<br>Forecast: Rp %{{y:,.0f}}<extra>{c}</extra>",
                 )
             )
             ci_x = pd.concat([fc["date"], fc["date"][::-1]])
             ci_y = pd.concat([fc["upper_95"], fc["lower_95"][::-1]])
+            _hex = COMMODITY_COLORS.get(c, "#1f77b4").lstrip("#")
+            _ci_fill = f"rgba({int(_hex[0:2], 16)},{int(_hex[2:4], 16)},{int(_hex[4:6], 16)},0.15)"
             fig.add_trace(
                 go.Scatter(
                     x=ci_x,
                     y=ci_y,
                     fill="toself",
-                    fillcolor="rgba(100,100,200,0.15)",
+                    fillcolor=_ci_fill,
                     line=dict(color="rgba(0,0,0,0)"),
                     name="95% CI",
                     showlegend=(_i == 0),
@@ -328,7 +358,7 @@ def _(COMMODITIES, commodity_dd, filtered_df, forecast_df, go, mo, pd):
             showarrow=True,
             arrowhead=2,
             font=dict(size=11),
-            ayref="y",
+            ayref="pixel",
             ay=-30,
         )
     fig.update_layout(
@@ -336,7 +366,7 @@ def _(COMMODITIES, commodity_dd, filtered_df, forecast_df, go, mo, pd):
         yaxis_title="IDR per kg / L",
         yaxis_tickformat=",d",
         template="plotly_white",
-        legend=dict(orientation="h", y=-0.2),
+        legend=dict(orientation="h", y=-0.3, yanchor="top"),
         margin=dict(l=60, r=20, t=40, b=80),
     )
     trend_chart_output = mo.ui.plotly(fig)
@@ -353,14 +383,14 @@ def _(buy_signals_df, max_month, mo):
             mo.md(
                 f"**{r['commodity']}** &nbsp; "
                 f"<span style='color:{r['color']}'>{r['icon']} {r['signal']}</span>  \n"
-                f"_{r['reason']}_"
+                f"_{r['reason']}_  \n"
+                f"<sub>As of {_month_str}</sub>"
             )
         )
 
     buy_signal_output = mo.vstack(
         [
             mo.md("## Buy Signal Monitor"),
-            mo.md(f"_As of {_month_str}_"),
             *rows,
         ],
         gap="0.5rem",
@@ -369,12 +399,8 @@ def _(buy_signals_df, max_month, mo):
 
 
 @app.cell
-def _(COMMODITIES, mo, show_all_years, year_slider, yoy_df, data_min_year, data_max_year):
-    if show_all_years.value:
-        _yr_lo, _yr_hi = data_min_year, data_max_year
-    else:
-        _yr_lo, _yr_hi = year_slider.value
-    table_data = yoy_df[(yoy_df["year"] >= _yr_lo) & (yoy_df["year"] <= _yr_hi)].sort_values(
+def _(COMMODITIES, mo, yoy_df, yr_lo, yr_hi):
+    table_data = yoy_df[(yoy_df["year"] >= yr_lo) & (yoy_df["year"] <= yr_hi)].sort_values(
         "year", ascending=False
     )
 
@@ -412,154 +438,10 @@ def _(EXPLAINERS, mo):
 
 
 @app.cell
-def _(islamic_cal_df, np, pd, price_national_df):
-    def _compute_seasonal_data(df, cal):
-        """Derive heatmap, Ramadan overlay, action windows, summary from price data."""
-        df = df.copy()
-        df["year"] = df["month"].dt.year
-        df["month_of_year"] = df["month"].dt.month
+def _(islamic_cal_df, price_national_df):
+    from computations.seasonal import compute_seasonal_data
 
-        annual_avg = (
-            df.groupby(["year", "commodity_consolidated"])["avg_price_idr"]
-            .mean()
-            .reset_index()
-            .rename(columns={"avg_price_idr": "ann_avg"})
-        )
-        df = df.merge(annual_avg, on=["year", "commodity_consolidated"], how="left")
-        df["price_index"] = (df["avg_price_idr"] / df["ann_avg"]) * 100
-
-        # Heatmap: mean premium % vs annual avg by commodity × month
-        monthly_avg = (
-            df.groupby(["commodity_consolidated", "month_of_year"])["avg_price_idr"]
-            .mean()
-            .reset_index()
-        )
-        overall_avg = (
-            df.groupby("commodity_consolidated")["avg_price_idr"]
-            .mean()
-            .reset_index()
-            .rename(columns={"avg_price_idr": "overall_avg"})
-        )
-        monthly_avg = monthly_avg.merge(overall_avg, on="commodity_consolidated", how="left")
-        monthly_avg["premium_pct"] = (
-            (monthly_avg["avg_price_idr"] / monthly_avg["overall_avg"]) - 1
-        ) * 100
-        heatmap_df = monthly_avg[["commodity_consolidated", "month_of_year", "premium_pct"]]
-
-        # Ramadan overlay: month_relative T-2 to T+1
-        cal = cal[["year", "eid_date"]].copy()
-        cal["eid_month_num"] = cal["eid_date"].dt.month
-        cal["eid_year"] = cal["eid_date"].dt.year
-        ramadan_rows = []
-        for _, row in cal.iterrows():
-            eid_ym = row["eid_year"] * 12 + row["eid_month_num"]
-            for comm in df["commodity_consolidated"].unique():
-                for mr in [-2, -1, 0, 1]:
-                    target_ym = eid_ym + mr
-                    target_year = target_ym // 12
-                    target_month = target_ym % 12
-                    if target_month == 0:
-                        target_month = 12
-                        target_year -= 1
-                    match = df[
-                        (df["commodity_consolidated"] == comm)
-                        & (df["year"] == target_year)
-                        & (df["month_of_year"] == target_month)
-                    ]
-                    if not match.empty:
-                        ramadan_rows.append(
-                            {
-                                "commodity": comm,
-                                "year": row["year"],
-                                "month_relative": mr,
-                                "price_index": match["price_index"].mean(),
-                            }
-                        )
-        ramadan_df = pd.DataFrame(ramadan_rows)
-
-        # Action windows
-        driver_months = {
-            "Ramadan / Lebaran": None,  # computed dynamically
-            "Harvest Season": [3, 4, 8, 9],
-            "Year-End": [11, 12],
-        }
-        action_rows = []
-        for driver_name, months in driver_months.items():
-            for comm in df["commodity_consolidated"].unique():
-                comm_df = df[df["commodity_consolidated"] == comm]
-                if driver_name == "Ramadan / Lebaran":
-                    comm_ram = ramadan_df[ramadan_df["commodity"] == comm]
-                    if comm_ram.empty:
-                        continue
-                    yearly_spikes = []
-                    for yr in comm_ram["year"].unique():
-                        yr_data = comm_ram[comm_ram["year"] == yr]
-                        driver_idx = yr_data[yr_data["month_relative"].isin([0, 1])][
-                            "price_index"
-                        ].mean()
-                        non_driver_idx = yr_data[yr_data["month_relative"].isin([-2, -1])][
-                            "price_index"
-                        ].mean()
-                        if pd.notna(driver_idx) and pd.notna(non_driver_idx) and non_driver_idx > 0:
-                            yearly_spikes.append((driver_idx / non_driver_idx - 1) * 100)
-                    if not yearly_spikes:
-                        continue
-                    avg_spike = np.mean(yearly_spikes)
-                    above = sum(1 for s in yearly_spikes if s > 0)
-                    action_rows.append(
-                        {
-                            "driver": driver_name,
-                            "commodity": comm,
-                            "spike_pct": round(avg_spike, 1),
-                            "consistency": above,
-                            "total_years": len(yearly_spikes),
-                            "lead_months": "2 months before Eid",
-                        }
-                    )
-                else:
-                    driver_data = comm_df[comm_df["month_of_year"].isin(months)]
-                    non_driver_data = comm_df[~comm_df["month_of_year"].isin(months)]
-                    if driver_data.empty or non_driver_data.empty:
-                        continue
-                    driver_avg = driver_data.groupby("year")["price_index"].mean()
-                    non_driver_avg = non_driver_data.groupby("year")["price_index"].mean()
-                    yearly_spikes = []
-                    years_with_data = 0
-                    for yr in driver_avg.index:
-                        if yr in non_driver_avg.index:
-                            d_val = driver_avg[yr]
-                            nd_val = non_driver_avg[yr]
-                            if pd.notna(d_val) and pd.notna(nd_val) and nd_val > 0:
-                                yearly_spikes.append((d_val / nd_val - 1) * 100)
-                                years_with_data += 1
-                    if not yearly_spikes:
-                        continue
-                    avg_spike = np.mean(yearly_spikes)
-                    above = sum(1 for s in yearly_spikes if s > 0)
-                    lead = (
-                        "Mar\u2013Apr / Aug\u2013Sep"
-                        if driver_name == "Harvest Season"
-                        else "Nov\u2013Dec"
-                    )
-                    action_rows.append(
-                        {
-                            "driver": driver_name,
-                            "commodity": comm,
-                            "spike_pct": round(avg_spike, 1),
-                            "consistency": above,
-                            "total_years": len(yearly_spikes),
-                            "lead_months": lead,
-                        }
-                    )
-        action_windows_df = pd.DataFrame(action_rows)
-
-        # Summary table
-        summary_df = action_windows_df.copy()
-        summary_df["data_scope"] = "national"
-
-        return heatmap_df, ramadan_df, action_windows_df, summary_df
-
-    heatmap_df, ramadan_df, action_windows_df, summary_df = _compute_seasonal_data(
+    heatmap_df, ramadan_df, action_windows_df, summary_df = compute_seasonal_data(
         price_national_df, islamic_cal_df
     )
     return heatmap_df, ramadan_df, action_windows_df, summary_df
@@ -731,7 +613,18 @@ def _(commodity_dd, driver_toggle, heatmap_df, mo, go):
 
 
 @app.cell
-def _(COMMODITIES, commodity_dd, driver_toggle, go, mo, np, pd, price_national_df, ramadan_df):
+def _(
+    COMMODITIES,
+    COMMODITY_COLORS,
+    commodity_dd,
+    driver_toggle,
+    go,
+    mo,
+    np,
+    pd,
+    price_national_df,
+    ramadan_df,
+):
     _driver = driver_toggle.value
     _selected_comm = commodity_dd.value
 
@@ -742,18 +635,21 @@ def _(COMMODITIES, commodity_dd, driver_toggle, go, mo, np, pd, price_national_d
             _sub = ramadan_df[ramadan_df["commodity"] == _c]
             if _sub.empty:
                 continue
+            _comm_color = COMMODITY_COLORS.get(_c, "#1f77b4")
             for _yr in _sub["year"].unique():
                 _yd = _sub[_sub["year"] == _yr].sort_values("month_relative")
                 _is_2022 = bool(_yr == 2022)
+                _hex = _comm_color.lstrip("#")
+                _rgba_base = f"rgba({int(_hex[0:2], 16)},{int(_hex[2:4], 16)},{int(_hex[4:6], 16)}"
                 _fig.add_trace(
                     go.Scatter(
                         x=_yd["month_relative"],
                         y=_yd["price_index"],
                         mode="lines",
-                        name=str(_yr),
+                        name=f"{_yr} ({_c})",
                         line=dict(
                             width=2.5 if _is_2022 else 0.8,
-                            color="red" if _is_2022 else "rgba(100,100,180,0.4)",
+                            color="red" if _is_2022 else f"{_rgba_base},0.35)",
                         ),
                         showlegend=_is_2022,
                         legendgroup=_c,
@@ -770,7 +666,7 @@ def _(COMMODITIES, commodity_dd, driver_toggle, go, mo, np, pd, price_national_d
                     y=_avg["price_index"],
                     mode="lines",
                     name=f"{_c} avg",
-                    line=dict(width=2.5, color="darkblue"),
+                    line=dict(width=2.5, color=_comm_color),
                     legendgroup=_c,
                 )
             )
@@ -1041,6 +937,10 @@ def _(
     _cards_section = mo.vstack(
         [
             mo.md("## Action Windows"),
+            mo.md(
+                "_Charts show how prices behave; cards below summarize optimal buying "
+                "windows and typical price impacts._"
+            ),
             page2_action_cards,
         ],
         gap="0.75rem",
@@ -1075,10 +975,8 @@ def _(
 
 
 @app.cell
-def _(mo, pd):
-    from data_static import load_json as _load_json
-
-    _raw = _load_json("geographic_disparity.json")
+def _(load_json, mo, pd):
+    _raw = load_json("geographic_disparity.json")
     geo_province_df = pd.DataFrame(_raw)
     geo_province_df["year"] = geo_province_df["year"].astype(int)
 
@@ -1253,10 +1151,7 @@ def _(commodity_dd, geo_island_dropdown, geo_province_df, mo):
         _pdf = geo_province_df.copy()
         if _island_filter != "All":
             _pdf = _pdf[_pdf["island_group"] == _island_filter]
-        _pdf = _pdf.sort_values("price_index_vs_java", ascending=False)
-        _pdf["avg_price_idr"] = _pdf["avg_price_idr"].apply(lambda v: f"Rp {v:,.0f}")
-        _pdf["price_index_vs_java"] = _pdf["price_index_vs_java"].apply(lambda v: f"{v:.2f}")
-
+        _pdf = _pdf.sort_values("price_index_vs_java", ascending=False).copy()
         _display = _pdf[
             ["admin1", "island_group", "avg_price_idr", "price_index_vs_java", "months_with_data"]
         ].copy()
@@ -1335,8 +1230,8 @@ def _(
     geo_page_content = mo.vstack(
         [
             _header,
-            _controls,
             geo_data_notice,
+            _controls,
             mo.md("## Island Group Comparison"),
             geo_island_kpi_cards,
             geo_island_bar_chart,
@@ -1355,11 +1250,9 @@ def _(
 
 
 @app.cell
-def _(mo, pd):
-    from data_static import load_json as _load_json
-
+def _(load_json, mo, pd):
     # Load correlation summary (pre-computed r values for all pairs x lags)
-    _corr_raw = _load_json("correlation_summary.json")
+    _corr_raw = load_json("correlation_summary.json")
     _corr_df = pd.DataFrame(_corr_raw)
     _corr_df[["leader", "follower"]] = _corr_df["commodity_pair"].str.split("-", n=1, expand=True)
     _comm_map = {
@@ -1382,9 +1275,7 @@ def _(mo, pd):
     ).copy()
 
     corr_all_pairs_df["stable"] = corr_all_pairs_df.apply(
-        lambda r: bool(
-            pd.isna(r["post_2022_r"]) or abs(r["pre_2022_r"] - r["post_2022_r"]) <= 0.2
-        ),
+        lambda r: bool(pd.isna(r["post_2022_r"]) or abs(r["pre_2022_r"] - r["post_2022_r"]) <= 0.2),
         axis=1,
     )
 
@@ -1401,7 +1292,7 @@ def _(mo, pd):
     best_leader_per_follower_df = _by_follower[["follower", "leader", "lag", "r", "stable"]].copy()
 
     # Load monthly price data for scatter + rolling correlation
-    _price_raw = _load_json("commodity_correlation.json")
+    _price_raw = load_json("commodity_correlation.json")
     _price_df = pd.DataFrame(_price_raw)
     _price_df["month"] = pd.to_datetime(_price_df["month"])
 
@@ -1568,7 +1459,7 @@ def _(corr_matrix_df, go, mo, page4_lag_selector):
                 _val = _at_lag[(_at_lag["leader"] == _leader) & (_at_lag["follower"] == _follower)][
                     "r"
                 ].values
-                _r = _val[0] if len(_val) else 0
+                _r = _val[0] if len(_val) else None
                 _row_z.append(_r)
                 _row_text.append(f"{_r:.2f}")
         _z.append(_row_z)
@@ -1594,6 +1485,8 @@ def _(corr_matrix_df, go, mo, page4_lag_selector):
     _fig.update_layout(
         height=240,
         title=f"Cross-Commodity Correlation Matrix \u2014 {_lag}-Month Lag",
+        xaxis_title="Following Commodity",
+        yaxis_title="Leading Commodity",
         annotations=[
             dict(
                 text="Row commodity <b>leads</b> column commodity at selected lag",
@@ -1669,11 +1562,14 @@ def _(page4_follower_dd, page4_leader_dd, selected_pair, set_selected_pair):
 
 @app.cell
 def _(
-    corr_pairs_scatter_df, data_max_year, data_min_year,
-    go, mo, np, selected_pair, show_all_years, year_slider,
+    corr_pairs_scatter_df,
+    go,
+    mo,
+    np,
+    selected_pair,
+    yr_lo,
+    yr_hi,
 ):
-    _yr_lo = data_min_year if show_all_years.value else year_slider.value[0]
-    _yr_hi = data_max_year if show_all_years.value else year_slider.value[1]
 
     _leader, _follower = selected_pair()
     _pair_data = corr_pairs_scatter_df[
@@ -1686,9 +1582,7 @@ def _(
             mo.md("No price data available for this pair."), kind="warn"
         )
     else:
-        _pair_data = _pair_data[
-            _pair_data["date"].dt.year.between(_yr_lo, _yr_hi)
-        ]
+        _pair_data = _pair_data[_pair_data["date"].dt.year.between(yr_lo, yr_hi)]
         _pre = _pair_data[_pair_data["period"] == "pre_2022"]
         _post = _pair_data[_pair_data["period"] == "post_2022"]
 
@@ -1754,17 +1648,20 @@ def _(
 
 @app.cell
 def _(
-    corr_rolling_r_df, data_max_year, data_min_year,
-    go, mo, pd, selected_pair, show_all_years, year_slider,
+    corr_rolling_r_df,
+    go,
+    mo,
+    pd,
+    selected_pair,
+    yr_lo,
+    yr_hi,
 ):
-    _yr_lo = data_min_year if show_all_years.value else year_slider.value[0]
-    _yr_hi = data_max_year if show_all_years.value else year_slider.value[1]
 
     _leader, _follower = selected_pair()
     _roll = corr_rolling_r_df[
         (corr_rolling_r_df["leader"] == _leader) & (corr_rolling_r_df["follower"] == _follower)
     ].sort_values("date")
-    _roll = _roll[_roll["date"].dt.year.between(_yr_lo, _yr_hi)]
+    _roll = _roll[_roll["date"].dt.year.between(yr_lo, yr_hi)]
 
     if _roll.empty:
         page4_stability_chart = mo.callout(
@@ -1801,7 +1698,7 @@ def _(
         _fig.update_layout(
             height=220,
             yaxis_title="Correlation (r)",
-            yaxis_range=[-0.1, 1.05],
+            yaxis_range=[max(-0.1, _roll["rolling_r_3yr"].min() - 0.05), 1.05],
             title=f"Rolling Correlation Stability \u2014 {_leader} \u2192 {_follower}",
             template="plotly_white",
             margin=dict(l=60, r=20, t=40, b=40),
@@ -1851,10 +1748,17 @@ def _(corr_all_pairs_df, mo, pd, page4_lag_selector, selected_pair):
         _is_stable = _row.iloc[0]["stable"]
         _lag_str = "the same month" if _lag == 0 else f"{int(_lag)} month{'s' if _lag != 1 else ''}"
 
+        _r_strength = "weak" if abs(_r_val) < 0.4 else "moderate" if abs(_r_val) < 0.7 else "strong"
+        _reliability = (
+            "Reliable for procurement planning."
+            if _r_strength == "strong"
+            else "Directional signal, not a guarantee."
+        )
         _body = (
             f"When **{_leader}** prices rise, **{_follower}** prices have "
             f"historically followed within {_lag_str} \u2014 "
-            f"this pattern occurred in a significant majority of observed periods."
+            f"this is a **{_r_strength}** correlation (r = {_r_val:.2f}). "
+            f"{_reliability}"
         )
 
         if not _is_stable and pd.notna(_post_r):
@@ -1893,8 +1797,13 @@ def _(corr_all_pairs_df, mo, pd, page4_lag_selector, selected_pair):
 
 @app.cell
 def _(
-    commodity_dd, corr_all_pairs_df, mo, pd,
-    page4_lag_selector, selected_pair, set_selected_pair,
+    commodity_dd,
+    corr_all_pairs_df,
+    mo,
+    pd,
+    page4_lag_selector,
+    selected_pair,
+    set_selected_pair,
 ):
     _lag = page4_lag_selector.value
     _table_data = (
@@ -2060,9 +1969,7 @@ def _(
     )
 
     _pair_label = mo.md(f"**Selected pair:** {selected_pair()[0]} \u2192 {selected_pair()[1]}")
-    _pair_selector = mo.hstack(
-        [page4_leader_dd, mo.md("\u2192"), page4_follower_dd], gap="0.5rem"
-    )
+    _pair_selector = mo.hstack([page4_leader_dd, mo.md("\u2192"), page4_follower_dd], gap="0.5rem")
 
     page4_content = mo.vstack(
         [
@@ -2144,10 +2051,10 @@ def _(
 
     mo.ui.tabs(
         {
-            "Price Trends": page1_content,
-            "Seasonal Patterns": page2_content,
-            "Geographic": geo_page_content,
-            "Commodity Signals": page4_content,
+            "Forecast & Signals": page1_content,
+            "Seasonal Planning": page2_content,
+            "Regional Pricing": geo_page_content,
+            "Leading Indicators": page4_content,
         }
     )
 
